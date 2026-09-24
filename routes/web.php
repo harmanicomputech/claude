@@ -14,12 +14,16 @@ use App\Http\Controllers\Admin\ResultController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SystemController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\RunnerController;
 use App\Http\Middleware\AuthenticateAdmin;
 use App\Http\Middleware\EnsureDatabaseReady;
 use App\Http\Middleware\RequireAdminRole;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/admin');
+
+// For an external pinger on hosts without per-minute cron (token shown in the console).
+Route::get('/cron/{token}', RunnerController::class)->middleware('throttle:30,1')->name('runner');
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/login', [AuthController::class, 'show'])->name('login');

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\RunBackgroundWork;
 use App\Http\Middleware\SecureCookiesOverHttps;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(prepend: [SecureCookiesOverHttps::class]);
+        $middleware->append(RunBackgroundWork::class);
 
         // Shared hosts often terminate HTTPS at a front proxy. Trust only its
         // scheme header, never X-Forwarded-For, so the USSD IP allowlist

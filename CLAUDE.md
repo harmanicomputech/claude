@@ -21,6 +21,7 @@ USSD service (Africa's Talking) for the Ebonyi State election (6 Feb 2027) that 
 - `app/Services/ElectionStats.php` — summary and missing-PU figures (summary email, reports API, `election:missing`)
 - `app/Support/ElectionCalendar.php` — election date, submission windows
 - `app/Http/Controllers/Admin/`, `resources/views/admin/` — web admin console at `/admin`; the production host is shared hosting with no terminal, so every operator task must be doable there. Accounts are `users` with `role` admin|coordinator (admin-only routes use `RequireAdminRole`); the first admin is created with ADMIN_PASSWORD as a setup key. Record sensitive actions with `App\Support\Audit::record()`.
+- `app/Support/BackgroundRunner.php`, `app/Http/Middleware/RunBackgroundWork.php`, `GET /cron/{token}`, `election:tick` — background work without per-minute cron (the host forbids it): after-response runs, an external pinger, and an hourly cron; periodic tasks are deduplicated by slot in `settings`, so add new periodic tasks there, not to `routes/console.php`
 - `app/Support/Queues.php` — queue names; workers must run `--queue=high,default,bulk,mail` so SMS/alerts never wait behind emails
 - `app/Support/Rehearsal.php`, `Settings.php`, `app/Services/TestDataCleaner.php` — rehearsal mode (console setting) and clearing test data
 - `app/Services/AgentRegistrar.php`, `AgentImporter.php` — agent registration shared by CLI and console

@@ -16,6 +16,7 @@ class OverviewController extends Controller
         return view('admin.overview', [
             'checks' => $status->checks(),
             'callbackUrl' => $status->callbackUrl(),
+            'pingerUrl' => $status->pingerUrl(),
             'ready' => $ready,
             'summary' => $ready ? $stats->summary() : null,
             'jobs' => $ready ? $status->jobs() : null,

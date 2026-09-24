@@ -7,7 +7,6 @@ use App\Models\Coordinator;
 use App\Models\DashboardDelivery;
 use App\Models\PollingUnit;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Throwable;
@@ -18,8 +17,6 @@ use Throwable;
  */
 class SystemStatus
 {
-    public const HEARTBEAT_KEY = 'election-shield:cron-heartbeat';
-
     public function __construct(private ElectionCalendar $calendar) {}
 
     /**
@@ -42,7 +39,7 @@ class SystemStatus
             $this->check('Email', config('mail.default') !== 'log' && self::isConfigured(config('mail.mailers.smtp.host')) && filled(config('ussd.notify_emails')), config('mail.default').' via '.(config('mail.mailers.smtp.host') ?? '—').'; to: '.(implode(', ', config('ussd.notify_emails')) ?: 'NOTIFY_EMAILS not set')),
             $this->check('Africa\'s Talking SMS', self::isConfigured(config('services.africastalking.api_key')), self::isConfigured(config('services.africastalking.api_key')) ? 'Username: '.config('services.africastalking.username') : 'AFRICASTALKING_API_KEY not set (SMS are only logged)'),
             $this->check('USSD callback secret', filled(config('ussd.callback_secret')), filled(config('ussd.callback_secret')) ? 'Set' : 'USSD_CALLBACK_SECRET not set: anyone could post to the callback'),
-            $this->check('Cron (background jobs)', $this->cronRunning(), $this->cronDetail()),
+            $this->check('Background work (SMS, emails, reminders)', $this->cronRunning(), $this->cronDetail()),
             $this->check('Queue', $migrated ? $this->queueHealthy() : null, $migrated ? $this->queueDetail() : '—'),
             $this->check('Submission windows', config('election.enforce_windows') ? true : null, config('election.enforce_windows')
                 ? 'On: presence '.$this->calendar->format($this->calendar->presenceOpensAt()).', results '.$this->calendar->format($this->calendar->resultsOpenAt())
@@ -52,6 +49,11 @@ class SystemStatus
                     ? ($migrated ? number_format(DashboardDelivery::whereNull('delivered_at')->count()).' undelivered event(s)' : '—')
                     : 'Not configured yet'),
         ];
+    }
+
+    public function pingerUrl(): string
+    {
+        return url('/cron/'.BackgroundRunner::token());
     }
 
     public function callbackUrl(): string
@@ -134,29 +136,30 @@ class SystemStatus
         return ['label' => $label, 'ok' => $ok, 'detail' => $detail];
     }
 
-    private function lastHeartbeat(): ?Carbon
+    private function lastRun(): ?Carbon
     {
-        try {
-            $value = Cache::get(self::HEARTBEAT_KEY);
-        } catch (Throwable) {
-            return null;
-        }
+        $last = BackgroundRunner::lastRun();
 
-        return $value ? Carbon::parse($value) : null;
+        return $last ? Carbon::parse($last['at']) : null;
     }
 
     private function cronRunning(): bool
     {
-        return $this->lastHeartbeat()?->greaterThan(now()->subMinutes(3)) ?? false;
+        return $this->lastRun()?->greaterThan(now()->subMinutes(5)) ?? false;
     }
 
     private function cronDetail(): string
     {
-        $last = $this->lastHeartbeat();
+        $last = BackgroundRunner::lastRun();
 
-        return $last
-            ? 'Last run '.$last->diffForHumans()
-            : 'Never run: add the cron job (see set-up steps)';
+        if ($last === null) {
+            return 'Never run: set up the pinger (see "Background work" below)';
+        }
+
+        $via = ['web' => 'after a web request', 'pinger' => 'by the pinger', 'cron' => 'by cron'][$last['source']] ?? $last['source'];
+
+        return 'Last run '.Carbon::parse($last['at'])->diffForHumans()." ({$via})"
+            .($this->cronRunning() ? '' : '. Set up the pinger so alerts go out even when nobody is dialling.');
     }
 
     private function queueHealthy(): bool

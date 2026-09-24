@@ -57,18 +57,28 @@ Then, on the **Overview** page:
 
 The **Set-up checklist** on the Overview page shows what is still missing.
 
-## 5. Add the cron job
+## 5. Keep background work running (no per-minute cron needed)
 
-In the control panel, open **Cron Jobs** and add one job that runs **every minute** (`* * * * *`):
+SMS receipts, violence alerts, emails, reminders and the hourly summary are sent in the background. Many shared hosts don't allow per-minute cron jobs, so Election Shield doesn't depend on one. It runs background work in three ways, and you should set up the first two:
 
-```
-/usr/local/bin/php /home/USERNAME/domains/yourdomain.com/election-shield/artisan schedule:run >> /dev/null 2>&1
-```
+1. **Automatically after every visit.** After answering a USSD request, an admin page or a web-app API call, the app sends whatever is waiting. On election day the USSD traffic keeps everything moving within seconds. This needs nothing from you.
+2. **A free pinger, every minute. Set this up.** It covers quiet periods, for example a violence alert when nobody else is dialling, or the 8:00 AM reminder.
+   - Create a free account at **cron-job.org** (or UptimeRobot, EasyCron, …).
+   - Add a job that opens the **Background work URL** shown at the bottom of the admin **Overview** checklist (`https://…/cron/<secret>`) **every minute**.
+   - This is an ordinary web visit, not a cron job on your server, so shared-hosting rules allow it. Keep the URL secret.
+3. **Your host's cron, hourly, as a backup.** In **Cron Jobs**, add:
 
-- Replace the folder path with the real location of `election-shield`. cPanel is usually `/home/USERNAME/election-shield`. The File Manager shows the full path.
-- The PHP path varies by host. DirectAdmin often uses `/usr/local/bin/php` or `/usr/local/php84/bin/php`; cPanel often uses `/usr/local/bin/php` or `/opt/cpanel/ea-php84/root/usr/bin/php`. It must be PHP 8.3 or newer. Ask your host if unsure.
+   ```
+   0 * * * *   /usr/local/bin/php /home/USERNAME/domains/yourdomain.com/election-shield/artisan election:tick
+   ```
 
-This single job sends SMS and emails, delivers to the dashboard, sends reminders and the hourly summary. Within two minutes, **Cron (background jobs)** on the Overview page should turn **OK**. If it doesn't, the PHP path or folder path is wrong.
+   Adjust the PHP path and folder path as needed. It must be PHP 8.3 or newer.
+
+Tasks never run twice, whichever of the three triggers them. Reminders still go out if the run after 8:00 comes a little late.
+
+**Check it:** the **Background work** row on the Overview checklist turns **OK** and shows how it last ran: *after a web request*, *by the pinger* or *by cron*. If it stays red for more than a few minutes, the pinger isn't reaching the URL.
+
+**On election day,** consider moving to a VPS for the week, with a permanent queue worker (`php artisan queue:work --queue=high,default,bulk,mail`) and a per-minute cron running `election:tick`. The pinger setup works, but a VPS gives more headroom.
 
 ## 6. Connect the Africa's Talking sandbox
 
@@ -144,5 +154,5 @@ so the new vote-suppression and malpractice reports also text coordinators.
 | **419 Page Expired** when logging in or pressing a button | The browser didn't send the session cookie back. Turn on SSL and open the console with `https://`. Packages built before 24 Sep 2026 also need `SESSION_SECURE_COOKIE=true` removed from `.env` (or apply the update zip, which handles this automatically). Then reload the login page. |
 | Blank page or **500 error** | Check that the PHP version is 8.3+ and that `election-shield/.env` has no `CHANGE-ME` left in the `DB_*` lines. The error details are in `election-shield/storage/logs/`. |
 | "the election-shield folder was not found" | `election-shield/` must sit next to `public_html/` (or up to two folders higher), not inside it. |
-| Cron check stays red | The PHP path or folder path in the cron command is wrong; ask your host for the PHP 8.3/8.4 CLI path. |
+| Background work check stays red | Set up the pinger (step 5) and check that it's calling the exact URL from the Overview page. The hourly cron alone is too slow for alerts. |
 | The simulator shows an error or nothing | The callback URL must be `https://` and match the one on the Overview page exactly. Some hosts' firewall (ModSecurity) blocks automated POSTs: ask them to allow `/api/ussd`. |

@@ -33,6 +33,7 @@
         <env name="NOTIFY_EMAILS" value=""/>
         <env name="DASHBOARD_WEBHOOK_URL" value=""/>
         <env name="ELECTION_API_TOKEN" value=""/>
+        <env name="BACKGROUND_RUNNER" value="false"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

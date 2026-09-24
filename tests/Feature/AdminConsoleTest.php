@@ -125,14 +125,14 @@ class AdminConsoleTest extends TestCase
             ->assertSee('Up to date')
             ->assertSee(url('/api/ussd/s3cret'))
             ->assertSee('Francis Ogbonna Nwifuru')
-            ->assertSee('Never run: add the cron job', false);
+            ->assertSee('Never run: set up the pinger', false);
     }
 
-    public function test_heartbeat_marks_cron_as_running(): void
+    public function test_tick_marks_background_work_as_running(): void
     {
-        $this->artisan('election:heartbeat')->assertSuccessful();
+        $this->artisan('election:tick', ['--seconds' => 1])->assertSuccessful();
 
-        $this->asAdmin()->get('/admin')->assertSee('Last run');
+        $this->asAdmin()->get('/admin')->assertSee('Last run')->assertSee('(by cron)')->assertSee(url('/cron/'), false);
     }
 
     public function test_database_setup_and_polling_unit_import_buttons(): void

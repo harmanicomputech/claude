@@ -45,6 +45,9 @@
             @endforeach
         </table>
         <p class="muted">USSD callback URL for Africa's Talking:<br><code>{{ $callbackUrl }}</code></p>
+        @if (auth()->user()->isAdmin())
+            <p class="muted"><b>Background work:</b> SMS, emails and reminders are sent after each visit to the site. So they also go out when nobody is using it, have a free pinger such as <a href="https://cron-job.org" target="_blank" rel="noopener">cron-job.org</a> open this URL <b>every minute</b>. Keep it secret.<br><code>{{ $pingerUrl }}</code></p>
+        @endif
     </div>
 
     @if ($jobs)

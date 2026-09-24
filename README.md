@@ -124,10 +124,10 @@ Coordinators receive SMS alerts for urgent incidents in their LGA. State-wide co
 ```bash
 php artisan serve
 php artisan queue:work --queue=high,default,bulk,mail   # SMS and alerts first, emails last
-php artisan schedule:work   # reminders, hourly summary, dashboard resend (use cron in production)
+php artisan schedule:work   # runs election:tick every minute (reminders, summary, dashboard resend, queue)
 ```
 
-Every notification runs on the queue, so the USSD reply is never delayed. In production, keep a queue worker running under a process manager such as Supervisor, and add the Laravel scheduler to cron:
+Every notification runs on the queue, so the USSD reply is never delayed. On shared hosting without a per-minute cron, background work also runs after each web request and when an external pinger calls `/cron/{token}` (shown in the admin console). See `App\\Support\\BackgroundRunner` and docs/DEPLOY-SHARED-HOSTING.md. In production, keep a queue worker running under a process manager such as Supervisor, and add the Laravel scheduler to cron:
 
 ```
 * * * * * cd /path/to/app && php artisan schedule:run >> /dev/null 2>&1

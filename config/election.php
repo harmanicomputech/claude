@@ -150,4 +150,12 @@ return [
 
     'scheduler_runs_queue' => (bool) env('SCHEDULER_RUNS_QUEUE', false),
 
+    /*
+    | Process background work after web requests and via /cron/{token}
+    | (see App\Support\BackgroundRunner). Turn off only on servers with a
+    | permanent queue worker and a per-minute cron.
+    */
+
+    'background_runner' => (bool) env('BACKGROUND_RUNNER', true),
+
 ];
