@@ -19,10 +19,11 @@ Built with Laravel 13 and MySQL.
 CON Election Shield
 1. Submit Result    → PU code → Accredited Voters → Votes for APC → PDP → LP → OTHERS → Rejected Votes
                       → Confirm (1.Submit 2.Edit 3.Cancel) → Enter PIN → END Submitted ✔ Ref: RS123456
-2. Report Incident  → Type → PU code → Short Note → Confirm → END Incident Logged ✔ Ref: IN123456
+2. Report Incident  → Type (Violence, Vote Suppression, Malpractice, Vote Buying, Delay, Other) → PU code → Short Note → Confirm → END Incident Logged ✔ Ref: IN123456
 3. Confirm Presence → PU code → END Presence Confirmed ✔
-4. Instructions     → END Stay at PU. …
-5. Exit             → END Thank you
+4. Materials Status → PU code → 1 Arrived / 2 Incomplete / 3 Not arrived → END Materials report saved ✔
+5. Instructions     → END Stay at PU. …
+6. Exit             → END Thank you
 ```
 
 Example confirmation screen, for a real PU from the register (it fits the 182-character USSD limit even with large numbers):
@@ -198,7 +199,8 @@ X-Election-Shield-Signature: sha256=<HMAC-SHA256 of the raw body using DASHBOARD
 | `result.correction_requested` | An agent asks to correct a result | result with `status: "pending"` and `corrects_reference` |
 | `result.corrected` | A coordinator approves a correction | result with `status: "accepted"`, plus `superseded_reference`. **Replace** the PU's figures with these. |
 | `result.correction_rejected` | A coordinator rejects a correction | result with `status: "rejected"` |
-| `incident.reported` | Incident | `reference`, `polling_unit`, `type`, `type_label`, `urgent`, `note`, `agent`, `reported_at` |
+| `incident.reported` | Incident | `reference`, `polling_unit`, `type` (`violence`/`vote_suppression`/`malpractice`/`vote_buying`/`delay`/`other`), `type_label`, `urgent`, `note`, `agent`, `reported_at` |
+| `materials.reported` | Materials status report (the latest per PU is current) | `id`, `polling_unit`, `status` (`arrived`/`incomplete`/`not_arrived`), `status_label`, `agent`, `reported_at` |
 | `presence.confirmed` | Check-in | `id`, `polling_unit`, `agent`, `confirmed_at` |
 
 The dashboard should:
@@ -267,7 +269,7 @@ curl -X POST http://localhost:8000/api/ussd \
 | `ELECTION_REQUIRE_KNOWN_PU` | `true` | Only accept imported PU codes |
 | `ELECTION_PIN_MAX_ATTEMPTS` | `3` | Wrong PINs before lockout |
 | `ELECTION_PIN_LOCK_MINUTES` | `30` | Lockout length |
-| `ELECTION_URGENT_INCIDENT_TYPES` | `violence` | Types that text coordinators (`violence,vote_buying,delay,other`) |
+| `ELECTION_URGENT_INCIDENT_TYPES` | `violence,vote_suppression,malpractice` | Types that text coordinators (any of `violence,vote_suppression,malpractice,vote_buying,delay,other`) |
 | `ELECTION_PRESENCE_REMINDER_AT` | `08:00` | Presence reminder SMS time (empty disables) |
 | `ELECTION_RESULTS_REMINDER_AT` | `17:00` | Result reminder SMS time (empty disables) |
 | `ELECTION_API_TOKEN` | — | Coordinator API token |

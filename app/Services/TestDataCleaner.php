@@ -38,6 +38,7 @@ class TestDataCleaner
                 'results' => DB::table('results')->count(),
                 'incidents' => DB::table('incidents')->count(),
                 'check-ins' => DB::table('presences')->count(),
+                'materials reports' => DB::table('material_reports')->count(),
                 'dashboard events' => DB::table('dashboard_deliveries')->count(),
                 'queued jobs' => DB::table('jobs')->count() + DB::table('failed_jobs')->count(),
             ];
@@ -48,6 +49,7 @@ class TestDataCleaner
             DB::table('results')->delete();
             DB::table('incidents')->delete();
             DB::table('presences')->delete();
+            DB::table('material_reports')->delete();
             DB::table('dashboard_deliveries')->delete();
             DB::table('jobs')->delete();
             DB::table('failed_jobs')->delete();

@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\MaterialStatus;
 use App\Enums\ResultStatus;
 use App\Models\Agent;
 use App\Models\Incident;
+use App\Models\MaterialReport;
 use App\Models\PollingUnit;
 use App\Models\Presence;
 use App\Models\Result;
@@ -55,6 +57,7 @@ class ElectionStats
                 'party_votes' => $this->partyTotals(),
                 'candidates' => config('election.candidates'),
             ],
+            'materials' => $this->materials($totalUnits),
             'incidents' => [
                 'total' => Incident::count(),
                 'last_hour' => Incident::where('created_at', '>=', now()->subHour())->count(),
@@ -67,6 +70,41 @@ class ElectionStats
             ],
             'by_lga' => $this->byLga(),
         ];
+    }
+
+    /**
+     * PUs by their current (latest) materials status.
+     *
+     * @return array{arrived: int, incomplete: int, not_arrived: int, no_report: int}
+     */
+    private function materials(int $totalUnits): array
+    {
+        $counts = $this->latestMaterialsQuery()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $reported = (int) $counts->sum();
+
+        return [
+            'arrived' => (int) ($counts[MaterialStatus::Arrived->value] ?? 0),
+            'incomplete' => (int) ($counts[MaterialStatus::Incomplete->value] ?? 0),
+            'not_arrived' => (int) ($counts[MaterialStatus::NotArrived->value] ?? 0),
+            'no_report' => max(0, $totalUnits - $reported),
+        ];
+    }
+
+    /**
+     * Each PU's latest materials report (counted from election day, like presence).
+     */
+    public function latestMaterialsQuery(): Builder
+    {
+        $from = $this->calendar->presenceCountsFrom();
+
+        return MaterialReport::query()->whereIn('id', MaterialReport::query()
+            ->when($from, fn (Builder $query) => $query->where('reported_at', '>=', $from))
+            ->selectRaw('max(id)')
+            ->groupBy('polling_unit_code'));
     }
 
     /**

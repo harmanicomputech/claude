@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\IncidentType;
+use App\Enums\MaterialStatus;
 use App\Enums\UserRole;
 use App\Jobs\SendSms;
 use App\Mail\ResultSubmitted;
@@ -153,6 +154,7 @@ class AdminSection2Test extends TestCase
         $recorder->submitResult($this->agent, self::PU, 300, ['APC' => 130, 'PDP' => 80, 'LP' => 20], 5, correction: true);
         $recorder->logIncident($this->agent, self::PU, IncidentType::Delay, 'Late');
         $recorder->confirmPresence($this->agent, self::PU);
+        $recorder->reportMaterials($this->agent, self::PU, MaterialStatus::Arrived);
         $this->agent->forceFill(['locked_until' => now()->addHour()])->save();
         Coordinator::create(['name' => 'Lead', 'phone_number' => '08020000001']);
     }
@@ -173,7 +175,7 @@ class AdminSection2Test extends TestCase
         $this->actingAs($this->admin)->post('/admin/settings/clear-test-data', ['confirm' => 'CLEAR', 'password' => 'admin-password'])
             ->assertSessionHas('status', fn ($status) => str_contains($status, '2 results'));
 
-        foreach (['results', 'result_votes', 'incidents', 'presences', 'jobs'] as $table) {
+        foreach (['results', 'result_votes', 'incidents', 'presences', 'material_reports', 'jobs'] as $table) {
             $this->assertDatabaseCount($table, 0);
         }
 

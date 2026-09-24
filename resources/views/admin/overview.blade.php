@@ -9,6 +9,7 @@
         <div class="stats">
             <a class="stat" href="{{ route('admin.polling-units.index') }}"><b>{{ number_format($summary['polling_units']) }}</b><span>Polling units</span></a>
             <a class="stat" href="{{ route('admin.agents.index', ['status' => 'checked_in']) }}"><b>{{ $summary['presence']['percent'] }}%</b><span>Agents checked in ({{ number_format($summary['presence']['polling_units']) }} PUs)</span></a>
+            <a class="stat" href="{{ route('admin.polling-units.index', ['status' => 'materials_problem']) }}"><b>{{ number_format($summary['materials']['arrived']) }}</b><span>PUs with materials ({{ number_format($summary['materials']['incomplete']) }} incomplete, {{ number_format($summary['materials']['not_arrived']) }} not arrived)</span></a>
             <a class="stat" href="{{ route('admin.results.index') }}"><b>{{ $summary['results']['percent'] }}%</b><span>Results received ({{ number_format($summary['results']['polling_units']) }} PUs)</span></a>
             <a class="stat" href="{{ route('admin.corrections.index') }}"><b>{{ number_format($summary['results']['pending_corrections']) }}</b><span>Corrections to review</span></a>
             <a class="stat" href="{{ route('admin.incidents.index') }}"><b>{{ number_format($summary['incidents']['total']) }}</b><span>Incidents ({{ $summary['incidents']['last_hour'] }} last hour)</span></a>

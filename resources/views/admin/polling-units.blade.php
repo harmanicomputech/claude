@@ -10,7 +10,10 @@
         'no_result' => ['No result yet', $counts['all'] - $counts['reported']],
         'checked_in' => ['Agent checked in', $counts['checked_in']],
         'no_presence' => ['No check-in', $counts['all'] - $counts['checked_in']],
+        'materials_arrived' => ['Materials arrived', $counts['materials_arrived']],
+        'materials_problem' => ['Materials not confirmed', $counts['all'] - $counts['materials_arrived']],
     ];
+    $materialBadge = ['arrived' => 'accepted', 'incomplete' => 'pending', 'not_arrived' => 'rejected'];
 @endphp
 
 @section('content')
@@ -56,7 +59,7 @@
     <div class="card">
         <table class="data">
             <thead>
-                <tr><th>Code</th><th>Polling unit</th><th class="num">Registered</th><th>Agent(s)</th><th>Checked in</th><th>Result</th></tr>
+                <tr><th>Code</th><th>Polling unit</th><th class="num">Registered</th><th>Agent(s)</th><th>Checked in</th><th>Materials</th><th>Result</th></tr>
             </thead>
             <tbody>
                 @forelse ($units as $unit)
@@ -80,6 +83,13 @@
                             @endif
                         </td>
                         <td>
+                            @if ($detail['materials'])
+                                <span class="badge {{ $materialBadge[$detail['materials']->status->value] }}">{{ $detail['materials']->status->label() }}</span><span class="sub">{{ $detail['materials']->reported_at->timezone($tz)->format('j M, g:i A') }}</span>
+                            @else
+                                <span class="badge neutral">No report</span>
+                            @endif
+                        </td>
+                        <td>
                             @if ($detail['result'])
                                 <a href="{{ route('admin.results.show', $detail['result']) }}"><b>{{ $detail['result']->reference }}</b></a>
                                 <span class="sub">{{ number_format($detail['result']->total_valid_votes) }} valid votes</span>
@@ -89,7 +99,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="empty">No polling units match these filters.</td></tr>
+                    <tr><td colspan="7" class="empty">No polling units match these filters.</td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -3,13 +3,16 @@
 namespace Tests\Feature;
 
 use App\Enums\IncidentType;
+use App\Enums\MaterialStatus;
 use App\Enums\ResultStatus;
 use App\Jobs\SendSms;
 use App\Models\Agent;
 use App\Models\Incident;
+use App\Models\MaterialReport;
 use App\Models\PollingUnit;
 use App\Models\Presence;
 use App\Models\Result;
+use App\Services\ElectionStats;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\Concerns\InteractsWithUssd;
@@ -38,7 +41,7 @@ class UssdTest extends TestCase
     public function test_registered_agent_sees_main_menu(): void
     {
         $this->ussd('')->assertContent(
-            "CON Election Shield\n1. Submit Result\n2. Report Incident\n3. Confirm Presence\n4. Instructions\n5. Exit"
+            "CON Election Shield\n1. Submit Result\n2. Report Incident\n3. Confirm Presence\n4. Materials Status\n5. Instructions\n6. Exit"
         );
     }
 
@@ -180,13 +183,13 @@ class UssdTest extends TestCase
 
     public function test_report_incident_steps(): void
     {
-        $this->ussd('2')->assertContent("CON Incident Type:\n1. Violence\n2. Vote Buying\n3. Delay\n4. Other");
-        $this->ussd('2*2')->assertContent('CON Enter PU Code:');
-        $this->ussd('2*2*'.self::PU)->assertContent('CON Short Note:');
-        $this->ussd('2*2*'.self::PU.'*Cash at queue')
+        $this->ussd('2')->assertContent("CON Incident Type:\n1. Violence\n2. Vote Suppression\n3. Malpractice\n4. Vote Buying\n5. Delay\n6. Other");
+        $this->ussd('2*4')->assertContent('CON Enter PU Code:');
+        $this->ussd('2*4*'.self::PU)->assertContent('CON Short Note:');
+        $this->ussd('2*4*'.self::PU.'*Cash at queue')
             ->assertContent("CON Confirm Incident:\nVote Buying\nAmachi Pry Sch\nPU:110101001\n1. Submit\n2. Cancel");
 
-        $response = $this->ussd('2*2*'.self::PU.'*Cash at queue*1');
+        $response = $this->ussd('2*4*'.self::PU.'*Cash at queue*1');
 
         $incident = Incident::sole();
         $response->assertContent("END Incident Logged ✔\nRef: {$incident->reference}");
@@ -205,7 +208,8 @@ class UssdTest extends TestCase
 
     public function test_invalid_incident_type_is_rejected(): void
     {
-        $this->ussd('2*5')->assertSee("CON Invalid input.\nIncident Type:", false);
+        $this->ussd('2*7')->assertSee("CON Invalid input.\nIncident Type:", false);
+        $this->ussd('2*0')->assertSee("CON Invalid input.\nIncident Type:", false);
     }
 
     public function test_incident_note_length_is_limited(): void
@@ -220,8 +224,8 @@ class UssdTest extends TestCase
     {
         $agent = Agent::factory()->assignedTo(self::PU)->create();
 
-        $this->ussd('2*3', $agent)->assertContent('CON Short Note:');
-        $this->ussd('2*3*Late start*1', $agent);
+        $this->ussd('2*5', $agent)->assertContent('CON Short Note:');
+        $this->ussd('2*5*Late start*1', $agent);
 
         $this->assertSame(self::PU, Incident::sole()->polling_unit_code);
     }
@@ -250,18 +254,58 @@ class UssdTest extends TestCase
         $this->assertSame(self::PU, Presence::sole()->polling_unit_code);
     }
 
-    // Flows 4 & 5 -----------------------------------------------------------
+    public function test_new_urgent_incident_types(): void
+    {
+        $this->ussd('2*2*'.self::PU.'*Voters turned away*1')->assertSee('Incident Logged', false);
+        $this->ussd('2*3*'.self::PU.'*Result sheet swapped*1')->assertSee('Incident Logged', false);
+
+        $this->assertSame(
+            [IncidentType::VoteSuppression, IncidentType::Malpractice],
+            Incident::orderBy('id')->pluck('type')->all(),
+        );
+        $this->assertTrue(Incident::first()->isUrgent());
+        $this->assertTrue(Incident::latest('id')->first()->isUrgent());
+    }
+
+    // Flow 4: Materials status ----------------------------------------------
+
+    public function test_materials_report(): void
+    {
+        $this->ussd('4')->assertContent('CON Enter PU Code:');
+        $this->ussd('4*'.self::PU)->assertContent("CON Amachi Pry Sch\nMaterials Status:\n1. Arrived (complete)\n2. Arrived (incomplete)\n3. Not arrived yet");
+        $this->ussd('4*'.self::PU.'*9')->assertSee("CON Invalid input.\nAmachi Pry Sch", false);
+        $this->ussd('4*'.self::PU.'*3')->assertContent("END Materials report saved ✔\nNot arrived yet\nAmachi Pry Sch");
+
+        $report = MaterialReport::sole();
+        $this->assertSame(MaterialStatus::NotArrived, $report->status);
+        $this->assertSame(self::PU, $report->polling_unit_code);
+    }
+
+    public function test_assigned_agent_reports_materials_without_pu_code_and_latest_counts(): void
+    {
+        $agent = Agent::factory()->assignedTo(self::PU)->create();
+
+        $this->ussd('4', $agent)->assertSee('Materials Status:', false);
+        $this->ussd('4*3', $agent);
+        $this->ussd('4*1', $agent)->assertSee('Arrived (complete)', false);
+
+        $summary = app(ElectionStats::class)->summary();
+        $this->assertSame(1, $summary['materials']['arrived']);
+        $this->assertSame(0, $summary['materials']['not_arrived']);
+    }
+
+    // Flows 5 & 6 -----------------------------------------------------------
 
     public function test_instructions(): void
     {
-        $this->ussd('4')->assertContent(
+        $this->ussd('5')->assertContent(
             "END Stay at PU.\nSubmit results after counting.\nReport any issue immediately."
         );
     }
 
     public function test_exit(): void
     {
-        $this->ussd('5')->assertContent('END Thank you');
+        $this->ussd('6')->assertContent('END Thank you');
     }
 
     // Screen size -----------------------------------------------------------

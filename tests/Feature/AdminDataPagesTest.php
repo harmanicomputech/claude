@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\IncidentType;
+use App\Enums\MaterialStatus;
 use App\Models\Agent;
 use App\Models\PollingUnit;
 use App\Models\Result;
@@ -170,8 +171,23 @@ class AdminDataPagesTest extends TestCase
         $rows = $this->csv($this->admin()->get('/admin/polling-units/export?lga=Ikwo'));
         $this->assertCount(3, $rows);
         $townHall = collect($rows)->firstWhere(0, '21802700001');
-        $this->assertSame($this->ikwo->reference, $townHall[7]);
+        $this->assertSame($this->ikwo->reference, $townHall[9]);
         $this->assertNotSame('', $townHall[6]); // checked in
+    }
+
+    public function test_materials_on_polling_units_page_and_overview(): void
+    {
+        $recorder = app(ElectionRecorder::class);
+        $recorder->reportMaterials($this->agent, self::PU, MaterialStatus::NotArrived);
+        $recorder->reportMaterials($this->agent, self::PU, MaterialStatus::Arrived);
+        $recorder->reportMaterials($this->agent, '21802700002', MaterialStatus::Incomplete);
+
+        $this->admin()->get('/admin')->assertSee('PUs with materials (1 incomplete, 0 not arrived)');
+        $this->admin()->get('/admin/polling-units?status=materials_arrived')->assertSee('Amachi Pry Sch')->assertDontSee('Ikwo Market 002');
+        $this->admin()->get('/admin/polling-units?status=materials_problem')->assertSee('Ikwo Market 002')->assertSee('Arrived (incomplete)')->assertDontSee('Amachi Pry Sch');
+
+        $rows = $this->csv($this->admin()->get('/admin/polling-units/export?lga=Abakaliki'));
+        $this->assertSame('Arrived (complete)', collect($rows)->firstWhere(0, self::PU)[7]);
     }
 
     public function test_agents_status_filter_and_export(): void

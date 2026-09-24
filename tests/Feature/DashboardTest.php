@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\IncidentType;
+use App\Enums\MaterialStatus;
 use App\Jobs\PushToDashboard;
 use App\Models\DashboardDelivery;
 use App\Models\Presence;
@@ -136,6 +137,19 @@ class DashboardTest extends TestCase
         Http::assertSent(fn (Request $request) => $request['event'] === 'presence.confirmed'
             && $request['data']['polling_unit']['code'] === self::PU
             && $request->hasHeader('Idempotency-Key', 'presence.confirmed:'.Presence::sole()->id));
+    }
+
+    public function test_materials_reports_are_delivered(): void
+    {
+        Http::fake();
+
+        $report = app(ElectionRecorder::class)->reportMaterials($this->agent, self::PU, MaterialStatus::Incomplete);
+
+        Http::assertSent(fn (Request $request) => $request['event'] === 'materials.reported'
+            && $request->hasHeader('Idempotency-Key', "materials.reported:{$report->id}")
+            && $request['data']['status'] === 'incomplete'
+            && $request['data']['status_label'] === 'Arrived (incomplete)'
+            && $request['data']['polling_unit']['code'] === self::PU);
     }
 
     public function test_failed_delivery_is_left_undelivered_with_the_error(): void

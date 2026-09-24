@@ -127,6 +127,16 @@ Clearing is blocked on election day itself, unless rehearsal mode is on.
 - Clear the test data (Settings), switch rehearsal mode off, and remove the test agents.
 - Change the mail password, and update `MAIL_PASSWORD`.
 
+## Updating an existing install: urgent incident types
+
+Installs set up before 26 Sep 2026 have `ELECTION_URGENT_INCIDENT_TYPES=violence` in `.env`. Change it to:
+
+```
+ELECTION_URGENT_INCIDENT_TYPES=violence,vote_suppression,malpractice
+```
+
+so the new vote-suppression and malpractice reports also text coordinators.
+
 ## Troubleshooting
 
 | Problem | Fix |

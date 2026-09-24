@@ -3,6 +3,7 @@
 namespace App\Ussd;
 
 use App\Enums\IncidentType;
+use App\Enums\MaterialStatus;
 use App\Models\Agent;
 use App\Models\PollingUnit;
 use App\Services\ElectionRecorder;
@@ -54,6 +55,10 @@ class UssdMenu
     private const INCIDENT_CONFIRM = 'incident.confirm';
 
     private const PRESENCE_PU = 'presence.pu';
+
+    private const MATERIALS_PU = 'materials.pu';
+
+    private const MATERIALS_STATUS = 'materials.status';
 
     private const ERROR_NUMBER = 'number';
 
@@ -145,6 +150,8 @@ class UssdMenu
             self::INCIDENT_NOTE => $this->onIncidentNote($input),
             self::INCIDENT_CONFIRM => $this->onIncidentConfirm($input),
             self::PRESENCE_PU => $this->onPresencePollingUnit($input),
+            self::MATERIALS_PU => $this->onMaterialsPollingUnit($input),
+            self::MATERIALS_STATUS => $this->onMaterialsStatus($input),
         };
     }
 
@@ -154,8 +161,9 @@ class UssdMenu
             '1' => $this->calendar->resultsClosedMessage() ?? $this->startResult(correction: false),
             '2' => $this->goTo(self::INCIDENT_TYPE),
             '3' => $this->calendar->presenceClosedMessage() ?? $this->startPresence(),
-            '4' => (string) config('ussd.instructions'),
-            '5' => 'Thank you',
+            '4' => $this->startMaterials(),
+            '5' => (string) config('ussd.instructions'),
+            '6' => 'Thank you',
             default => $this->fail(self::ERROR_OPTION),
         };
     }
@@ -416,6 +424,43 @@ class UssdMenu
         return 'Presence Confirmed ✔'.($unit ? "\n".$unit->shortName(30) : '');
     }
 
+    // Flow 4: Materials status ---------------------------------------------
+
+    private function startMaterials(): ?string
+    {
+        if (! $this->agent->hasAssignedPollingUnit()) {
+            return $this->goTo(self::MATERIALS_PU);
+        }
+
+        $this->data['pu'] = $this->agent->polling_unit_code;
+        $this->data['unit'] = PollingUnit::findByCode($this->agent->polling_unit_code);
+
+        return $this->goTo(self::MATERIALS_STATUS);
+    }
+
+    private function onMaterialsPollingUnit(string $input): ?string
+    {
+        return $this->withPollingUnit($input, function (string $code, ?PollingUnit $unit) {
+            $this->data['pu'] = $code;
+            $this->data['unit'] = $unit;
+
+            return $this->goTo(self::MATERIALS_STATUS);
+        });
+    }
+
+    private function onMaterialsStatus(string $input): ?string
+    {
+        $status = MaterialStatus::fromMenuOption($input);
+
+        if ($status === null) {
+            return $this->fail(self::ERROR_OPTION);
+        }
+
+        $this->recorder->reportMaterials($this->agent, $this->data['pu'], $status);
+
+        return "Materials report saved ✔\n{$status->label()}".(isset($this->data['unit']) ? "\n".$this->data['unit']->shortName(30) : '');
+    }
+
     // Helpers ---------------------------------------------------------------
 
     private function goTo(string $state): null
@@ -508,8 +553,8 @@ class UssdMenu
     private function prompt(): string
     {
         return match ($this->state) {
-            self::MAIN => (Rehearsal::active() ? 'Election Shield REHEARSAL' : 'Election Shield')."\n1. Submit Result\n2. Report Incident\n3. Confirm Presence\n4. Instructions\n5. Exit",
-            self::RESULT_PU, self::INCIDENT_PU, self::PRESENCE_PU => 'Enter PU Code:',
+            self::MAIN => (Rehearsal::active() ? 'Election Shield REHEARSAL' : 'Election Shield')."\n1. Submit Result\n2. Report Incident\n3. Confirm Presence\n4. Materials Status\n5. Instructions\n6. Exit",
+            self::RESULT_PU, self::INCIDENT_PU, self::PRESENCE_PU, self::MATERIALS_PU => 'Enter PU Code:',
             self::RESULT_EXISTS => "Result already submitted\nfor this PU.\n1. Request correction\n2. Exit",
             self::RESULT_ACCREDITED => $this->unitLine().($this->data['correction'] ? "CORRECTION\n" : '').'Accredited Voters:',
             self::RESULT_PARTY => "Votes for {$this->currentParty()}:",
@@ -518,10 +563,19 @@ class UssdMenu
             self::RESULT_ACCREDITED_FIX => 'Re-enter accredited:',
             self::RESULT_CONFIRM => $this->resultConfirmation(),
             self::RESULT_PIN => 'Enter PIN to submit:',
-            self::INCIDENT_TYPE => "Incident Type:\n1. Violence\n2. Vote Buying\n3. Delay\n4. Other",
+            self::INCIDENT_TYPE => "Incident Type:\n".$this->numbered(array_map(fn (IncidentType $type) => $type->label(), IncidentType::menu())),
+            self::MATERIALS_STATUS => $this->unitLine()."Materials Status:\n".$this->numbered(array_map(fn (MaterialStatus $status) => $status->label(), MaterialStatus::menu())),
             self::INCIDENT_NOTE => 'Short Note:',
             self::INCIDENT_CONFIRM => "Confirm Incident:\n{$this->data['type']->label()}\n".$this->unitLine()."PU:{$this->data['pu']}\n1. Submit\n2. Cancel",
         };
+    }
+
+    /**
+     * @param  list<string>  $options
+     */
+    private function numbered(array $options): string
+    {
+        return implode("\n", array_map(fn (string $option, int $i) => ($i + 1).'. '.$option, $options, array_keys($options)));
     }
 
     private function unitLine(): string

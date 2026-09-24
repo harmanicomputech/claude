@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\IncidentType;
+use App\Enums\MaterialStatus;
 use App\Enums\ResultStatus;
 use App\Jobs\SendSms;
 use App\Mail\CorrectionRequested;
@@ -11,6 +12,7 @@ use App\Mail\ResultSubmitted;
 use App\Models\Agent;
 use App\Models\Coordinator;
 use App\Models\Incident;
+use App\Models\MaterialReport;
 use App\Models\Presence;
 use App\Models\Result;
 use Illuminate\Contracts\Mail\Mailable;
@@ -126,6 +128,23 @@ class ElectionRecorder
         $this->outbox->record('presence.confirmed', (string) $presence->id, $presence->toDashboardArray());
 
         return $presence;
+    }
+
+    /**
+     * Record the election materials status at a PU. Agents may report again
+     * as things change; the latest report is the PU's current status.
+     */
+    public function reportMaterials(Agent $agent, string $pollingUnitCode, MaterialStatus $status): MaterialReport
+    {
+        $report = $agent->materialReports()->create([
+            'polling_unit_code' => $pollingUnitCode,
+            'status' => $status,
+            'reported_at' => now(),
+        ]);
+
+        $this->outbox->record('materials.reported', (string) $report->id, $report->toDashboardArray());
+
+        return $report;
     }
 
     private function announceAcceptedResult(Result $result): void

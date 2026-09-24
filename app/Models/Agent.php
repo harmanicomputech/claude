@@ -121,4 +121,9 @@ class Agent extends Model
     {
         return $this->hasMany(Presence::class);
     }
+
+    public function materialReports(): HasMany
+    {
+        return $this->hasMany(MaterialReport::class);
+    }
 }

@@ -15,9 +15,9 @@ Paste or attach this file at the start of the new chat. It describes the existin
 
 | Feature | Already in the USSD service | Still to build (mostly in the web app) |
 | --- | --- | --- |
-| **1. Polling unit monitoring.** Agents report materials arriving, delays and irregularities. | Presence check-in per PU. Incidents of type *delay*, *vote buying*, *violence* and *other*. Missing-PU lists and SMS reminders. | Live PU status board and map by LGA and ward. **USSD additions** (small changes in the USSD repo): a "materials arrived / not arrived" report with a timestamp, and more incident types (see 3). |
+| **1. Polling unit monitoring.** Agents report materials arriving, delays and irregularities. | Presence check-in per PU. **Materials status** (arrived / incomplete / not arrived, with a timestamp; the latest report counts). Incidents of type *delay*, *malpractice*, *vote suppression* and more. Missing-PU lists and SMS reminders. | Live PU status board and map by LGA and ward, showing check-in, materials and result per PU. |
 | **2. Parallel Vote Tabulation (PVT).** Collect results from every PU and compare them with the official results. | EC8A figures from every PU (accredited, per party, rejected), a correction workflow, and collation by LGA and ward. | **Official results intake:** INEC's IReV result per PU and the declared ward and LGA collations (EC8B/EC8C), entered by hand or imported. **Comparison:** our figures against the official ones per PU, ward and LGA, flagging differences above a threshold and PUs where IReV shows no upload. Evidence export for petitions. EC8A **photo upload** tied to the result reference, since USSD can't carry images. |
-| **3. Incident alert system.** Real-time alerts for violence, vote suppression and malpractice. | Violence sends an instant SMS to the coordinators for that LGA plus state-wide coordinators, with email, dashboard events and an audit trail. Which types count as urgent is configurable. | A live incident feed and map, and acknowledge/resolve tracking for coordinators. **USSD addition:** *vote suppression* and *malpractice* as their own incident types (today they fall under *other* or *vote buying*), marked urgent. |
+| **3. Incident alert system.** Real-time alerts for violence, vote suppression and malpractice. | **Violence, vote suppression and malpractice** each send an instant SMS to the coordinators for that LGA plus state-wide coordinators, with email, dashboard events and an audit trail. Which types count as urgent is configurable. | A live incident feed and map, and acknowledge/resolve tracking for coordinators. |
 | **4. Digital town hall.** The candidate engages voters through live sessions and Q&A. | Not covered: USSD can't carry it. | Embedded live stream (YouTube/Facebook), a question submission and moderation queue, and a schedule of sessions. Could share the broadcast list for reminders. |
 | **5. WhatsApp/SMS broadcast system.** Election updates and mobilisation reminders. | SMS to *agents* through Africa's Talking (PINs, receipts, alerts, election-day reminders). | Audience lists (supporters by LGA and ward, agents, coordinators), opt-in and opt-out, scheduled campaigns, and delivery reports. **SMS:** Africa's Talking bulk SMS; watch the sender ID and do-not-disturb (DND) rules. **WhatsApp:** the WhatsApp Business Platform (Meta Cloud API or a provider) needs a verified business, pre-approved message templates, and recipients' opt-in. |
 
@@ -41,9 +41,10 @@ This is where Election Shield delivers "coverage across all LGAs, no weak links 
 - **Africa's Talking USSD:** sandbox channel `*384*92342#` for now; a live code has been applied for.
 - **What agents do by USSD** (registered phone numbers only, with a 4-digit PIN for results):
   - confirm presence at their PU
+  - report election materials status: arrived, incomplete or not arrived
   - submit the EC8A result: accredited voters, votes for each party, rejected votes
   - request a correction, which a coordinator must approve
-  - report incidents: violence, vote buying, delay, other; violence sends an SMS alert to coordinators
+  - report incidents: violence, vote suppression, malpractice, vote buying, delay, other; the first three send an SMS alert to coordinators
 - **Admin console:**
   - results with collation by LGA and ward, incidents, polling units, agents
   - correction review, coordinators, users (admin and coordinator roles), audit log
@@ -90,7 +91,8 @@ The web app must:
 | `result.correction_requested` | A result with `status: "pending"` and `corrects_reference` |
 | `result.corrected` | A result with `status: "accepted"` plus `superseded_reference`. **Replace** that PU's figures. |
 | `result.correction_rejected` | A result with `status: "rejected"` |
-| `incident.reported` | `reference`, `polling_unit`, `type` (`violence`/`vote_buying`/`delay`/`other`), `type_label`, `urgent`, `note`, `agent`, `reported_at` |
+| `incident.reported` | `reference`, `polling_unit`, `type` (`violence`/`vote_suppression`/`malpractice`/`vote_buying`/`delay`/`other`), `type_label`, `urgent`, `note`, `agent`, `reported_at` |
+| `materials.reported` | `id`, `polling_unit`, `status` (`arrived`/`incomplete`/`not_arrived`), `status_label`, `agent`, `reported_at`. Agents can report again; the latest report per PU is its current status. |
 | `presence.confirmed` | `id`, `polling_unit`, `agent`, `confirmed_at` |
 
 Every `data` object also has **`rehearsal: true|false`**. Keep rehearsal data apart from real results, or drop it.

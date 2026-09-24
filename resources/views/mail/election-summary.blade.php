@@ -8,6 +8,7 @@ As of {{ \Illuminate\Support\Carbon::parse($summary['generated_at'])->timezone(c
 | :-- | --: |
 | **Polling units** | {{ number_format($summary['polling_units']) }} |
 | **Agents checked in (PUs)** | {{ number_format($summary['presence']['polling_units']) }} ({{ $summary['presence']['percent'] }}%) |
+| **Materials arrived (PUs)** | {{ number_format($summary['materials']['arrived']) }} ({{ number_format($summary['materials']['incomplete']) }} incomplete, {{ number_format($summary['materials']['not_arrived']) }} not arrived, {{ number_format($summary['materials']['no_report']) }} no report) |
 | **Results received (PUs)** | {{ number_format($summary['results']['polling_units']) }} ({{ $summary['results']['percent'] }}%) |
 | **Corrections awaiting review** | {{ number_format($summary['results']['pending_corrections']) }} |
 | **Incidents (last hour / total)** | {{ number_format($summary['incidents']['last_hour']) }} / {{ number_format($summary['incidents']['total']) }} |

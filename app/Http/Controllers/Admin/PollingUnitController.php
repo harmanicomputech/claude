@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\MaterialStatus;
 use App\Enums\ResultStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
+use App\Models\MaterialReport;
 use App\Models\PollingUnit;
 use App\Models\Result;
 use App\Services\ElectionStats;
@@ -19,7 +21,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PollingUnitController extends Controller
 {
-    private const STATUSES = ['all', 'reported', 'no_result', 'checked_in', 'no_presence'];
+    private const STATUSES = ['all', 'reported', 'no_result', 'checked_in', 'no_presence', 'materials_arrived', 'materials_problem'];
 
     public function __construct(private ElectionStats $stats) {}
 
@@ -38,6 +40,7 @@ class PollingUnitController extends Controller
                 'all' => $scope()->count(),
                 'reported' => $scope()->whereIn('code', $this->acceptedCodes())->count(),
                 'checked_in' => $scope()->whereIn('code', $this->presenceCodes())->count(),
+                'materials_arrived' => $scope()->whereIn('code', $this->materialsArrivedCodes())->count(),
             ],
             'lgas' => PollingUnit::distinct()->orderBy('lga')->pluck('lga'),
             'wardsByLga' => PollingUnit::select('lga', 'ward')->distinct()->orderBy('ward')->get()->groupBy('lga')->map->pluck('ward'),
@@ -66,6 +69,8 @@ class PollingUnitController extends Controller
                         $unit->registered_voters,
                         $detail['agents']->map(fn ($agent) => "{$agent->name} {$agent->phone_number}")->implode('; '),
                         $detail['checked_in_at']?->timezone($timezone)->format('Y-m-d H:i'),
+                        $detail['materials']?->status->label(),
+                        $detail['materials']?->reported_at->timezone($timezone)->format('Y-m-d H:i'),
                         $detail['result']?->reference,
                         $detail['result']?->total_valid_votes,
                         $detail['result']?->created_at->timezone($timezone)->format('Y-m-d H:i'),
@@ -75,7 +80,7 @@ class PollingUnitController extends Controller
         };
 
         return CsvExport::download(CsvExport::filename('polling-units'), [
-            'PU code', 'Polling unit', 'Ward', 'LGA', 'Registered voters', 'Agents', 'Checked in', 'Result reference', 'Total valid', 'Result submitted',
+            'PU code', 'Polling unit', 'Ward', 'LGA', 'Registered voters', 'Agents', 'Checked in', 'Materials', 'Materials reported', 'Result reference', 'Total valid', 'Result submitted',
         ], $rows());
     }
 
@@ -83,7 +88,7 @@ class PollingUnitController extends Controller
      * Agents, latest check-in and accepted result for each unit, keyed by code.
      *
      * @param  Collection<int, PollingUnit>  $units
-     * @return array<string, array{agents: Collection, checked_in_at: ?Carbon, result: ?Result}>
+     * @return array<string, array{agents: Collection, checked_in_at: ?Carbon, result: ?Result, materials: ?MaterialReport}>
      */
     private function details(Collection $units): array
     {
@@ -95,11 +100,13 @@ class PollingUnitController extends Controller
             ->groupBy('polling_unit_code')
             ->pluck('confirmed_at', 'polling_unit_code');
         $results = Result::where('status', ResultStatus::Accepted)->whereIn('polling_unit_code', $codes)->get()->keyBy('polling_unit_code');
+        $materials = $this->stats->latestMaterialsQuery()->whereIn('polling_unit_code', $codes)->get()->keyBy('polling_unit_code');
 
         return $units->mapWithKeys(fn (PollingUnit $unit) => [$unit->code => [
             'agents' => $agents[$unit->code] ?? collect(),
             'checked_in_at' => isset($presence[$unit->code]) ? Carbon::parse($presence[$unit->code]) : null,
             'result' => $results[$unit->code] ?? null,
+            'materials' => $materials[$unit->code] ?? null,
         ]])->all();
     }
 
@@ -134,12 +141,19 @@ class PollingUnitController extends Controller
             ->when($filters['status'] === 'no_result', fn (Builder $query) => $query->whereNotIn('code', $this->acceptedCodes()))
             ->when($filters['status'] === 'checked_in', fn (Builder $query) => $query->whereIn('code', $this->presenceCodes()))
             ->when($filters['status'] === 'no_presence', fn (Builder $query) => $query->whereNotIn('code', $this->presenceCodes()))
+            ->when($filters['status'] === 'materials_arrived', fn (Builder $query) => $query->whereIn('code', $this->materialsArrivedCodes()))
+            ->when($filters['status'] === 'materials_problem', fn (Builder $query) => $query->whereNotIn('code', $this->materialsArrivedCodes()))
             ->orderBy('lga')->orderBy('ward')->orderBy('code');
     }
 
     private function acceptedCodes(): Builder
     {
         return Result::where('status', ResultStatus::Accepted)->select('polling_unit_code');
+    }
+
+    private function materialsArrivedCodes(): Builder
+    {
+        return $this->stats->latestMaterialsQuery()->where('status', MaterialStatus::Arrived)->select('polling_unit_code');
     }
 
     private function presenceCodes(): Builder

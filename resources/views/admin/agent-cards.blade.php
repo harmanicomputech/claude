@@ -97,6 +97,7 @@
 
                 <ol>
                     <li><b>At the PU (from {{ $presenceAt }}):</b> dial, press <b>3</b>{{ $unit ? '' : ', enter PU code' }}.</li>
+                    <li><b>Materials:</b> dial, press <b>4</b>, then 1 arrived / 2 incomplete / 3 not arrived. Report again when it changes.</li>
                     <li><b>After counting (from {{ $resultsAt }}):</b> dial, press <b>1</b>{{ $unit ? '' : ', PU code' }}, then enter accredited voters → {{ $parties }} → rejected votes. Check the screen, press <b>1</b>, enter your PIN.</li>
                     <li><b>Any problem:</b> dial, press <b>2</b>, choose the type, type a short note, press <b>1</b>.</li>
                     <li>Keep the reference (RS… / IN…) you receive.</li>
