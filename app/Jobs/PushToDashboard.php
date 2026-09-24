@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\DashboardDelivery;
 use App\Services\DashboardClient;
+use App\Support\Queues;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;
@@ -21,7 +22,10 @@ class PushToDashboard implements ShouldQueue
 
     public array $backoff = [5, 15, 30, 60, 120, 300, 900];
 
-    public function __construct(public DashboardDelivery $delivery) {}
+    public function __construct(public DashboardDelivery $delivery)
+    {
+        $this->onQueue(Queues::DEFAULT);
+    }
 
     public function handle(DashboardClient $dashboard): void
     {

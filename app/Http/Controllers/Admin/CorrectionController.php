@@ -6,6 +6,7 @@ use App\Enums\ResultStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Result;
 use App\Services\CorrectionReviewer;
+use App\Support\Audit;
 use App\Support\CsvExport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,7 @@ class CorrectionController extends Controller
     {
         $timezone = config('election.timezone');
         $parties = config('election.parties');
+        Audit::record('correction.exported', 'Exported corrections');
 
         $rows = function () use ($timezone, $parties) {
             $corrections = Result::with('agent', 'pollingUnit', 'votes', 'corrects.votes')
@@ -74,27 +76,32 @@ class CorrectionController extends Controller
 
     public function approve(Request $request, Result $result, CorrectionReviewer $reviewer): RedirectResponse
     {
-        return $this->review($request, fn (?string $by, ?string $note) => $reviewer->approve($result, $by, $note), "Approved {$result->reference}.");
+        return $this->review($request, $result, 'approved', fn (?string $by, ?string $note) => $reviewer->approve($result, $by, $note));
     }
 
     public function reject(Request $request, Result $result, CorrectionReviewer $reviewer): RedirectResponse
     {
-        return $this->review($request, fn (?string $by, ?string $note) => $reviewer->reject($result, $by, $note), "Rejected {$result->reference}.");
+        return $this->review($request, $result, 'rejected', fn (?string $by, ?string $note) => $reviewer->reject($result, $by, $note));
     }
 
-    private function review(Request $request, callable $decide, string $message): RedirectResponse
+    private function review(Request $request, Result $result, string $decision, callable $decide): RedirectResponse
     {
-        $validated = $request->validate([
-            'reviewed_by' => ['nullable', 'string', 'max:255'],
-            'note' => ['nullable', 'string', 'max:255'],
-        ]);
+        $validated = $request->validate(['note' => ['nullable', 'string', 'max:255']]);
 
         try {
-            $decide($validated['reviewed_by'] ?? 'Admin console', $validated['note'] ?? null);
+            $decide($request->user()->name, $validated['note'] ?? null);
         } catch (InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('status', $message);
+        $result->load('corrects.votes', 'votes');
+
+        Audit::record("correction.{$decision}", ucfirst($decision)." correction {$result->reference} for PU {$result->polling_unit_code}", $result, [
+            'note' => $validated['note'] ?? null,
+            'previous' => $result->corrects ? ['reference' => $result->corrects->reference, 'votes' => $result->corrects->votesByParty()] : null,
+            'proposed' => $result->votesByParty(),
+        ]);
+
+        return back()->with('status', ucfirst($decision)." {$result->reference}.");
     }
 }

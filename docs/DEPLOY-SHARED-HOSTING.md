@@ -41,11 +41,13 @@ Open `election-shield/.env` in File Manager's editor. It's a hidden file, so tur
 | `AFRICASTALKING_API_KEY` | from the Africa's Talking sandbox (step 6) |
 | `USSD_SERVICE_CODE` | your sandbox USSD code, e.g. `*384*12345#` |
 
-`APP_KEY`, `ADMIN_PASSWORD`, `USSD_CALLBACK_SECRET` and `ELECTION_API_TOKEN` are already filled with random values generated for you. **`ADMIN_PASSWORD` is your admin console password.**
+`APP_KEY`, `ADMIN_PASSWORD`, `USSD_CALLBACK_SECRET` and `ELECTION_API_TOKEN` are already filled with random values generated for you. **`ADMIN_PASSWORD` is the one-time setup key** for creating the first admin account (step 4).
 
 ## 4. Set up from the admin console
 
-Open `https://ussd.yourdomain.com/admin` and log in with `ADMIN_PASSWORD`. Then, on the **Overview** page:
+Open `https://ussd.yourdomain.com/admin`. The first time, it asks you to **create the first admin account**: enter `ADMIN_PASSWORD` from `.env` as the setup key, then your name, email and a new password. This also sets up the database. After that, you log in with your email and password.
+
+Then, on the **Overview** page:
 
 1. Press **Set up / update database**.
 2. Press **Import polling units**. With no file chosen, it loads the bundled Ebonyi register (3,308 PUs).
@@ -97,11 +99,32 @@ You'll receive `election-shield-shared-hosting-update.zip`. It contains no `.env
 1. Upload it to the same folder as before and extract it, overwriting files.
 2. In the admin console, press **Set up / update database**.
 
+## Accounts and roles
+
+Under **Users** (admins only), give each coordinator their own account:
+- **Admins** can do everything.
+- **Coordinators** can see all data, export it and review corrections, but can't change agents, users or settings.
+
+A temporary password is shown once after an account is created. Each person can change their password on the Overview page. Every sensitive action (logins, correction decisions, PIN resets, exports, clearing data) is recorded under **Audit log**.
+
+## Rehearsals
+
+1. **Settings → Switch rehearsal mode on.** Submissions are open at any time, the USSD menu reads *Election Shield REHEARSAL*, and every SMS and email starts with *[REHEARSAL]*.
+2. Run the practice with your agents.
+3. **Settings → Clear test data.** Type `CLEAR` and your password. This removes results, incidents and check-ins, and keeps the polling units, agents (unless you tick the box), coordinators, accounts and audit log.
+4. Switch rehearsal mode off.
+
+Clearing is blocked on election day itself, unless rehearsal mode is on.
+
+## Agent cards
+
+**Agents → Print agent cards** prints one card per agent with their PU code, the dial code and simple steps. PINs are stored scrambled, so existing ones can't be printed. An admin can instead set new PINs for the agents on the page and print them onto the cards; their old PINs stop working.
+
 ## Before election day
 
 - Set `ELECTION_ENFORCE_WINDOWS=true`.
 - Switch to live Africa's Talking: set `AFRICASTALKING_USERNAME` to your app's username, use the live API key and your live service code, and set the callback URL on the live channel.
-- Remove the test agents.
+- Clear the test data (Settings), switch rehearsal mode off, and remove the test agents.
 - Change the mail password, and update `MAIL_PASSWORD`.
 
 ## Troubleshooting

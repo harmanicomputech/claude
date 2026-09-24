@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\Audit;
+use App\Support\Queues;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -40,7 +42,7 @@ class SystemController extends Controller
      */
     public function runJobs(): RedirectResponse
     {
-        return $this->run('queue:work', ['--stop-when-empty' => true, '--max-time' => 20, '--tries' => 3], 'Background jobs processed');
+        return $this->run('queue:work', ['--queue' => Queues::WORKER_ORDER, '--stop-when-empty' => true, '--max-time' => 20, '--tries' => 3], 'Background jobs processed');
     }
 
     public function retryFailedJobs(): RedirectResponse
@@ -63,9 +65,12 @@ class SystemController extends Controller
             $output = trim(Artisan::output());
         } catch (Throwable $e) {
             report($e);
+            Audit::record('system.'.$command, "{$success}: failed ({$e->getMessage()})");
 
             return back()->with('error', "{$command} failed: {$e->getMessage()}");
         }
+
+        Audit::record('system.'.$command, $exitCode === 0 ? $success : "{$success}: reported problems");
 
         return back()
             ->with($exitCode === 0 ? 'status' : 'error', $exitCode === 0 ? $success : "{$command} reported problems")

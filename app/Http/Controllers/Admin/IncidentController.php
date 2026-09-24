@@ -6,6 +6,7 @@ use App\Enums\IncidentType;
 use App\Http\Controllers\Controller;
 use App\Models\Incident;
 use App\Models\PollingUnit;
+use App\Support\Audit;
 use App\Support\CsvExport;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -31,6 +32,7 @@ class IncidentController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $filters = $this->filters($request);
+        Audit::record('incident.exported', 'Exported incidents', details: array_filter($filters));
         $timezone = config('election.timezone');
 
         $rows = function () use ($filters, $timezone) {

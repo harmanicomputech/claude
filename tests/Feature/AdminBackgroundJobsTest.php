@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\SendSms;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -29,7 +30,7 @@ class AdminBackgroundJobsTest extends TestCase
         SendSms::dispatch('+2348011111111', 'Hello');
         $this->assertSame(1, DB::table('jobs')->count());
 
-        $admin = $this->withSession(['admin.authenticated' => true]);
+        $admin = $this->actingAs(User::factory()->admin()->create());
 
         $admin->get('/admin')->assertSee('1 waiting')->assertSee('Run background jobs now');
 
@@ -50,7 +51,7 @@ class AdminBackgroundJobsTest extends TestCase
             'failed_at' => now(),
         ]);
 
-        $admin = $this->withSession(['admin.authenticated' => true]);
+        $admin = $this->actingAs(User::factory()->admin()->create());
 
         $admin->get('/admin')
             ->assertSee('1 failed')

@@ -4,19 +4,17 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Guards the /admin console: a logged-in console account is required.
+ * Set-up, agent management, users, settings and data clearing are for
+ * admins; coordinators can see everything and review corrections.
  */
-class AuthenticateAdmin
+class RequireAdminRole
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (! Auth::check()) {
-            return redirect()->guest(route('admin.login'));
-        }
+        abort_unless($request->user()?->isAdmin(), 403, 'Only admins can do this.');
 
         return $next($request);
     }

@@ -3,7 +3,10 @@
 @section('title', 'Agents')
 
 @section('content')
-    <h1>Agents</h1>
+    <div class="page-head">
+        <h1>Agents</h1>
+        <div class="actions"><a class="button secondary" href="{{ route('admin.agents.cards') }}">Print agent cards</a></div>
+    </div>
 
     @if (session('import'))
         @php($import = session('import'))
@@ -26,6 +29,7 @@
         </div>
     @endif
 
+    @if (auth()->user()->isAdmin())
     <div class="grid">
         <div class="card">
             <h2>Add or update one agent</h2>
@@ -51,6 +55,7 @@
             </form>
         </div>
     </div>
+    @endif
 
     <div class="card" style="margin-top:20px">
         <div class="tabs">
@@ -79,6 +84,7 @@
                         @endif
                     </td>
                     <td>
+                        @if (auth()->user()->isAdmin())
                         <details>
                             <summary>Reset</summary>
                             <form method="post" action="{{ route('admin.agents.pin', $agent) }}">
@@ -88,12 +94,15 @@
                                 <button type="submit" class="secondary">Set PIN &amp; unlock</button>
                             </form>
                         </details>
+                        @endif
                     </td>
                     <td>
+                        @if (auth()->user()->isAdmin())
                         <form method="post" action="{{ route('admin.agents.destroy', $agent) }}" onsubmit="return confirm('Remove {{ $agent->name }}?')">
                             @csrf @method('DELETE')
                             <button type="submit" class="danger">Remove</button>
                         </form>
+                        @endif
                     </td>
                 </tr>
             @empty

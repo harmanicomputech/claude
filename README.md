@@ -73,7 +73,7 @@ Africa's Talking sends the whole session so far as one string (`text=1*212026330
 
 ### Admin console
 
-Set `ADMIN_PASSWORD` to enable `https://your-domain/admin`. The console has:
+Open `https://your-domain/admin`. The first visit creates the first admin account, using `ADMIN_PASSWORD` as a one-time setup key; after that, people log in with their own accounts (admin or coordinator). The console has:
 
 - a set-up checklist and buttons to set up the database, import the PU register and send a test email
 - agents: add them one at a time or by CSV upload, reset PINs and unlock accounts
@@ -122,7 +122,7 @@ Coordinators receive SMS alerts for urgent incidents in their LGA. State-wide co
 
 ```bash
 php artisan serve
-php artisan queue:work      # SMS, emails and dashboard deliveries
+php artisan queue:work --queue=high,default,bulk,mail   # SMS and alerts first, emails last
 php artisan schedule:work   # reminders, hourly summary, dashboard resend (use cron in production)
 ```
 

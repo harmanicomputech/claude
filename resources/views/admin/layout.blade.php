@@ -110,19 +110,31 @@
     </style>
 </head>
 <body>
-@if (session('admin.authenticated'))
+@auth
+    @php
+        $nav = ['admin.overview' => 'Overview', 'admin.results.index' => 'Results', 'admin.incidents.index' => 'Incidents', 'admin.polling-units.index' => 'Polling units', 'admin.agents.index' => 'Agents', 'admin.corrections.index' => 'Corrections', 'admin.coordinators.index' => 'Coordinators'];
+        if (auth()->user()->isAdmin()) {
+            $nav += ['admin.users.index' => 'Users', 'admin.audit.index' => 'Audit log', 'admin.settings.index' => 'Settings'];
+        }
+    @endphp
     <header>
         <div class="wrap" style="padding-top:12px;padding-bottom:12px">
             <strong>Election Shield</strong>
             <nav>
-                @foreach (['admin.overview' => 'Overview', 'admin.results.index' => 'Results', 'admin.incidents.index' => 'Incidents', 'admin.polling-units.index' => 'Polling units', 'admin.agents.index' => 'Agents', 'admin.corrections.index' => 'Corrections', 'admin.coordinators.index' => 'Coordinators'] as $route => $label)
+                @foreach ($nav as $route => $label)
                     <a href="{{ route($route) }}" @class(['active' => request()->routeIs(Str::before($route, '.index').'*')])>{{ $label }}</a>
                 @endforeach
             </nav>
+            <span style="font-size:13px;color:#d1fadf">{{ auth()->user()->name }} · {{ auth()->user()->role->label() }}</span>
             <form method="post" action="{{ route('admin.logout') }}">@csrf<button type="submit">Log out</button></form>
         </div>
     </header>
-@endif
+    @if (\App\Support\Rehearsal::active())
+        <div class="no-print" style="background:#fffaeb;color:#b54708;border-bottom:1px solid #fedf89;text-align:center;padding:8px 16px;font-weight:600">
+            REHEARSAL MODE: submissions are practice data. Clear them in Settings before election day.
+        </div>
+    @endif
+@endauth
 <main class="wrap">
     @if (session('status'))
         <div class="flash ok">{{ session('status') }}</div>

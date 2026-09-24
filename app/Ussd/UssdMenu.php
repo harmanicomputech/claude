@@ -6,7 +6,9 @@ use App\Enums\IncidentType;
 use App\Models\Agent;
 use App\Models\PollingUnit;
 use App\Services\ElectionRecorder;
+use App\Support\Audit;
 use App\Support\ElectionCalendar;
+use App\Support\Rehearsal;
 
 /**
  * Election Shield USSD menu.
@@ -301,6 +303,8 @@ class UssdMenu
         if (! $this->agent->pinMatches($input)) {
             // Earlier wrong PINs in the history were already counted.
             if ($this->isLatestInput && ($this->data['pin_tries_left'] = $this->agent->recordFailedPin()) === 0) {
+                Audit::record('agent.locked', "Agent {$this->agent->name} ({$this->agent->phone_number}) locked after too many wrong PINs", $this->agent, actor: 'USSD');
+
                 return "Too many wrong PINs.\nTry again in ".config('election.pin_lock_minutes').' minutes.';
             }
 
@@ -504,7 +508,7 @@ class UssdMenu
     private function prompt(): string
     {
         return match ($this->state) {
-            self::MAIN => "Election Shield\n1. Submit Result\n2. Report Incident\n3. Confirm Presence\n4. Instructions\n5. Exit",
+            self::MAIN => (Rehearsal::active() ? 'Election Shield REHEARSAL' : 'Election Shield')."\n1. Submit Result\n2. Report Incident\n3. Confirm Presence\n4. Instructions\n5. Exit",
             self::RESULT_PU, self::INCIDENT_PU, self::PRESENCE_PU => 'Enter PU Code:',
             self::RESULT_EXISTS => "Result already submitted\nfor this PU.\n1. Request correction\n2. Exit",
             self::RESULT_ACCREDITED => $this->unitLine().($this->data['correction'] ? "CORRECTION\n" : '').'Accredited Voters:',

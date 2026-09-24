@@ -7,6 +7,7 @@ use App\Jobs\SendSms;
 use App\Models\Agent;
 use App\Models\Coordinator;
 use App\Models\PollingUnit;
+use App\Models\User;
 use App\Services\ElectionRecorder;
 use App\Support\SystemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,39 +33,85 @@ class AdminConsoleTest extends TestCase
 
     private function asAdmin(): static
     {
-        return $this->withSession(['admin.authenticated' => true]);
+        return $this->actingAs(User::factory()->admin()->create(['name' => 'Chief Admin']));
     }
 
-    public function test_console_does_not_exist_without_a_password(): void
+    public function test_fresh_install_without_setup_key_has_no_console(): void
     {
         config(['election.admin_password' => null]);
 
         $this->get('/admin/login')->assertNotFound();
-        $this->asAdmin()->get('/admin')->assertNotFound();
+        $this->get('/admin')->assertRedirect('/admin/login');
     }
 
-    public function test_login(): void
+    public function test_first_admin_is_created_with_the_setup_key(): void
     {
+        $this->get('/admin/login')->assertOk()->assertSee('Create the first admin account');
+
+        $this->post('/admin/setup', ['setup_key' => 'wrong', 'name' => 'Kehinde', 'email' => 'k@example.com', 'password' => 'long-password-1', 'password_confirmation' => 'long-password-1'])
+            ->assertSessionHasErrors('setup_key');
+        $this->assertDatabaseCount('users', 0);
+
+        $this->post('/admin/setup', ['setup_key' => 'correct-horse', 'name' => 'Kehinde', 'email' => 'K@Example.com', 'password' => 'long-password-1', 'password_confirmation' => 'long-password-1'])
+            ->assertRedirect('/admin');
+
+        $user = User::sole();
+        $this->assertTrue($user->isAdmin());
+        $this->assertSame('k@example.com', $user->email);
+        $this->assertAuthenticatedAs($user);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'auth.setup', 'user_id' => $user->id]);
+
+        // Once an account exists, setup is closed and the page asks for a login.
+        auth()->logout();
+        $this->get('/admin/login')->assertSee('Keep me logged in')->assertDontSee('Create the first admin account');
+        $this->post('/admin/setup', ['setup_key' => 'correct-horse', 'name' => 'X', 'email' => 'x@example.com', 'password' => 'long-password-2', 'password_confirmation' => 'long-password-2'])
+            ->assertRedirect('/admin/login');
+        $this->assertDatabaseCount('users', 1);
+    }
+
+    public function test_login_and_logout(): void
+    {
+        $user = User::factory()->create(['email' => 'coord@example.com', 'password' => 'secret-password']);
+
         $this->get('/admin')->assertRedirect('/admin/login');
-        $this->get('/admin/login')->assertOk()->assertSee('Admin password');
 
-        $this->post('/admin/login', ['password' => 'wrong'])->assertSessionHasErrors('password');
-        $this->assertFalse(session()->has('admin.authenticated'));
+        $this->post('/admin/login', ['email' => 'coord@example.com', 'password' => 'wrong'])->assertSessionHasErrors('email');
+        $this->assertGuest();
+        $this->assertDatabaseHas('audit_logs', ['action' => 'auth.failed']);
 
-        $this->post('/admin/login', ['password' => 'correct-horse'])->assertRedirect('/admin');
+        $this->post('/admin/login', ['email' => 'coord@example.com', 'password' => 'secret-password'])->assertRedirect('/admin');
+        $this->assertAuthenticatedAs($user);
+        $this->assertNotNull($user->refresh()->last_login_at);
         $this->get('/admin')->assertOk()->assertSee('Set-up checklist');
 
         $this->post('/admin/logout')->assertRedirect('/admin/login');
-        $this->get('/admin')->assertRedirect('/admin/login');
+        $this->assertGuest();
     }
 
     public function test_login_is_rate_limited(): void
     {
+        User::factory()->create(['email' => 'coord@example.com', 'password' => 'secret-password']);
+
         foreach (range(1, 5) as $attempt) {
-            $this->post('/admin/login', ['password' => 'wrong']);
+            $this->post('/admin/login', ['email' => 'coord@example.com', 'password' => 'wrong']);
         }
 
-        $this->post('/admin/login', ['password' => 'correct-horse'])->assertTooManyRequests();
+        $this->post('/admin/login', ['email' => 'coord@example.com', 'password' => 'secret-password'])->assertTooManyRequests();
+    }
+
+    public function test_coordinators_see_data_but_cannot_change_set_up(): void
+    {
+        $coordinator = User::factory()->create();
+
+        $this->actingAs($coordinator)->get('/admin')->assertOk()->assertDontSee('Set up / update database');
+        $this->actingAs($coordinator)->get('/admin/results')->assertOk();
+        $this->actingAs($coordinator)->get('/admin/agents')->assertOk()->assertDontSee('Import agents from CSV');
+
+        $this->actingAs($coordinator)->post('/admin/system/migrate')->assertForbidden();
+        $this->actingAs($coordinator)->post('/admin/agents', ['name' => 'X', 'phone' => '08033333333'])->assertForbidden();
+        $this->actingAs($coordinator)->get('/admin/users')->assertForbidden();
+        $this->actingAs($coordinator)->get('/admin/settings')->assertForbidden();
+        $this->actingAs($coordinator)->get('/admin/audit')->assertForbidden();
     }
 
     public function test_overview_shows_checklist_callback_and_totals(): void

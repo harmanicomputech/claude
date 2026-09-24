@@ -112,7 +112,7 @@ class ElectionCalendar
 
     private function enforced(): bool
     {
-        return (bool) config('election.enforce_windows');
+        return config('election.enforce_windows') && ! Rehearsal::active();
     }
 
     private function onElectionDay(string $time): CarbonImmutable

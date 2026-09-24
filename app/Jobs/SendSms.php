@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Services\AfricasTalkingSms;
+use App\Support\Queues;
+use App\Support\Rehearsal;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -18,7 +20,11 @@ class SendSms implements ShouldQueue
 
     public array $backoff = [10, 60];
 
-    public function __construct(public string $to, public string $message) {}
+    public function __construct(public string $to, public string $message)
+    {
+        $this->message = Rehearsal::prefix().$message;
+        $this->onQueue(Queues::HIGH);
+    }
 
     public function handle(AfricasTalkingSms $sms): void
     {

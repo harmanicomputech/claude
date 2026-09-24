@@ -2,6 +2,8 @@
 
 namespace App\Mail;
 
+use App\Support\Queues;
+use App\Support\Rehearsal;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -17,14 +19,17 @@ class ElectionSummary extends Mailable implements ShouldQueue
     /**
      * @param  array<string, mixed>  $summary  from ElectionStats::summary()
      */
-    public function __construct(public array $summary) {}
+    public function __construct(public array $summary)
+    {
+        $this->onQueue(Queues::MAIL);
+    }
 
     public function envelope(): Envelope
     {
         $at = Carbon::parse($this->summary['generated_at'])->timezone(config('election.timezone'))->format('g:i A');
 
         return new Envelope(
-            subject: "Election Shield summary {$at}: {$this->summary['results']['polling_units']}/{$this->summary['polling_units']} PUs reported",
+            subject: Rehearsal::prefix()."Election Shield summary {$at}: {$this->summary['results']['polling_units']}/{$this->summary['polling_units']} PUs reported",
         );
     }
 

@@ -7,6 +7,7 @@ use App\Jobs\SendSms;
 use App\Models\Agent;
 use App\Models\Result;
 use App\Support\ElectionCalendar;
+use App\Support\Queues;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -29,7 +30,7 @@ class ElectionReminders
         $code = config('ussd.service_code');
 
         foreach ($agents as $agent) {
-            SendSms::dispatch($agent->phone_number, "Election Shield: please confirm you are at your PU. Dial {$code}, option 3.");
+            SendSms::dispatch($agent->phone_number, "Election Shield: please confirm you are at your PU. Dial {$code}, option 3.")->onQueue(Queues::BULK);
         }
 
         return $agents->count();
@@ -56,7 +57,7 @@ class ElectionReminders
         $code = config('ussd.service_code');
 
         foreach ($agents as $agent) {
-            SendSms::dispatch($agent->phone_number, "Election Shield: your PU result has not been received. Dial {$code}, option 1 to submit.");
+            SendSms::dispatch($agent->phone_number, "Election Shield: your PU result has not been received. Dial {$code}, option 1 to submit.")->onQueue(Queues::BULK);
         }
 
         return $agents->count();

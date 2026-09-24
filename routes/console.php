@@ -1,6 +1,7 @@
 <?php
 
 use App\Support\ElectionCalendar;
+use App\Support\Queues;
 use Illuminate\Support\Facades\Schedule;
 
 $calendar = app(ElectionCalendar::class);
@@ -32,7 +33,7 @@ foreach (['presence' => 'presence_reminder_at', 'results' => 'results_reminder_a
 // Shared hosting (no permanent worker): work the queue for most of each
 // minute from the scheduler cron. Must stay last, as it runs for ~50s.
 if (config('election.scheduler_runs_queue')) {
-    Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')
+    Schedule::command('queue:work --queue='.Queues::WORKER_ORDER.' --stop-when-empty --max-time=50 --tries=3')
         ->everyMinute()
         ->withoutOverlapping(2);
 }

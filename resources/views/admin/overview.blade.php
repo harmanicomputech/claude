@@ -50,12 +50,14 @@
         <div class="card">
             <h2>Background jobs (SMS, email, dashboard)</h2>
             <p class="muted">{{ number_format($jobs['pending']) }} waiting · {{ number_format($jobs['failed']) }} failed. The cron job sends these every minute; you can also send them now.</p>
+            @if (auth()->user()->isAdmin())
             <div class="row" style="justify-content:flex-start">
                 <form method="post" action="{{ route('admin.system.jobs.run') }}">@csrf<button type="submit">Run background jobs now</button></form>
                 @if ($jobs['failed'])
                     <form method="post" action="{{ route('admin.system.jobs.retry') }}">@csrf<button type="submit" class="secondary">Retry failed jobs</button></form>
                 @endif
             </div>
+            @endif
             @if ($jobs['failures'])
                 <table style="margin-top:12px">
                     <tr><th>Failed job</th><th>When</th><th>Error</th></tr>
@@ -67,6 +69,7 @@
         </div>
     @endif
 
+    @if (auth()->user()->isAdmin())
     <div class="grid">
         <div class="card">
             <h2>Database</h2>
@@ -94,5 +97,17 @@
             </form>
             <form method="post" action="{{ route('admin.system.summary') }}">@csrf<button type="submit" class="secondary" @disabled(! $ready)>Email summary now</button></form>
         </div>
+    </div>
+    @endif
+
+    <div class="card" style="margin-top:20px">
+        <h2>Your account</h2>
+        <form method="post" action="{{ route('admin.account.password') }}" class="filters">
+            @csrf
+            <div><label>Current password</label><input type="password" name="current_password" required></div>
+            <div><label>New password (10+ characters)</label><input type="password" name="password" required></div>
+            <div><label>Repeat new password</label><input type="password" name="password_confirmation" required></div>
+            <div class="actions" style="flex:0 0 auto"><button type="submit" class="secondary">Change password</button></div>
+        </form>
     </div>
 @endsection

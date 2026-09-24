@@ -6,6 +6,7 @@ use App\Enums\ResultStatus;
 use App\Http\Controllers\Controller;
 use App\Models\PollingUnit;
 use App\Models\Result;
+use App\Support\Audit;
 use App\Support\CsvExport;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -56,6 +57,7 @@ class ResultController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $filters = $this->filters($request);
+        Audit::record('result.exported', 'Exported results', details: array_filter($filters));
         $parties = config('election.parties');
         $timezone = config('election.timezone');
 
@@ -104,6 +106,7 @@ class ResultController extends Controller
         $filters = $this->filters($request);
         $breakdown = $this->breakdown($filters);
         $parties = config('election.parties');
+        Audit::record('result.collation_exported', 'Exported collation by '.$breakdown['level'], details: array_filter($filters));
 
         $rows = array_map(fn (array $row) => [
             $row['area'], $row['reported'], $row['units'], $row['percent'],

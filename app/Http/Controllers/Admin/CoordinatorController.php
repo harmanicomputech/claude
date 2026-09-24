@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Coordinator;
 use App\Models\PollingUnit;
+use App\Support\Audit;
 use App\Support\PhoneNumber;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,12 +36,15 @@ class CoordinatorController extends Controller
             ['name' => $validated['name'], 'email' => $validated['email'] ?? null, 'lga' => $validated['lga'] ?? null],
         );
 
+        Audit::record('coordinator.saved', "Saved coordinator {$coordinator->name} ({$coordinator->phone_number}) for ".($coordinator->lga ?? 'all LGAs'), $coordinator);
+
         return back()->with('status', "Saved {$coordinator->name} (".($coordinator->lga ?? 'all LGAs').').');
     }
 
     public function destroy(Coordinator $coordinator): RedirectResponse
     {
         $coordinator->delete();
+        Audit::record('coordinator.deleted', "Removed coordinator {$coordinator->name} ({$coordinator->phone_number})");
 
         return back()->with('status', "Removed {$coordinator->name}.");
     }

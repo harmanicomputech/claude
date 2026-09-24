@@ -8,6 +8,7 @@ use App\Models\Agent;
 use App\Models\PollingUnit;
 use App\Models\Result;
 use App\Services\ElectionStats;
+use App\Support\Audit;
 use App\Support\CsvExport;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -46,6 +47,7 @@ class PollingUnitController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $filters = $this->filters($request);
+        Audit::record('polling_unit.exported', 'Exported polling units', details: array_filter($filters));
         $timezone = config('election.timezone');
 
         $rows = function () use ($filters, $timezone) {

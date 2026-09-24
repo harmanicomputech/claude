@@ -20,7 +20,9 @@ USSD service (Africa's Talking) for the Ebonyi State election (6 Feb 2027) that 
 - `app/Services/DashboardOutbox.php`, `DashboardClient.php`, `app/Jobs/PushToDashboard.php` — outbox + signed webhook (contract documented in README; keep them in sync)
 - `app/Services/ElectionStats.php` — summary and missing-PU figures (summary email, reports API, `election:missing`)
 - `app/Support/ElectionCalendar.php` — election date, submission windows
-- `app/Http/Controllers/Admin/`, `resources/views/admin/` — web admin console at `/admin` (ADMIN_PASSWORD); the production host is shared hosting with no terminal, so every operator task must be doable there
+- `app/Http/Controllers/Admin/`, `resources/views/admin/` — web admin console at `/admin`; the production host is shared hosting with no terminal, so every operator task must be doable there. Accounts are `users` with `role` admin|coordinator (admin-only routes use `RequireAdminRole`); the first admin is created with ADMIN_PASSWORD as a setup key. Record sensitive actions with `App\Support\Audit::record()`.
+- `app/Support/Queues.php` — queue names; workers must run `--queue=high,default,bulk,mail` so SMS/alerts never wait behind emails
+- `app/Support/Rehearsal.php`, `Settings.php`, `app/Services/TestDataCleaner.php` — rehearsal mode (console setting) and clearing test data
 - `app/Services/AgentRegistrar.php`, `AgentImporter.php` — agent registration shared by CLI and console
 - `scripts/build-shared-hosting.sh`, `deploy/shared-hosting/`, `docs/DEPLOY-SHARED-HOSTING.md` — upload package for cPanel/DirectAdmin
 - `config/election.php` — date, windows, parties + candidates, PIN, alerts, reminders; `config/ussd.php` — USSD limits and callback protection

@@ -3,6 +3,8 @@
 namespace App\Mail;
 
 use App\Models\Result;
+use App\Support\Queues;
+use App\Support\Rehearsal;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -14,12 +16,15 @@ class ResultSubmitted extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public Result $result) {}
+    public function __construct(public Result $result)
+    {
+        $this->onQueue(Queues::MAIL);
+    }
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Result submitted: PU {$this->result->polling_unit_code} ({$this->result->reference})",
+            subject: Rehearsal::prefix()."Result submitted: PU {$this->result->polling_unit_code} ({$this->result->reference})",
         );
     }
 

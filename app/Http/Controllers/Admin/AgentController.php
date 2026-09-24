@@ -7,6 +7,7 @@ use App\Models\Agent;
 use App\Services\AgentImporter;
 use App\Services\AgentRegistrar;
 use App\Services\ElectionStats;
+use App\Support\Audit;
 use App\Support\CsvExport;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -40,6 +41,7 @@ class AgentController extends Controller
         $filters = $this->filters($request);
         $timezone = config('election.timezone');
         $checkedIn = $this->checkedInAt($filters);
+        Audit::record('agent.exported', 'Exported agents', details: array_filter($filters));
 
         $rows = function () use ($filters, $timezone, $checkedIn) {
             foreach ($this->query($filters)->with('pollingUnit')->withCount('results', 'incidents')->lazy(500) as $agent) {
@@ -127,6 +129,8 @@ class AgentController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
+        Audit::record($agent->wasRecentlyCreated ? 'agent.created' : 'agent.updated', "Saved agent {$agent->name} ({$agent->phone_number})".($agent->polling_unit_code ? " for PU {$agent->polling_unit_code}" : ''), $agent, ['pin_set' => $pin !== null, 'pin_texted' => $request->boolean('sms_pin')]);
+
         return back()->with('status', "Saved {$agent->name} ({$agent->phone_number})."
             .($pin !== null ? " PIN: {$pin}" : ' PIN unchanged.'));
     }
@@ -139,6 +143,8 @@ class AgentController extends Controller
         ]);
 
         $report = $importer->import($request->file('file')->getRealPath(), $request->boolean('sms_pins'));
+
+        Audit::record('agent.imported', 'Imported '.count($report['imported']).' agent(s) from '.$request->file('file')->getClientOriginalName(), details: ['skipped' => count($report['errors']), 'pins_texted' => $request->boolean('sms_pins')]);
 
         return back()
             ->with(count($report['errors']) ? 'error' : 'status', count($report['imported']).' agent(s) imported, '.count($report['errors']).' row(s) skipped.')
@@ -153,6 +159,7 @@ class AgentController extends Controller
         ]);
 
         $pin = $registrar->resetPin($agent, $validated['pin'] ?? null, $request->boolean('sms_pin'));
+        Audit::record('agent.pin_reset', "Reset PIN and unlocked {$agent->name} ({$agent->phone_number})", $agent, ['pin_texted' => $request->boolean('sms_pin')]);
 
         return back()->with('status', "New PIN for {$agent->name}: {$pin}".($request->boolean('sms_pin') ? ' (texted to the agent)' : ''));
     }
@@ -164,6 +171,7 @@ class AgentController extends Controller
         }
 
         $agent->delete();
+        Audit::record('agent.deleted', "Removed agent {$agent->name} ({$agent->phone_number})");
 
         return back()->with('status', "Removed {$agent->name}.");
     }

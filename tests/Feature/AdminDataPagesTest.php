@@ -6,6 +6,7 @@ use App\Enums\IncidentType;
 use App\Models\Agent;
 use App\Models\PollingUnit;
 use App\Models\Result;
+use App\Models\User;
 use App\Services\ElectionRecorder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -43,7 +44,7 @@ class AdminDataPagesTest extends TestCase
 
     private function admin(): static
     {
-        return $this->withSession(['admin.authenticated' => true]);
+        return $this->actingAs(User::factory()->admin()->create());
     }
 
     /**

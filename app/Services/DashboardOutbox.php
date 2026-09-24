@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Jobs\PushToDashboard;
 use App\Models\DashboardDelivery;
+use App\Support\Rehearsal;
 
 /**
  * Records dashboard events in the outbox and queues their delivery.
@@ -26,7 +27,7 @@ class DashboardOutbox
 
         $delivery = DashboardDelivery::firstOrCreate(
             ['idempotency_key' => "{$event}:{$key}"],
-            ['event' => $event, 'payload' => $payload],
+            ['event' => $event, 'payload' => [...$payload, 'rehearsal' => Rehearsal::active()]],
         );
 
         if ($delivery->wasRecentlyCreated) {

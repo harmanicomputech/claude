@@ -6,6 +6,7 @@
     <h1>Coordinators</h1>
     <p class="muted">Coordinators receive an SMS the moment an urgent incident (violence) is reported in their LGA. State-wide coordinators receive alerts for every LGA.</p>
 
+    @if (auth()->user()->isAdmin())
     <div class="card">
         <h2>Add or update a coordinator</h2>
         <form method="post" action="{{ route('admin.coordinators.store') }}" class="row">
@@ -23,6 +24,7 @@
             <button type="submit">Save</button>
         </form>
     </div>
+    @endif
 
     <div class="card">
         <table>
@@ -34,10 +36,12 @@
                     <td>{{ $coordinator->email ?? '—' }}</td>
                     <td>{{ $coordinator->lga ?? 'All LGAs' }}</td>
                     <td>
+                        @if (auth()->user()->isAdmin())
                         <form method="post" action="{{ route('admin.coordinators.destroy', $coordinator) }}" onsubmit="return confirm('Remove {{ $coordinator->name }}?')">
                             @csrf @method('DELETE')
                             <button type="submit" class="danger">Remove</button>
                         </form>
+                        @endif
                     </td>
                 </tr>
             @empty
