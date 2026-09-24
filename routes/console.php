@@ -6,6 +6,11 @@ use Illuminate\Support\Facades\Schedule;
 $calendar = app(ElectionCalendar::class);
 $timezone = config('election.timezone');
 
+// Lets the admin console show whether the cron job is running. A command
+// rather than a closure, so it also proves the host lets the scheduler start
+// processes (some shared hosts disable proc_open).
+Schedule::command('election:heartbeat')->everyMinute();
+
 // Safety net for dashboard events whose delivery ran out of retries.
 Schedule::command('dashboard:sync')->everyFifteenMinutes()->withoutOverlapping();
 
@@ -22,4 +27,12 @@ foreach (['presence' => 'presence_reminder_at', 'results' => 'results_reminder_a
             ->timezone($timezone)
             ->when(fn () => $calendar->isElectionDay());
     }
+}
+
+// Shared hosting (no permanent worker): work the queue for most of each
+// minute from the scheduler cron. Must stay last, as it runs for ~50s.
+if (config('election.scheduler_runs_queue')) {
+    Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')
+        ->everyMinute()
+        ->withoutOverlapping(2);
 }

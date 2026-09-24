@@ -126,4 +126,28 @@ return [
 
     'api_token' => env('ELECTION_API_TOKEN'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Console
+    |--------------------------------------------------------------------------
+    |
+    | Password for the web console at /admin (set-up, agents, corrections).
+    | Empty disables the console entirely. Use a long, unique password.
+    |
+    */
+
+    'admin_password' => env('ADMIN_PASSWORD'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Shared Hosting
+    |--------------------------------------------------------------------------
+    |
+    | On hosting without a permanent queue worker (cPanel / DirectAdmin), set
+    | this to true: the every-minute scheduler cron also works the queue.
+    |
+    */
+
+    'scheduler_runs_queue' => (bool) env('SCHEDULER_RUNS_QUEUE', false),
+
 ];

@@ -102,4 +102,19 @@ class AdminCommandTest extends TestCase
             ->expectsOutputToContain('Unknown or invalid PU code')
             ->assertFailed();
     }
+
+    public function test_agent_import_command(): void
+    {
+        Queue::fake();
+        PollingUnit::factory()->create(['code' => '21202633007']);
+        PollingUnit::factory()->create(['code' => '21202633002']);
+
+        $this->artisan('agent:import', ['file' => database_path('data/agents.example.csv'), '--sms-pins' => true])
+            ->expectsOutputToContain('3 agent(s) imported; 0 row(s) skipped.')
+            ->assertSuccessful();
+
+        $this->assertSame('21202633007', Agent::findByPhone('08012345678')->polling_unit_code);
+        $this->assertTrue(Agent::findByPhone('08023456789')->pinMatches('4821'));
+        Queue::assertPushed(SendSms::class, 3);
+    }
 }

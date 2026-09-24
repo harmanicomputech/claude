@@ -37,10 +37,12 @@ class SmsTest extends TestCase
 
     public function test_it_skips_sending_without_an_api_key(): void
     {
-        config(['services.africastalking.api_key' => null]);
         Http::fake();
 
-        app(AfricasTalkingSms::class)->send('+2348011111111', 'Hi');
+        foreach ([null, 'CHANGE-ME'] as $key) {
+            config(['services.africastalking.api_key' => $key]);
+            app(AfricasTalkingSms::class)->send('+2348011111111', 'Hi');
+        }
 
         Http::assertNothingSent();
     }

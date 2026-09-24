@@ -69,6 +69,21 @@ Africa's Talking sends the whole session so far as one string (`text=1*212026330
 
 ## Setup
 
+**Shared hosting (cPanel / DirectAdmin, no terminal):** follow [docs/DEPLOY-SHARED-HOSTING.md](docs/DEPLOY-SHARED-HOSTING.md).
+
+### Admin console
+
+Set `ADMIN_PASSWORD` to enable `https://your-domain/admin`. The console has:
+
+- a set-up checklist and buttons to set up the database, import the PU register and send a test email
+- agents: add them one at a time or by CSV upload, reset PINs and unlock accounts
+- coordinators, correction review, and the missing-PU lists
+
+Build the upload package with `scripts/build-shared-hosting.sh`, or `--update` for an update without `.env`. On shared hosting, `SCHEDULER_RUNS_QUEUE=true` lets the single every-minute cron job also process the queue.
+
+### Server with a terminal
+
+
 Requirements: PHP 8.3+, Composer, MySQL 8.
 
 ```bash
@@ -95,6 +110,7 @@ Codes are stored as digits only, which is what agents type: `EB/212/02633/007` b
 php artisan agent:add 08012345678 "Ada Obi" --pu=EB/212/02633/007 --sms-pin   # random PIN, texted to the agent
 php artisan agent:add 08012345679 "Chidi Eze" --pin=4821                   # any PU, chosen PIN
 php artisan agent:pin 08012345678 --sms                                    # reset a PIN / unlock
+php artisan agent:import agents.csv --sms-pins                             # bulk: name,phone,pu_code,pin
 
 php artisan coordinator:add 08020000001 "Abakaliki Lead" --lga=Abakaliki --email=lead@example.com
 php artisan coordinator:add 08020000009 "State Lead"                      # state-wide

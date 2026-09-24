@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\SystemStatus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -21,7 +22,7 @@ class AfricasTalkingSms
     {
         $config = config('services.africastalking');
 
-        if (blank($config['api_key'])) {
+        if (! SystemStatus::isConfigured($config['api_key'])) {
             Log::info('Africa\'s Talking API key not set; SMS not sent.', ['to' => $to, 'message' => $message]);
 
             return;

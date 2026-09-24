@@ -2,9 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\SendSms;
 use App\Models\Agent;
+use App\Services\AgentRegistrar;
 use Illuminate\Console\Command;
+use InvalidArgumentException;
 
 class ResetAgentPin extends Command
 {
@@ -15,7 +16,7 @@ class ResetAgentPin extends Command
 
     protected $description = 'Set a new PIN for an agent and unlock their account';
 
-    public function handle(): int
+    public function handle(AgentRegistrar $registrar): int
     {
         $agent = Agent::findByPhone($this->argument('phone'));
 
@@ -25,20 +26,17 @@ class ResetAgentPin extends Command
             return self::FAILURE;
         }
 
-        $pin = $this->option('pin') ?? str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-
-        if (! preg_match('/^\d{4}$/', $pin)) {
-            $this->error('PIN must be exactly 4 digits.');
+        try {
+            $pin = $registrar->resetPin($agent, $this->option('pin'), (bool) $this->option('sms'));
+        } catch (InvalidArgumentException $e) {
+            $this->error($e->getMessage());
 
             return self::FAILURE;
         }
 
-        $agent->forceFill(['pin' => $pin, 'failed_pin_attempts' => 0, 'locked_until' => null])->save();
-
         $this->info("New PIN for {$agent->name} ({$agent->phone_number}): {$pin}");
 
         if ($this->option('sms')) {
-            SendSms::dispatch($agent->phone_number, "Election Shield: your new PIN is {$pin}. Keep it secret.");
             $this->line('PIN SMS queued.');
         }
 
