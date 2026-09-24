@@ -121,6 +121,7 @@ class NotificationEmailTest extends TestCase
         $mail->assertSeeInHtml('Abakaliki');
         $mail->assertSeeInHtml('Violence');
         $mail->assertSeeInHtml('APC');
+        $mail->assertSeeInHtml('Francis Ogbonna Nwifuru');
         $this->assertStringContainsString('1/1 PUs reported', $mail->envelope()->subject);
     }
 

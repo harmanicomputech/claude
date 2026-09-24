@@ -53,6 +53,7 @@ class ElectionStats
                 'rejected_votes' => (int) (clone $accepted)->sum('rejected_votes'),
                 'total_votes_cast' => (int) (clone $accepted)->sum('total_votes_cast'),
                 'party_votes' => $this->partyTotals(),
+                'candidates' => config('election.candidates'),
             ],
             'incidents' => [
                 'total' => Incident::count(),

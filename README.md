@@ -2,7 +2,7 @@
 
 A USSD service built on [Africa's Talking](https://africastalking.com) for the Ebonyi State election on 6 February 2027. Registered polling agents can use it from any phone to:
 
-1. **Submit Result**: the EC8A figures (accredited voters, votes per party and rejected votes), protected by a PIN. Wrong results can be corrected with a coordinator's approval.
+1. **Submit Result**: the EC8A figures (accredited voters, votes for APC, PDP, LP and all other parties, and rejected votes), protected by a PIN. Wrong results can be corrected with a coordinator's approval.
 2. **Report Incident**: violence, vote buying, delay or other. Violence immediately texts the coordinators for that area.
 3. **Confirm Presence** at the polling unit.
 4. **Instructions**
@@ -17,7 +17,7 @@ Built with Laravel 13 and MySQL.
 ```
 *XXX#
 CON Election Shield
-1. Submit Result    → PU code → Accredited Voters → Votes for APC → … → Votes for OTHERS → Rejected Votes
+1. Submit Result    → PU code → Accredited Voters → Votes for APC → PDP → LP → OTHERS → Rejected Votes
                       → Confirm (1.Submit 2.Edit 3.Cancel) → Enter PIN → END Submitted ✔ Ref: RS123456
 2. Report Incident  → Type → PU code → Short Note → Confirm → END Incident Logged ✔ Ref: IN123456
 3. Confirm Presence → PU code → END Presence Confirmed ✔
@@ -25,19 +25,29 @@ CON Election Shield
 5. Exit             → END Thank you
 ```
 
-Example confirmation screen (it fits the 182-character USSD limit even with large numbers):
+Example confirmation screen, for a real PU from the register (it fits the 182-character USSD limit even with large numbers):
 
 ```
 Confirm:
-PU:110503004
-Amachi Pry Sch
-Acc:500 Rej:5
-APC:200 PDP:150
-LP:50 APGA:40
-OTHERS:20
-Valid:460
+PU:21202633007
+Police Station Area 007
+Acc:1200 Rej:21
+APC:610 PDP:402
+LP:95 OTHERS:18
+Valid:1125
 1.Submit 2.Edit 3.Cancel
 ```
+
+### Governorship ballot
+
+| Party | Candidate |
+| --- | --- |
+| APC | Francis Ogbonna Nwifuru |
+| PDP | Ifeanyi Chukwuma Odii |
+| LP | Splendor Oko Eze |
+| OTHERS | Combined votes of every other party on the ballot |
+
+Parties are set with `ELECTION_PARTIES`; candidate names live in `config/election.php` and appear in the summary email and reports API.
 
 ### Rules built into the flow
 
@@ -52,10 +62,10 @@ Valid:460
 | Duplicate result | The agent is offered *Request correction*. The correction is stored as **pending** and doesn't count until a coordinator approves it. |
 | Time windows | Presence opens at 07:00 on election day and results open at 14:30. Both close at `ELECTION_RESULTS_CLOSE_AT`. Incidents can be reported at any time. |
 | Auto-PU detection | Agents registered with `--pu` are never asked for a PU code. |
-| Quick codes | `*XXX*1*110503004*500*200*150*50*40*20*5#` goes straight to the confirmation screen, which still asks for the PIN. |
+| Quick codes | `*XXX*1*21202633007*1200*610*402*95*18*21#` goes straight to the confirmation screen, which still asks for the PIN. |
 | SMS | The agent gets a receipt for each result and correction request, and a message when a correction is approved or rejected. |
 
-Africa's Talking sends the whole session so far as one string (`text=1*110503004*500*…`). `app/Ussd/UssdMenu.php` replays these inputs through a state machine on every request, which is how retries, "Edit" and corrections work.
+Africa's Talking sends the whole session so far as one string (`text=1*21202633007*1200*…`). `app/Ussd/UssdMenu.php` replays these inputs through a state machine on every request, which is how retries, "Edit" and corrections work.
 
 ## Setup
 
@@ -71,18 +81,18 @@ php artisan migrate
 
 ### 1. Import the polling unit register
 
-Export the INEC polling unit list for Ebonyi to CSV with a header row: `code,name,ward,lga,registered_voters`. `registered_voters` is optional. Codes can be in INEC format (`11-05-03-004` or `11/05/03/004`); they're stored as digits (`110503004`), which is what agents type. See `database/data/polling_units.example.csv`.
+The Ebonyi register is in `database/data/ebonyi_polling_units.csv`: 3,308 PUs in 13 LGAs and 169 wards. The columns are `code,name,ward,lga,registered_voters`, and `registered_voters` is optional.
 
 ```bash
-php artisan pu:import ebonyi_polling_units.csv
+php artisan pu:import database/data/ebonyi_polling_units.csv
 ```
 
-Re-running the import updates existing polling units.
+Codes are stored as digits only, which is what agents type: `EB/212/02633/007` becomes **`21202633007`**. Print a list of each agent's code for them. Re-running the import (for example with an updated file) updates existing polling units and adds new ones.
 
 ### 2. Register agents and coordinators
 
 ```bash
-php artisan agent:add 08012345678 "Ada Obi" --pu=11-05-03-004 --sms-pin   # random PIN, texted to the agent
+php artisan agent:add 08012345678 "Ada Obi" --pu=EB/212/02633/007 --sms-pin   # random PIN, texted to the agent
 php artisan agent:add 08012345679 "Chidi Eze" --pin=4821                   # any PU, chosen PIN
 php artisan agent:pin 08012345678 --sms                                    # reset a PIN / unlock
 
@@ -106,7 +116,7 @@ Every notification runs on the queue, so the USSD reply is never delayed. In pro
 * * * * * cd /path/to/app && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-`php artisan db:seed` loads demo data: three polling units, agents `+2348000000001` (any PU) and `+2348000000002` (assigned to PU 110101002), both with PIN `1234`, and a state-wide coordinator.
+`php artisan db:seed` imports the Ebonyi register and adds demo agents `+2348000000001` (any PU) and `+2348000000002` (assigned to PU 21202633002), both with PIN `1234`, plus a state-wide coordinator. Remove the demo people before election day.
 
 ## Election day tools
 
@@ -152,12 +162,12 @@ X-Election-Shield-Signature: sha256=<HMAC-SHA256 of the raw body using DASHBOARD
   "data": {
     "reference": "RS784321",
     "status": "accepted",
-    "polling_unit": { "code": "110503004", "name": "Amachi Pry Sch", "ward": "Amachi", "lga": "Abakaliki", "registered_voters": 812 },
-    "accredited_voters": 500,
-    "votes": { "APC": 200, "PDP": 150, "LP": 50, "APGA": 40, "OTHERS": 20 },
-    "total_valid_votes": 460,
-    "rejected_votes": 5,
-    "total_votes_cast": 465,
+    "polling_unit": { "code": "21202633007", "name": "Police Station Area 007", "ward": "Abakaliki Ward 01", "lga": "Abakaliki", "registered_voters": 1507 },
+    "accredited_voters": 1200,
+    "votes": { "APC": 610, "PDP": 402, "LP": 95, "OTHERS": 18 },
+    "total_valid_votes": 1125,
+    "rejected_votes": 21,
+    "total_votes_cast": 1146,
     "corrects_reference": null,
     "agent": { "name": "Ada Obi", "phone_number": "+2348012345678" },
     "submitted_at": "2027-02-06T15:04:10+00:00",
@@ -217,21 +227,21 @@ To test without Africa's Talking (set `ELECTION_ENFORCE_WINDOWS=false` to try it
 
 ```bash
 curl -X POST http://localhost:8000/api/ussd \
-  -d "sessionId=test&serviceCode=*384*1#&phoneNumber=+2348000000001&text=1*110101001*500*200*150*50*40*20*5"
+  -d "sessionId=test&serviceCode=*384*1#&phoneNumber=+2348000000001&text=1*21202633007*1200*610*402*95*18*21"
 ```
 
 ## Configuration
 
 | Env var | Default | Purpose |
 | --- | --- | --- |
-| `ELECTION_NAME` | `Ebonyi State Election` | Shown in the summary email |
+| `ELECTION_NAME` | `Ebonyi State Governorship Election` | Shown in the summary email |
 | `ELECTION_DATE` | `2027-02-06` | Election day |
 | `ELECTION_TIMEZONE` | `Africa/Lagos` | Timezone for all windows, reminders and email times |
 | `ELECTION_ENFORCE_WINDOWS` | `true` | Turn off for testing and rehearsals |
 | `ELECTION_PRESENCE_OPENS_AT` | `07:00` | Presence check-in opens (election day) |
 | `ELECTION_RESULTS_OPEN_AT` | `14:30` | Result submission opens (election day) |
 | `ELECTION_RESULTS_CLOSE_AT` | `2027-02-08 23:59` | Result submission closes (empty = never) |
-| `ELECTION_PARTIES` | `APC,PDP,LP,APGA,OTHERS` | Parties agents enter votes for, in this order. Every party adds one USSD screen, so keep the main contenders plus `OTHERS`. |
+| `ELECTION_PARTIES` | `APC,PDP,LP,OTHERS` | Parties agents enter votes for, in this order. Every party adds one USSD screen, so keep the main contenders plus `OTHERS`. |
 | `ELECTION_REQUIRE_KNOWN_PU` | `true` | Only accept imported PU codes |
 | `ELECTION_PIN_MAX_ATTEMPTS` | `3` | Wrong PINs before lockout |
 | `ELECTION_PIN_LOCK_MINUTES` | `30` | Lockout length |

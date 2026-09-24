@@ -268,13 +268,14 @@ class UssdTest extends TestCase
 
     public function test_screens_fit_on_a_ussd_display(): void
     {
+        // Five parties, a 12-digit code and a long name are worse than election day.
         config(['election.parties' => ['APC', 'PDP', 'LP', 'APGA', 'OTHERS']]);
-        PollingUnit::factory()->create(['code' => '119999999', 'name' => str_repeat('Very Long Polling Unit Name ', 3), 'registered_voters' => 999999]);
+        PollingUnit::factory()->create(['code' => '212026330999', 'name' => str_repeat('Very Long Polling Unit Name ', 3), 'registered_voters' => 999999]);
         Result::query()->delete();
 
-        $big = '1*119999999*999999*999999*999999*999999*999999*999999*999999';
+        $big = '1*212026330999*999999*999999*999999*999999*999999*999999*999999';
 
-        foreach (['', '1', '1*119999999', $big, "{$big}*1", '2*1*119999999*'.str_repeat('a', 30)] as $text) {
+        foreach (['', '1', '1*212026330999', $big, "{$big}*1", '2*1*212026330999*'.str_repeat('a', 30)] as $text) {
             $body = $this->ussd($text)->getContent();
 
             $this->assertLessThanOrEqual(182, mb_strlen($body), "Screen too long for input [{$text}]: {$body}");

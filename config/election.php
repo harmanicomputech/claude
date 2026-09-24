@@ -4,7 +4,7 @@ $list = fn (string $value): array => array_values(array_filter(array_map('trim',
 
 return [
 
-    'name' => env('ELECTION_NAME', 'Ebonyi State Election'),
+    'name' => env('ELECTION_NAME', 'Ebonyi State Governorship Election'),
 
     /*
     |--------------------------------------------------------------------------
@@ -37,12 +37,21 @@ return [
     |--------------------------------------------------------------------------
     |
     | Agents enter votes for each party in this order. Keep the list short:
-    | every party is one more USSD screen. Add "OTHERS" to capture the
-    | combined votes of all remaining parties.
+    | every party is one more USSD screen. "OTHERS" captures the combined
+    | votes of every other party on the ballot.
+    |
+    | Candidates are shown next to their party in the summary email and the
+    | reports API. Update them here if the field changes.
     |
     */
 
-    'parties' => $list(env('ELECTION_PARTIES', 'APC,PDP,LP,APGA,OTHERS')),
+    'parties' => $list(env('ELECTION_PARTIES', 'APC,PDP,LP,OTHERS')),
+
+    'candidates' => [
+        'APC' => 'Francis Ogbonna Nwifuru',
+        'PDP' => 'Ifeanyi Chukwuma Odii',
+        'LP' => 'Splendor Oko Eze',
+    ],
 
     /*
     |--------------------------------------------------------------------------

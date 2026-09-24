@@ -20,7 +20,8 @@ USSD service (Africa's Talking) for the Ebonyi State election (6 Feb 2027) that 
 - `app/Services/DashboardOutbox.php`, `DashboardClient.php`, `app/Jobs/PushToDashboard.php` — outbox + signed webhook (contract documented in README; keep them in sync)
 - `app/Services/ElectionStats.php` — summary and missing-PU figures (summary email, reports API, `election:missing`)
 - `app/Support/ElectionCalendar.php` — election date, submission windows
-- `config/election.php` — date, windows, parties, PIN, alerts, reminders; `config/ussd.php` — USSD limits and callback protection
+- `config/election.php` — date, windows, parties + candidates, PIN, alerts, reminders; `config/ussd.php` — USSD limits and callback protection
+- `database/data/ebonyi_polling_units.csv` — the PU register (3,308 PUs; codes like `EB/212/02633/007`, typed by agents as `21202633007`). `db:seed` imports it.
 
 ## How the USSD flow works
 

@@ -16,14 +16,14 @@ As of {{ \Illuminate\Support\Carbon::parse($summary['generated_at'])->timezone(c
 ## Votes so far
 
 <x-mail::table>
-| Party | Votes |
-| :-- | --: |
+| Party | Candidate | Votes |
+| :-- | :-- | --: |
 @foreach ($summary['results']['party_votes'] as $party => $votes)
-| {{ $party }} | {{ number_format($votes) }} |
+| {{ $party }} | {{ $summary['results']['candidates'][$party] ?? '' }} | {{ number_format($votes) }} |
 @endforeach
-| **Total valid** | **{{ number_format($summary['results']['total_valid_votes']) }}** |
-| Rejected | {{ number_format($summary['results']['rejected_votes']) }} |
-| Accredited voters | {{ number_format($summary['results']['accredited_voters']) }} |
+| **Total valid** | | **{{ number_format($summary['results']['total_valid_votes']) }}** |
+| Rejected | | {{ number_format($summary['results']['rejected_votes']) }} |
+| Accredited voters | | {{ number_format($summary['results']['accredited_voters']) }} |
 </x-mail::table>
 
 @if ($summary['incidents']['by_type'])

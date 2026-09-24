@@ -51,7 +51,7 @@ class PollingUnit extends Model
     /**
      * Short name for USSD screens.
      */
-    public function shortName(int $length = 20): string
+    public function shortName(int $length = 25): string
     {
         return Str::limit($this->name, $length, '');
     }

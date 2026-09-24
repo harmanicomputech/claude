@@ -38,6 +38,20 @@ class AdminCommandTest extends TestCase
         $this->assertSame(2, PollingUnit::count());
     }
 
+    public function test_the_ebonyi_register_imports_cleanly(): void
+    {
+        $this->artisan('pu:import', ['file' => database_path('data/ebonyi_polling_units.csv')])
+            ->expectsOutputToContain('Imported 3308 polling unit(s); 0 row(s) skipped.')
+            ->assertSuccessful();
+
+        $this->assertSame(13, PollingUnit::distinct()->count('lga'));
+
+        $unit = PollingUnit::findByCode('EB/212/02633/007');
+        $this->assertSame('21202633007', $unit->code);
+        $this->assertSame('Police Station Area 007', $unit->shortName());
+        $this->assertSame('Abakaliki', $unit->lga);
+    }
+
     public function test_pu_import_reports_bad_rows_and_missing_columns(): void
     {
         $this->artisan('pu:import', ['file' => $this->csv("code,name\n1,x\n")])
