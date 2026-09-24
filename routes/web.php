@@ -91,6 +91,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
                 Route::post('/settings/rehearsal', [SettingsController::class, 'rehearsal'])->name('settings.rehearsal');
                 Route::post('/settings/clear-test-data', [SettingsController::class, 'clearTestData'])->name('settings.clear');
+                Route::post('/settings/dashboard-backfill', [SettingsController::class, 'backfillDashboard'])->name('settings.backfill');
             });
         });
     });

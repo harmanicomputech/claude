@@ -213,6 +213,10 @@ The dashboard should:
 
 To total results correctly, count only results with `status: "accepted"`. When `result.corrected` arrives, replace the PU's figures.
 
+Every event's `data` also carries `"rehearsal": true|false`. Keep rehearsal data apart from real results, or discard it.
+
+**Connecting a dashboard after data exists:** press **Settings → Send all existing data to the dashboard**, or run `php artisan dashboard:backfill`. This re-sends every result, incident and check-in using the same idempotency keys, so repeats are harmless.
+
 ## Email notifications
 
 Set `NOTIFY_EMAILS` (comma-separated) and configure a real mailer (`MAIL_MAILER`, `MAIL_HOST`, …). Coordinators then receive:

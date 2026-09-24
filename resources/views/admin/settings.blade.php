@@ -20,6 +20,16 @@
         </form>
     </div>
 
+    <div class="card">
+        <h2>Results dashboard</h2>
+        @if ($dashboardUrl)
+            <p class="muted">Connected to <code>{{ $dashboardUrl }}</code>. New submissions are sent automatically. If the dashboard was connected after data was already collected, send it everything that already exists. Anything it already has is skipped.</p>
+            <form method="post" action="{{ route('admin.settings.backfill') }}">@csrf<button type="submit" class="secondary">Send all existing data to the dashboard</button></form>
+        @else
+            <p class="muted">Not connected. Set <code>DASHBOARD_WEBHOOK_URL</code> (and <code>DASHBOARD_API_TOKEN</code>, <code>DASHBOARD_WEBHOOK_SECRET</code>) in <code>election-shield/.env</code>.</p>
+        @endif
+    </div>
+
     <div class="card" style="border-color:#fda29b">
         <h2>Clear test data</h2>
         <p>Removes <b>{{ number_format($counts['results']) }} result(s), {{ number_format($counts['incidents']) }} incident(s) and {{ number_format($counts['check-ins']) }} check-in(s)</b>, plus queued SMS/emails and dashboard events. It keeps the polling units, coordinators, console accounts and the audit log, and unlocks every agent.</p>
