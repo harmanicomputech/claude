@@ -2,18 +2,16 @@
 
 namespace App\Models;
 
-use App\Contracts\DashboardRecord;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['agent_id', 'polling_unit_code', 'confirmed_at', 'dashboard_synced_at'])]
-class Presence extends Model implements DashboardRecord
+#[Fillable(['agent_id', 'polling_unit_code', 'confirmed_at'])]
+class Presence extends Model
 {
     protected function casts(): array
     {
         return [
-            'dashboard_synced_at' => 'datetime',
             'confirmed_at' => 'datetime',
         ];
     }
@@ -23,24 +21,22 @@ class Presence extends Model implements DashboardRecord
         return $this->belongsTo(Agent::class);
     }
 
-    public function dashboardEvent(): string
+    public function pollingUnit(): BelongsTo
     {
-        return 'presence.confirmed';
+        return $this->belongsTo(PollingUnit::class, 'polling_unit_code', 'code');
     }
 
-    public function dashboardIdempotencyKey(): string
+    /**
+     * @return array<string, mixed>
+     */
+    public function toDashboardArray(): array
     {
-        return 'presence-'.$this->id;
-    }
+        $this->loadMissing('agent', 'pollingUnit');
 
-    public function dashboardPayload(): array
-    {
         return [
-            'polling_unit_code' => $this->polling_unit_code,
-            'agent' => [
-                'name' => $this->agent->name,
-                'phone_number' => $this->agent->phone_number,
-            ],
+            'id' => $this->id,
+            'polling_unit' => $this->pollingUnit?->toSummaryArray() ?? ['code' => $this->polling_unit_code],
+            'agent' => $this->agent->toSummaryArray(),
             'confirmed_at' => $this->confirmed_at->toIso8601String(),
         ];
     }

@@ -2,19 +2,17 @@
 
 namespace App\Models;
 
-use App\Contracts\DashboardRecord;
 use App\Enums\IncidentType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['reference', 'agent_id', 'polling_unit_code', 'type', 'note', 'dashboard_synced_at'])]
-class Incident extends Model implements DashboardRecord
+#[Fillable(['reference', 'agent_id', 'polling_unit_code', 'type', 'note'])]
+class Incident extends Model
 {
     protected function casts(): array
     {
         return [
-            'dashboard_synced_at' => 'datetime',
             'type' => IncidentType::class,
         ];
     }
@@ -24,28 +22,31 @@ class Incident extends Model implements DashboardRecord
         return $this->belongsTo(Agent::class);
     }
 
-    public function dashboardEvent(): string
+    public function pollingUnit(): BelongsTo
     {
-        return 'incident.reported';
+        return $this->belongsTo(PollingUnit::class, 'polling_unit_code', 'code');
     }
 
-    public function dashboardIdempotencyKey(): string
+    public function isUrgent(): bool
     {
-        return $this->reference;
+        return in_array($this->type->value, config('election.urgent_incident_types'), true);
     }
 
-    public function dashboardPayload(): array
+    /**
+     * @return array<string, mixed>
+     */
+    public function toDashboardArray(): array
     {
+        $this->loadMissing('agent', 'pollingUnit');
+
         return [
             'reference' => $this->reference,
-            'polling_unit_code' => $this->polling_unit_code,
+            'polling_unit' => $this->pollingUnit?->toSummaryArray() ?? ['code' => $this->polling_unit_code],
             'type' => $this->type->value,
             'type_label' => $this->type->label(),
+            'urgent' => $this->isUrgent(),
             'note' => $this->note,
-            'agent' => [
-                'name' => $this->agent->name,
-                'phone_number' => $this->agent->phone_number,
-            ],
+            'agent' => $this->agent->toSummaryArray(),
             'reported_at' => $this->created_at->toIso8601String(),
         ];
     }

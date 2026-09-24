@@ -1,14 +1,14 @@
 # Election Shield
 
-A USSD service built on [Africa's Talking](https://africastalking.com) for the Ebonyi State election on 6 February 2027. It lets registered polling agents, from any phone:
+A USSD service built on [Africa's Talking](https://africastalking.com) for the Ebonyi State election on 6 February 2027. Registered polling agents can use it from any phone to:
 
-1. **Submit Result**: enter the PU code, candidate votes and total votes, check the confirmation screen, and submit. The agent gets an SMS receipt.
-2. **Report Incident**: violence, vote buying, delay or other, with a short note.
-3. **Confirm Presence**: records a timestamp and marks the agent as active.
+1. **Submit Result**: the EC8A figures (accredited voters, votes per party and rejected votes), protected by a PIN. Wrong results can be corrected with a coordinator's approval.
+2. **Report Incident**: violence, vote buying, delay or other. Violence immediately texts the coordinators for that area.
+3. **Confirm Presence** at the polling unit.
 4. **Instructions**
 5. **Exit**
 
-Every result, incident and presence check-in is also pushed to an external results dashboard over HTTP. Results and incidents are emailed to the coordinators.
+Every result, incident and presence check-in is pushed to an external dashboard. Coordinators receive emails, an hourly summary, and SMS alerts for urgent incidents. Agents who haven't reported get SMS reminders on election day.
 
 Built with Laravel 13 and MySQL.
 
@@ -16,12 +16,27 @@ Built with Laravel 13 and MySQL.
 
 ```
 *XXX#
-CON Election Shield            1 → Enter PU Code → Votes for Candidate → Total Votes Cast
-1. Submit Result                   → Confirm (1. Submit / 2. Edit / 3. Cancel) → END Submitted ✔ Ref: RS123456
-2. Report Incident             2 → Incident Type → Enter PU Code → Short Note → Confirm → END Incident Logged ✔ Ref: IN123456
-3. Confirm Presence            3 → Enter PU Code → END Presence Confirmed ✔
-4. Instructions                4 → END Stay at PU. ...
-5. Exit                        5 → END Thank you
+CON Election Shield
+1. Submit Result    → PU code → Accredited Voters → Votes for APC → … → Votes for OTHERS → Rejected Votes
+                      → Confirm (1.Submit 2.Edit 3.Cancel) → Enter PIN → END Submitted ✔ Ref: RS123456
+2. Report Incident  → Type → PU code → Short Note → Confirm → END Incident Logged ✔ Ref: IN123456
+3. Confirm Presence → PU code → END Presence Confirmed ✔
+4. Instructions     → END Stay at PU. …
+5. Exit             → END Thank you
+```
+
+Example confirmation screen (it fits the 182-character USSD limit even with large numbers):
+
+```
+Confirm:
+PU:110503004
+Amachi Pry Sch
+Acc:500 Rej:5
+APC:200 PDP:150
+LP:50 APGA:40
+OTHERS:20
+Valid:460
+1.Submit 2.Edit 3.Cancel
 ```
 
 ### Rules built into the flow
@@ -29,16 +44,18 @@ CON Election Shield            1 → Enter PU Code → Votes for Candidate → T
 | Rule | Behaviour |
 | --- | --- |
 | Authentication | Phone numbers that aren't registered agents get `END Access denied. Contact coordinator.` |
-| Invalid input | `CON Invalid input. Enter number only:` The agent can re-enter and carry on. |
-| Votes > total | `CON Error: Votes cannot exceed total. Re-enter total:` |
-| Duplicate result | `END Result already submitted for this PU.` This is checked when the PU code is entered and again at submission, and backed by a unique index. |
-| Edit | Restarts result entry from the PU code. |
+| PU register | Only PU codes from the imported INEC register are accepted (`PU code not found`). The PU name is shown before voting figures are entered, so a mistyped code is easy to spot. |
+| Invalid input | `Invalid input. Enter number only:` The agent can re-enter and carry on. |
+| Accredited > registered | `Error: Accredited cannot exceed registered voters (N). Re-enter accredited:` |
+| Votes cast > accredited | Valid votes plus rejected votes can't exceed accredited voters. The agent chooses *Re-enter accredited* or *Start again*. |
+| PIN | Required to submit a result. After 3 wrong PINs the agent is locked out for 30 minutes. Only the latest input counts toward the limit, so replayed inputs aren't counted twice. |
+| Duplicate result | The agent is offered *Request correction*. The correction is stored as **pending** and doesn't count until a coordinator approves it. |
+| Time windows | Presence opens at 07:00 on election day and results open at 14:30. Both close at `ELECTION_RESULTS_CLOSE_AT`. Incidents can be reported at any time. |
 | Auto-PU detection | Agents registered with `--pu` are never asked for a PU code. |
-| Quick codes | Dialling `*XXX*1*02345*120*300#` goes straight to the confirmation screen. Adding `*1` at the end submits immediately. |
-| SMS confirmation | `Result received. Ref: RS123456` is queued after each result. |
-| Incident note | 1–30 characters. |
+| Quick codes | `*XXX*1*110503004*500*200*150*50*40*20*5#` goes straight to the confirmation screen, which still asks for the PIN. |
+| SMS | The agent gets a receipt for each result and correction request, and a message when a correction is approved or rejected. |
 
-Africa's Talking sends the whole session so far as one string (`text=1*02345*120*300*1`). `app/Ussd/UssdMenu.php` replays these inputs through a state machine on every request, which is how retries after errors and "Edit" work.
+Africa's Talking sends the whole session so far as one string (`text=1*110503004*500*…`). `app/Ussd/UssdMenu.php` replays these inputs through a state machine on every request, which is how retries, "Edit" and corrections work.
 
 ## Setup
 
@@ -48,38 +65,84 @@ Requirements: PHP 8.3+, Composer, MySQL 8.
 composer install
 cp .env.example .env
 php artisan key:generate
-# set DB_* and AFRICASTALKING_* in .env, then:
+# set DB_*, AFRICASTALKING_*, MAIL_*, NOTIFY_EMAILS, DASHBOARD_*, USSD_CALLBACK_SECRET in .env
 php artisan migrate
 ```
 
-### Register agents
+### 1. Import the polling unit register
+
+Export the INEC polling unit list for Ebonyi to CSV with a header row: `code,name,ward,lga,registered_voters`. `registered_voters` is optional. Codes can be in INEC format (`11-05-03-004` or `11/05/03/004`); they're stored as digits (`110503004`), which is what agents type. See `database/data/polling_units.example.csv`.
 
 ```bash
-php artisan agent:add 08012345678 "Ada Obi"                 # agent enters PU codes
-php artisan agent:add 08012345678 "Ada Obi" --pu=02345      # assigned to one PU
+php artisan pu:import ebonyi_polling_units.csv
 ```
 
-Numbers are stored in E.164 format (`+2348012345678`), the format Africa's Talking sends. `php artisan db:seed` adds two demo agents: `+2348000000001` (any PU) and `+2348000000002` (assigned to PU 02345).
+Re-running the import updates existing polling units.
 
-### Run it
+### 2. Register agents and coordinators
+
+```bash
+php artisan agent:add 08012345678 "Ada Obi" --pu=11-05-03-004 --sms-pin   # random PIN, texted to the agent
+php artisan agent:add 08012345679 "Chidi Eze" --pin=4821                   # any PU, chosen PIN
+php artisan agent:pin 08012345678 --sms                                    # reset a PIN / unlock
+
+php artisan coordinator:add 08020000001 "Abakaliki Lead" --lga=Abakaliki --email=lead@example.com
+php artisan coordinator:add 08020000009 "State Lead"                      # state-wide
+```
+
+Coordinators receive SMS alerts for urgent incidents in their LGA. State-wide coordinators receive alerts for every LGA.
+
+### 3. Run it
 
 ```bash
 php artisan serve
-php artisan queue:work      # sends SMS, emails and dashboard deliveries
-php artisan schedule:work   # resends anything the dashboard missed (use cron in production)
+php artisan queue:work      # SMS, emails and dashboard deliveries
+php artisan schedule:work   # reminders, hourly summary, dashboard resend (use cron in production)
 ```
 
-SMS, email and dashboard deliveries all run on the queue so the USSD reply is never delayed. A queue worker must be running, and `QUEUE_CONNECTION` must not be `sync` in production.
+Every notification runs on the queue, so the USSD reply is never delayed. In production, keep a queue worker running under a process manager such as Supervisor, and add the Laravel scheduler to cron:
 
-## Dashboard API
+```
+* * * * * cd /path/to/app && php artisan schedule:run >> /dev/null 2>&1
+```
 
-Set `DASHBOARD_WEBHOOK_URL` and every record is sent as it is created:
+`php artisan db:seed` loads demo data: three polling units, agents `+2348000000001` (any PU) and `+2348000000002` (assigned to PU 110101002), both with PIN `1234`, and a state-wide coordinator.
+
+## Election day tools
+
+| Command | What it does |
+| --- | --- |
+| `php artisan election:missing presence` | PUs with no agent checked in today, grouped by LGA and ward, with the agent's name and phone number. Add `--lga=Ikwo` to filter. |
+| `php artisan election:missing results` | PUs with no accepted result. |
+| `php artisan election:remind presence` | Texts every agent who hasn't checked in. Runs automatically at 08:00 on election day. |
+| `php artisan election:remind results` | Texts every agent whose PU has no result. Runs automatically at 17:00 on election day. |
+| `php artisan election:summary` | Emails the summary now. It's sent automatically every hour from 07:00 until results close. `--print` shows the figures instead. |
+| `php artisan result:review list` | Shows pending corrections next to the current result. |
+| `php artisan result:review approve RS123456 --by="Name" --note="…"` | Approves a correction. It becomes the PU's result and the old one is kept as *superseded*. |
+| `php artisan result:review reject RS123456 --note="…"` | Rejects a correction. |
+| `php artisan dashboard:sync` | Resends dashboard events that never got through. Runs every 15 minutes. |
+
+## Coordinator API
+
+For your dashboard. Set `ELECTION_API_TOKEN` and send `Authorization: Bearer {token}`.
+
+| Endpoint | |
+| --- | --- |
+| `GET /api/corrections?status=pending` | Corrections (`pending`, `accepted` or `rejected`) |
+| `POST /api/corrections/{reference}/approve` | Body: `reviewed_by`, `note` (both optional). Returns 409 if the correction has already been reviewed. |
+| `POST /api/corrections/{reference}/reject` | Same body as approve |
+| `GET /api/reports/summary` | The same figures as the hourly email: turnout, party totals, incidents, and a breakdown by LGA |
+| `GET /api/reports/missing?type=presence\|results&lga=…` | PUs missing presence or a result, with their assigned agents |
+
+## Dashboard webhook
+
+Set `DASHBOARD_WEBHOOK_URL`. Every event is saved in an outbox table and then posted:
 
 ```http
 POST {DASHBOARD_WEBHOOK_URL}
 Content-Type: application/json
 Authorization: Bearer {DASHBOARD_API_TOKEN}
-Idempotency-Key: RS784321
+Idempotency-Key: result.submitted:RS784321
 X-Election-Shield-Event: result.submitted
 X-Election-Shield-Signature: sha256=<HMAC-SHA256 of the raw body using DASHBOARD_WEBHOOK_SECRET>
 
@@ -88,66 +151,108 @@ X-Election-Shield-Signature: sha256=<HMAC-SHA256 of the raw body using DASHBOARD
   "sent_at": "2027-02-06T15:04:11+00:00",
   "data": {
     "reference": "RS784321",
-    "polling_unit_code": "02345",
-    "candidate_votes": 120,
-    "total_votes": 300,
+    "status": "accepted",
+    "polling_unit": { "code": "110503004", "name": "Amachi Pry Sch", "ward": "Amachi", "lga": "Abakaliki", "registered_voters": 812 },
+    "accredited_voters": 500,
+    "votes": { "APC": 200, "PDP": 150, "LP": 50, "APGA": 40, "OTHERS": 20 },
+    "total_valid_votes": 460,
+    "rejected_votes": 5,
+    "total_votes_cast": 465,
+    "corrects_reference": null,
     "agent": { "name": "Ada Obi", "phone_number": "+2348012345678" },
-    "submitted_at": "2027-02-06T15:04:10+00:00"
+    "submitted_at": "2027-02-06T15:04:10+00:00",
+    "reviewed_at": null, "reviewed_by": null, "review_note": null
   }
 }
 ```
 
-Other events:
-
-- `incident.reported`: `reference`, `polling_unit_code`, `type` (`violence` / `vote_buying` / `delay` / `other`), `type_label`, `note`, `agent`, `reported_at`
-- `presence.confirmed`: `polling_unit_code`, `agent`, `confirmed_at`. The `Idempotency-Key` for this event is `presence-{id}`.
+| Event | When | `data` |
+| --- | --- | --- |
+| `result.submitted` | A PU's first result | result (as above) |
+| `result.correction_requested` | An agent asks to correct a result | result with `status: "pending"` and `corrects_reference` |
+| `result.corrected` | A coordinator approves a correction | result with `status: "accepted"`, plus `superseded_reference`. **Replace** the PU's figures with these. |
+| `result.correction_rejected` | A coordinator rejects a correction | result with `status: "rejected"` |
+| `incident.reported` | Incident | `reference`, `polling_unit`, `type`, `type_label`, `urgent`, `note`, `agent`, `reported_at` |
+| `presence.confirmed` | Check-in | `id`, `polling_unit`, `agent`, `confirmed_at` |
 
 The dashboard should:
 
-- **Reply with any 2xx status** once the record is stored. Any other reply, a timeout or a network error is retried 8 times over about 25 minutes.
-- **Treat a repeated `Idempotency-Key` as already received.** The same record can arrive more than once.
+- **Reply with any 2xx status** once it has stored the event. Anything else is retried 8 times over about 25 minutes, and after that `dashboard:sync` keeps resending.
+- **Ignore repeats:** treat a repeated `Idempotency-Key` as already received.
 - **Verify the signature**, if you set a secret:
 
   ```php
   hash_equals('sha256='.hash_hmac('sha256', $rawBody, $secret), $signatureHeader)
   ```
 
-Every record has a `dashboard_synced_at` column. `php artisan dashboard:sync` requeues anything the dashboard never acknowledged. The scheduler runs it every 15 minutes, so a longer dashboard outage loses nothing.
+To total results correctly, count only results with `status: "accepted"`. When `result.corrected` arrives, replace the PU's figures.
 
 ## Email notifications
 
-Set `NOTIFY_EMAILS` (comma-separated) and configure a real mailer (`MAIL_MAILER`, `MAIL_HOST`, …). Each submitted result and each reported incident then sends one email. Presence check-ins don't send email.
+Set `NOTIFY_EMAILS` (comma-separated) and configure a real mailer (`MAIL_MAILER`, `MAIL_HOST`, …). Coordinators then receive:
 
-Election day will produce thousands of emails in a few hours. Personal Gmail accounts can only *send* about 500 emails a day, so use a transactional provider such as Resend, Mailgun, Brevo or Amazon SES. The address the emails are sent *to* can still be a Gmail address.
+- one email per accepted result (turn off with `NOTIFY_EMAIL_EACH_RESULT=false`)
+- one email per incident, marked **URGENT** for violence
+- one email per correction request, showing the old and proposed figures side by side
+- the hourly summary: turnout, votes per party, incidents, and results received per LGA (turn off with `NOTIFY_HOURLY_SUMMARY=false`)
+
+Election day will produce thousands of emails. Personal Gmail accounts can only *send* about 500 a day, so use a transactional provider such as Resend, Mailgun, Brevo or Amazon SES. The address the emails are sent *to* can still be a Gmail address.
+
+## Securing the USSD callback
+
+Anyone who finds `/api/ussd` could otherwise post fake results under an agent's phone number. Before going live:
+
+1. Set `USSD_CALLBACK_SECRET` to a long random string, for example the output of `openssl rand -hex 24`.
+2. In Africa's Talking, set the callback URL to `https://your-domain/api/ussd/{that-secret}`. Without the secret, the endpoint returns 404.
+3. Optionally, set `USSD_ALLOWED_IPS` to Africa's Talking's IP ranges. If the app is behind a load balancer or Cloudflare, configure Laravel's trusted proxies so the real client IP is seen.
 
 ## Connecting Africa's Talking
 
-1. In the Africa's Talking dashboard (use the sandbox first), create a USSD service code.
-2. Set the callback URL to `https://your-domain/api/ussd`. For local testing, expose `php artisan serve` with a tunnel such as ngrok.
-3. Dial the code in the AT simulator using one of the registered agent numbers.
+1. In the Africa's Talking dashboard (use the sandbox first), create a USSD service code and set `USSD_SERVICE_CODE` to it. The code is quoted in reminder SMS messages.
+2. Set the callback URL as described above. For local testing, expose `php artisan serve` with a tunnel such as ngrok.
+3. Dial the code in the AT simulator using a registered agent's number.
 4. For SMS, set `AFRICASTALKING_USERNAME` and `AFRICASTALKING_API_KEY`. The username `sandbox` uses the sandbox API. Without an API key, SMS messages are written to the log instead of being sent.
 
-You can also test without Africa's Talking:
+To test without Africa's Talking (set `ELECTION_ENFORCE_WINDOWS=false` to try it before election day):
 
 ```bash
 curl -X POST http://localhost:8000/api/ussd \
-  -d "sessionId=test&serviceCode=*384*1#&phoneNumber=+2348000000001&text=1*02345*120*300"
+  -d "sessionId=test&serviceCode=*384*1#&phoneNumber=+2348000000001&text=1*110101001*500*200*150*50*40*20*5"
 ```
 
 ## Configuration
 
 | Env var | Default | Purpose |
 | --- | --- | --- |
+| `ELECTION_NAME` | `Ebonyi State Election` | Shown in the summary email |
+| `ELECTION_DATE` | `2027-02-06` | Election day |
+| `ELECTION_TIMEZONE` | `Africa/Lagos` | Timezone for all windows, reminders and email times |
+| `ELECTION_ENFORCE_WINDOWS` | `true` | Turn off for testing and rehearsals |
+| `ELECTION_PRESENCE_OPENS_AT` | `07:00` | Presence check-in opens (election day) |
+| `ELECTION_RESULTS_OPEN_AT` | `14:30` | Result submission opens (election day) |
+| `ELECTION_RESULTS_CLOSE_AT` | `2027-02-08 23:59` | Result submission closes (empty = never) |
+| `ELECTION_PARTIES` | `APC,PDP,LP,APGA,OTHERS` | Parties agents enter votes for, in this order. Every party adds one USSD screen, so keep the main contenders plus `OTHERS`. |
+| `ELECTION_REQUIRE_KNOWN_PU` | `true` | Only accept imported PU codes |
+| `ELECTION_PIN_MAX_ATTEMPTS` | `3` | Wrong PINs before lockout |
+| `ELECTION_PIN_LOCK_MINUTES` | `30` | Lockout length |
+| `ELECTION_URGENT_INCIDENT_TYPES` | `violence` | Types that text coordinators (`violence,vote_buying,delay,other`) |
+| `ELECTION_PRESENCE_REMINDER_AT` | `08:00` | Presence reminder SMS time (empty disables) |
+| `ELECTION_RESULTS_REMINDER_AT` | `17:00` | Result reminder SMS time (empty disables) |
+| `ELECTION_API_TOKEN` | — | Coordinator API token |
+| `NOTIFY_EMAILS` | — | Comma-separated coordinator email addresses |
+| `NOTIFY_EMAIL_EACH_RESULT` | `true` | Send one email per accepted result |
+| `NOTIFY_HOURLY_SUMMARY` | `true` | Send the hourly summary email |
+| `USSD_SERVICE_CODE` | `*384*123#` | Quoted in reminder SMS |
+| `USSD_CALLBACK_SECRET` | — | Secret path segment for the callback URL |
+| `USSD_ALLOWED_IPS` | — | IPs or CIDR ranges allowed to call the callback |
+| `USSD_COUNTRY_CODE` | `234` | Used to normalise local phone numbers |
+| `USSD_REFERENCE_DIGITS` | `6` | Digits in `RS`/`IN` references |
+| `USSD_SMS_CONFIRMATION` | `true` | Send SMS receipts to agents |
+| `USSD_INSTRUCTIONS` | see `config/ussd.php` | Text for menu option 4 (`\n` for new lines) |
 | `AFRICASTALKING_USERNAME` | `sandbox` | AT app username |
 | `AFRICASTALKING_API_KEY` | — | AT API key (SMS) |
 | `AFRICASTALKING_SENDER_ID` | — | Optional SMS sender ID or short code |
-| `USSD_COUNTRY_CODE` | `234` | Used to normalise local phone numbers |
-| `USSD_REFERENCE_DIGITS` | `6` | Digits in `RS`/`IN` references |
-| `USSD_SMS_CONFIRMATION` | `true` | Send an SMS after a result is submitted |
-| `USSD_INSTRUCTIONS` | see `config/ussd.php` | Text for menu option 4 (`\n` for new lines) |
-| `USSD_DISPLAY_TIMEZONE` | `Africa/Lagos` | Timezone for times shown in emails |
-| `NOTIFY_EMAILS` | — | Comma-separated addresses to email results and incidents to |
-| `DASHBOARD_WEBHOOK_URL` | — | Where to POST records (empty disables it) |
+| `DASHBOARD_WEBHOOK_URL` | — | Where to POST events (empty disables it) |
 | `DASHBOARD_API_TOKEN` | — | Sent as `Authorization: Bearer …` |
 | `DASHBOARD_WEBHOOK_SECRET` | — | HMAC key for `X-Election-Shield-Signature` |
 | `DASHBOARD_TIMEOUT` | `10` | Seconds to wait for the dashboard |

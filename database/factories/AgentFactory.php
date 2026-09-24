@@ -16,6 +16,7 @@ class AgentFactory extends Factory
             'name' => fake()->name(),
             'phone_number' => '+23480'.fake()->unique()->numerify('########'),
             'polling_unit_code' => null,
+            'pin' => '1234',
         ];
     }
 

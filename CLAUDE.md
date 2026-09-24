@@ -1,27 +1,33 @@
 # Election Shield
 
-USSD service (Africa's Talking) for the Ebonyi State election (6 Feb 2027) that lets polling agents submit results, report incidents and confirm presence. Laravel 13, MySQL in production, SQLite in-memory for tests.
+USSD service (Africa's Talking) for the Ebonyi State election (6 Feb 2027) that lets polling agents submit EC8A results, report incidents and confirm presence. Laravel 13, MySQL in production, SQLite in-memory for tests.
 
 ## Commands
 
 - `php artisan test` — run the test suite
 - `vendor/bin/pint` — format code (CI runs `pint --test`)
-- `php artisan dashboard:sync` — requeue records the dashboard hasn't acknowledged
-- `php artisan agent:add <phone> "<name>" [--pu=<code>]` — register an agent
+- `php artisan pu:import <csv>`, `agent:add`, `agent:pin`, `coordinator:add` — set-up
+- `php artisan result:review list|approve|reject`, `election:missing`, `election:remind`, `election:summary`, `dashboard:sync` — election day
 
 ## Layout
 
-- `routes/api.php` — `POST /api/ussd`, the Africa's Talking callback
+- `routes/api.php` — `POST /api/ussd/{secret?}` (AT callback) and the coordinator API
 - `app/Http/Controllers/UssdController.php` — phone-number auth, error fallback
+- `app/Http/Middleware/VerifyUssdRequest.php` — callback secret + IP allowlist
 - `app/Ussd/UssdMenu.php` — the menu state machine (all screens and texts)
-- `app/Services/ElectionRecorder.php` — every database write for the flows
-- `app/Services/AfricasTalkingSms.php` + `app/Jobs/SendSms.php` — queued SMS
-- `app/Services/DashboardClient.php` + `app/Jobs/PushToDashboard.php` — signed JSON to the external dashboard (contract documented in README; keep them in sync)
-- `app/Mail/` — result and incident emails to `NOTIFY_EMAILS`
-- `config/ussd.php` — instructions text, input limits, reference length
+- `app/Services/ElectionRecorder.php` — every write the USSD flows make, plus the SMS / email / dashboard / alert side effects
+- `app/Services/CorrectionReviewer.php` — approving / rejecting corrections
+- `app/Services/DashboardOutbox.php`, `DashboardClient.php`, `app/Jobs/PushToDashboard.php` — outbox + signed webhook (contract documented in README; keep them in sync)
+- `app/Services/ElectionStats.php` — summary and missing-PU figures (summary email, reports API, `election:missing`)
+- `app/Support/ElectionCalendar.php` — election date, submission windows
+- `config/election.php` — date, windows, parties, PIN, alerts, reminders; `config/ussd.php` — USSD limits and callback protection
 
 ## How the USSD flow works
 
-Africa's Talking sends the full input history each request (`text=1*02345*120*300*1`). `UssdMenu` replays every input through the state machine from the main menu, so never read inputs by position. Only END (terminal) steps may write to the database — a CON step can be replayed many times in one session.
+Africa's Talking sends the full input history each request (`text=1*110101001*300*120*...`). `UssdMenu` replays every input through the state machine from the main menu, so never read inputs by position. Only END (terminal) steps may write to the database — a CON step can be replayed many times in one session. The one exception, counting wrong PINs, only happens for the latest input (`$isLatestInput`).
 
-Screen texts must stay short (USSD screens are ~160–182 characters).
+Screen texts must stay under 182 characters (`test_screens_fit_on_a_ussd_display`).
+
+Results: one `accepted` result per PU, enforced by the unique `accepted_polling_unit_code` column (null for every other status). Corrections are `pending` until reviewed; approval marks the old result `superseded`.
+
+Tests use parties `APC,PDP,LP` and disable submission windows (see `phpunit.xml`); `tests/Concerns/InteractsWithUssd.php` sets up a PU and an agent with PIN 1234.

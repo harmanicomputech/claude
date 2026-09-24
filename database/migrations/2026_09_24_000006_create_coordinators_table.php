@@ -8,20 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('agents', function (Blueprint $table) {
+        Schema::create('coordinators', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('phone_number', 20)->unique();
-            // When set, the agent is never asked for a PU code (auto-PU detection).
-            $table->string('polling_unit_code', 20)->nullable()->index();
-            $table->boolean('is_active')->default(false);
-            $table->timestamp('last_seen_at')->nullable();
+            $table->string('email')->nullable();
+            // Null means state-wide: alerted for incidents in every LGA.
+            $table->string('lga', 100)->nullable()->index();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('agents');
+        Schema::dropIfExists('coordinators');
     }
 };

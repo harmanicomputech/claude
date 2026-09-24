@@ -2,15 +2,15 @@
 
 namespace App\Services;
 
-use App\Contracts\DashboardRecord;
+use App\Models\DashboardDelivery;
 use Illuminate\Support\Facades\Http;
 
 /**
- * Pushes records to the external results dashboard as signed JSON.
+ * Pushes outbox events to the external results dashboard as signed JSON.
  *
  * Request: POST {DASHBOARD_WEBHOOK_URL}
  *   Authorization: Bearer {DASHBOARD_API_TOKEN}          (when set)
- *   Idempotency-Key: RS784321 | IN452190 | presence-12
+ *   Idempotency-Key: result.submitted:RS784321
  *   X-Election-Shield-Event: result.submitted
  *   X-Election-Shield-Signature: sha256=<hex HMAC of the raw body>  (when a secret is set)
  *   Body: {"event": "...", "sent_at": "...", "data": {...}}
@@ -23,21 +23,21 @@ class DashboardClient
     }
 
     /**
-     * Deliver the record, throwing if the dashboard does not answer with 2xx.
+     * Deliver the event, throwing if the dashboard does not answer with 2xx.
      */
-    public function push(DashboardRecord $record): void
+    public function push(DashboardDelivery $delivery): void
     {
         $config = config('services.dashboard');
 
         $body = json_encode([
-            'event' => $record->dashboardEvent(),
+            'event' => $delivery->event,
             'sent_at' => now()->toIso8601String(),
-            'data' => $record->dashboardPayload(),
+            'data' => $delivery->payload,
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         $headers = [
-            'Idempotency-Key' => $record->dashboardIdempotencyKey(),
-            'X-Election-Shield-Event' => $record->dashboardEvent(),
+            'Idempotency-Key' => $delivery->idempotency_key,
+            'X-Election-Shield-Event' => $delivery->event,
         ];
 
         if (filled($config['secret'])) {

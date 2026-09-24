@@ -3,18 +3,16 @@
 namespace App\Console\Commands;
 
 use App\Jobs\PushToDashboard;
-use App\Models\Incident;
-use App\Models\Presence;
-use App\Models\Result;
+use App\Models\DashboardDelivery;
 use App\Services\DashboardClient;
 use Illuminate\Console\Command;
 
 class SyncDashboard extends Command
 {
     protected $signature = 'dashboard:sync
-        {--older-than=30 : Only resend records created at least this many minutes ago}';
+        {--older-than=30 : Only resend events created at least this many minutes ago}';
 
-    protected $description = 'Queue every result, incident and presence the dashboard has not acknowledged yet';
+    protected $description = 'Queue every dashboard event that has not been delivered yet';
 
     public function handle(DashboardClient $dashboard): int
     {
@@ -24,20 +22,16 @@ class SyncDashboard extends Command
             return self::SUCCESS;
         }
 
-        $cutoff = now()->subMinutes((int) $this->option('older-than'));
+        $count = 0;
 
-        foreach ([Result::class, Incident::class, Presence::class] as $model) {
-            $count = 0;
+        DashboardDelivery::whereNull('delivered_at')
+            ->where('created_at', '<=', now()->subMinutes((int) $this->option('older-than')))
+            ->each(function (DashboardDelivery $delivery) use (&$count) {
+                PushToDashboard::dispatch($delivery);
+                $count++;
+            });
 
-            $model::whereNull('dashboard_synced_at')
-                ->where('created_at', '<=', $cutoff)
-                ->each(function ($record) use (&$count) {
-                    PushToDashboard::dispatch($record);
-                    $count++;
-                });
-
-            $this->line("Queued {$count} ".class_basename($model).' record(s).');
-        }
+        $this->info("Queued {$count} undelivered event(s).");
 
         return self::SUCCESS;
     }

@@ -14,8 +14,26 @@ return [
 
     'default_country_code' => env('USSD_COUNTRY_CODE', '234'),
 
-    // Times in emails are shown in this zone (the app itself stores UTC).
-    'timezone' => env('USSD_DISPLAY_TIMEZONE', 'Africa/Lagos'),
+    /*
+    |--------------------------------------------------------------------------
+    | Service Code and Callback Protection
+    |--------------------------------------------------------------------------
+    |
+    | service_code is shown in SMS reminders ("Dial *384*123#"). When
+    | callback_secret is set, Africa's Talking must call /api/ussd/{secret}.
+    | allowed_ips (comma-separated IPs or CIDR ranges) restricts who may call
+    | the callback at all.
+    |
+    */
+
+    'service_code' => env('USSD_SERVICE_CODE', '*384*123#'),
+
+    'callback_secret' => env('USSD_CALLBACK_SECRET'),
+
+    'allowed_ips' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('USSD_ALLOWED_IPS', ''))
+    ))),
 
     /*
     |--------------------------------------------------------------------------
@@ -40,7 +58,7 @@ return [
 
     'polling_unit_pattern' => '/^\d{2,12}$/',
 
-    'max_vote_digits' => 7,
+    'max_vote_digits' => 6,
 
     'max_note_length' => 30,
 
