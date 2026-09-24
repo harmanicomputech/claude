@@ -9,6 +9,31 @@ Paste or attach this file at the start of the new chat. It describes the existin
 - **Polling units:** 3,308 PUs in 13 LGAs and 169 wards, from the INEC-verified register. INEC codes like `EB/212/02633/007` are stored as digits: `21202633007`.
 - **Owner:** Kehinde Amusan (amusankehinde@gmail.com).
 
+## Product scope: Software 3, Election Shield
+
+**"Election Day Control & Protection System"**: making sure votes are protected, the process is transparent, and problems get a fast response.
+
+| Feature | Already in the USSD service | Still to build (mostly in the web app) |
+| --- | --- | --- |
+| **1. Polling unit monitoring.** Agents report materials arriving, delays and irregularities. | Presence check-in per PU. Incidents of type *delay*, *vote buying*, *violence* and *other*. Missing-PU lists and SMS reminders. | Live PU status board and map by LGA and ward. **USSD additions** (small changes in the USSD repo): a "materials arrived / not arrived" report with a timestamp, and more incident types (see 3). |
+| **2. Parallel Vote Tabulation (PVT).** Collect results from every PU and compare them with the official results. | EC8A figures from every PU (accredited, per party, rejected), a correction workflow, and collation by LGA and ward. | **Official results intake:** INEC's IReV result per PU and the declared ward and LGA collations (EC8B/EC8C), entered by hand or imported. **Comparison:** our figures against the official ones per PU, ward and LGA, flagging differences above a threshold and PUs where IReV shows no upload. Evidence export for petitions. EC8A **photo upload** tied to the result reference, since USSD can't carry images. |
+| **3. Incident alert system.** Real-time alerts for violence, vote suppression and malpractice. | Violence sends an instant SMS to the coordinators for that LGA plus state-wide coordinators, with email, dashboard events and an audit trail. Which types count as urgent is configurable. | A live incident feed and map, and acknowledge/resolve tracking for coordinators. **USSD addition:** *vote suppression* and *malpractice* as their own incident types (today they fall under *other* or *vote buying*), marked urgent. |
+| **4. Digital town hall.** The candidate engages voters through live sessions and Q&A. | Not covered: USSD can't carry it. | Embedded live stream (YouTube/Facebook), a question submission and moderation queue, and a schedule of sessions. Could share the broadcast list for reminders. |
+| **5. WhatsApp/SMS broadcast system.** Election updates and mobilisation reminders. | SMS to *agents* through Africa's Talking (PINs, receipts, alerts, election-day reminders). | Audience lists (supporters by LGA and ward, agents, coordinators), opt-in and opt-out, scheduled campaigns, and delivery reports. **SMS:** Africa's Talking bulk SMS; watch the sender ID and do-not-disturb (DND) rules. **WhatsApp:** the WhatsApp Business Platform (Meta Cloud API or a provider) needs a verified business, pre-approved message templates, and recipients' opt-in. |
+
+### Ebonyi election insight: the win condition
+
+Under section 179(2) of the 1999 Constitution, a governorship candidate is declared elected with:
+1. **the highest number of votes** (a plurality, not necessarily a majority), and
+2. **at least 25% of the votes in at least two-thirds of the LGAs**. Ebonyi has **13 LGAs**, so this means **at least 9 LGAs** (two-thirds is 8.67). Confirm the rounding with the legal team.
+
+Otherwise, a run-off is held. The web app should track this live from the PVT figures:
+- the **25% tracker:** each candidate's share in each of the 13 LGAs, and how many LGAs they have reached 25% in (target 9)
+- the **overall lead**
+- **weak links:** LGAs where the candidate is under or near 25%, and LGAs with low result coverage (few PUs reported)
+
+This is where Election Shield delivers "coverage across all LGAs, no weak links on election day". The USSD data already arrives with LGA and ward on every result.
+
 ## What already exists: Election Shield USSD
 
 - **Repository:** `harmanicomputech/claude`, branch `claude/hello-i876f8`. Laravel 13, PHP 8.4, MySQL.
@@ -113,11 +138,11 @@ After connecting the webhook, press **Settings → Send all existing data to the
 
 - **What the web app is for:** an internal situation room for coordinators, public or partner results, or both. This decides the authentication and what is shown.
 - **Stack and hosting:** the same shared host (Laravel suits it), or somewhere else. If it's a separate app, the webhook above is the integration. Don't share the USSD database directly.
-- **Features to consider:**
-  - a live results map and collation by LGA and ward
-  - a turnout and incident map
-  - correction review (through the API)
-  - agent presence tracking
-  - result-sheet (EC8A) photo uploads, which USSD can't carry
-  - exports and printable collation sheets
+- **Features:** build in order of election-day value.
+  1. PVT dashboard with collation and the 25% tracker
+  2. PU monitoring board and incident feed
+  3. Official-results intake and comparison
+  4. EC8A photo upload
+  5. Broadcast system
+  6. Digital town hall
 - **The EC8A photo:** USSD can't send images. A web or WhatsApp upload flow tied to the result reference would let coordinators check figures against the photographed result sheet.
