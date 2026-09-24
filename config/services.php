@@ -42,4 +42,13 @@ return [
         'sender_id' => env('AFRICASTALKING_SENDER_ID'),
     ],
 
+    // External results dashboard that receives every result, incident and
+    // presence check-in. Leave the URL empty to disable delivery.
+    'dashboard' => [
+        'url' => env('DASHBOARD_WEBHOOK_URL'),
+        'token' => env('DASHBOARD_API_TOKEN'),
+        'secret' => env('DASHBOARD_WEBHOOK_SECRET'),
+        'timeout' => (int) env('DASHBOARD_TIMEOUT', 10),
+    ],
+
 ];

@@ -1,11 +1,12 @@
 # Election Shield
 
-USSD service (Africa's Talking) for election polling agents to submit results, report incidents and confirm presence. Laravel 13, MySQL in production, SQLite in-memory for tests.
+USSD service (Africa's Talking) for the Ebonyi State election (6 Feb 2027) that lets polling agents submit results, report incidents and confirm presence. Laravel 13, MySQL in production, SQLite in-memory for tests.
 
 ## Commands
 
 - `php artisan test` — run the test suite
 - `vendor/bin/pint` — format code (CI runs `pint --test`)
+- `php artisan dashboard:sync` — requeue records the dashboard hasn't acknowledged
 - `php artisan agent:add <phone> "<name>" [--pu=<code>]` — register an agent
 
 ## Layout
@@ -15,6 +16,8 @@ USSD service (Africa's Talking) for election polling agents to submit results, r
 - `app/Ussd/UssdMenu.php` — the menu state machine (all screens and texts)
 - `app/Services/ElectionRecorder.php` — every database write for the flows
 - `app/Services/AfricasTalkingSms.php` + `app/Jobs/SendSms.php` — queued SMS
+- `app/Services/DashboardClient.php` + `app/Jobs/PushToDashboard.php` — signed JSON to the external dashboard (contract documented in README; keep them in sync)
+- `app/Mail/` — result and incident emails to `NOTIFY_EMAILS`
 - `config/ussd.php` — instructions text, input limits, reference length
 
 ## How the USSD flow works

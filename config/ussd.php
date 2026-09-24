@@ -14,6 +14,9 @@ return [
 
     'default_country_code' => env('USSD_COUNTRY_CODE', '234'),
 
+    // Times in emails are shown in this zone (the app itself stores UTC).
+    'timezone' => env('USSD_DISPLAY_TIMEZONE', 'Africa/Lagos'),
+
     /*
     |--------------------------------------------------------------------------
     | Instructions
@@ -60,5 +63,20 @@ return [
     */
 
     'sms_confirmation' => (bool) env('USSD_SMS_CONFIRMATION', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Email Notifications
+    |--------------------------------------------------------------------------
+    |
+    | Comma-separated addresses that get an email for every submitted result
+    | and reported incident. Leave empty to disable.
+    |
+    */
+
+    'notify_emails' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('NOTIFY_EMAILS', ''))
+    ))),
 
 ];

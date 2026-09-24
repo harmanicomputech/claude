@@ -1,12 +1,14 @@
 # Election Shield
 
-A USSD service built on [Africa's Talking](https://africastalking.com) that lets registered polling agents, from any phone:
+A USSD service built on [Africa's Talking](https://africastalking.com) for the Ebonyi State election on 6 February 2027. It lets registered polling agents, from any phone:
 
 1. **Submit Result**: enter the PU code, candidate votes and total votes, check the confirmation screen, and submit. The agent gets an SMS receipt.
 2. **Report Incident**: violence, vote buying, delay or other, with a short note.
 3. **Confirm Presence**: records a timestamp and marks the agent as active.
 4. **Instructions**
 5. **Exit**
+
+Every result, incident and presence check-in is also pushed to an external results dashboard over HTTP. Results and incidents are emailed to the coordinators.
 
 Built with Laravel 13 and MySQL.
 
@@ -63,8 +65,60 @@ Numbers are stored in E.164 format (`+2348012345678`), the format Africa's Talki
 
 ```bash
 php artisan serve
-php artisan queue:work      # sends the SMS confirmations
+php artisan queue:work      # sends SMS, emails and dashboard deliveries
+php artisan schedule:work   # resends anything the dashboard missed (use cron in production)
 ```
+
+SMS, email and dashboard deliveries all run on the queue so the USSD reply is never delayed. A queue worker must be running, and `QUEUE_CONNECTION` must not be `sync` in production.
+
+## Dashboard API
+
+Set `DASHBOARD_WEBHOOK_URL` and every record is sent as it is created:
+
+```http
+POST {DASHBOARD_WEBHOOK_URL}
+Content-Type: application/json
+Authorization: Bearer {DASHBOARD_API_TOKEN}
+Idempotency-Key: RS784321
+X-Election-Shield-Event: result.submitted
+X-Election-Shield-Signature: sha256=<HMAC-SHA256 of the raw body using DASHBOARD_WEBHOOK_SECRET>
+
+{
+  "event": "result.submitted",
+  "sent_at": "2027-02-06T15:04:11+00:00",
+  "data": {
+    "reference": "RS784321",
+    "polling_unit_code": "02345",
+    "candidate_votes": 120,
+    "total_votes": 300,
+    "agent": { "name": "Ada Obi", "phone_number": "+2348012345678" },
+    "submitted_at": "2027-02-06T15:04:10+00:00"
+  }
+}
+```
+
+Other events:
+
+- `incident.reported`: `reference`, `polling_unit_code`, `type` (`violence` / `vote_buying` / `delay` / `other`), `type_label`, `note`, `agent`, `reported_at`
+- `presence.confirmed`: `polling_unit_code`, `agent`, `confirmed_at`. The `Idempotency-Key` for this event is `presence-{id}`.
+
+The dashboard should:
+
+- **Reply with any 2xx status** once the record is stored. Any other reply, a timeout or a network error is retried 8 times over about 25 minutes.
+- **Treat a repeated `Idempotency-Key` as already received.** The same record can arrive more than once.
+- **Verify the signature**, if you set a secret:
+
+  ```php
+  hash_equals('sha256='.hash_hmac('sha256', $rawBody, $secret), $signatureHeader)
+  ```
+
+Every record has a `dashboard_synced_at` column. `php artisan dashboard:sync` requeues anything the dashboard never acknowledged. The scheduler runs it every 15 minutes, so a longer dashboard outage loses nothing.
+
+## Email notifications
+
+Set `NOTIFY_EMAILS` (comma-separated) and configure a real mailer (`MAIL_MAILER`, `MAIL_HOST`, …). Each submitted result and each reported incident then sends one email. Presence check-ins don't send email.
+
+Election day will produce thousands of emails in a few hours. Personal Gmail accounts can only *send* about 500 emails a day, so use a transactional provider such as Resend, Mailgun, Brevo or Amazon SES. The address the emails are sent *to* can still be a Gmail address.
 
 ## Connecting Africa's Talking
 
@@ -91,6 +145,12 @@ curl -X POST http://localhost:8000/api/ussd \
 | `USSD_REFERENCE_DIGITS` | `6` | Digits in `RS`/`IN` references |
 | `USSD_SMS_CONFIRMATION` | `true` | Send an SMS after a result is submitted |
 | `USSD_INSTRUCTIONS` | see `config/ussd.php` | Text for menu option 4 (`\n` for new lines) |
+| `USSD_DISPLAY_TIMEZONE` | `Africa/Lagos` | Timezone for times shown in emails |
+| `NOTIFY_EMAILS` | — | Comma-separated addresses to email results and incidents to |
+| `DASHBOARD_WEBHOOK_URL` | — | Where to POST records (empty disables it) |
+| `DASHBOARD_API_TOKEN` | — | Sent as `Authorization: Bearer …` |
+| `DASHBOARD_WEBHOOK_SECRET` | — | HMAC key for `X-Election-Shield-Signature` |
+| `DASHBOARD_TIMEOUT` | `10` | Seconds to wait for the dashboard |
 
 ## Tests
 
