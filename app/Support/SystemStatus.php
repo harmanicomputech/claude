@@ -31,6 +31,7 @@ class SystemStatus
 
         return [
             $this->check('PHP version', version_compare(PHP_VERSION, '8.3.0', '>='), PHP_VERSION.' (8.3 or newer needed)'),
+            $this->check('HTTPS', request()->isSecure(), request()->isSecure() ? 'On' : 'Not in use: turn on SSL (Let\'s Encrypt) and open this page with https://. Africa\'s Talking needs an https:// callback URL.'),
             $this->check('Debug mode off', ! config('app.debug'), config('app.debug') ? 'Set APP_DEBUG=false before going live' : 'Off'),
             $this->check('Database connection', $database, $database ? config('database.connections.'.config('database.default').'.database') : 'Cannot connect: check DB_* in .env'),
             $this->check('Database tables', $database ? $migrated : null, ! $database ? '—' : ($migrated ? 'Up to date' : $this->pendingMigrations().' pending: press "Set up / update database"')),

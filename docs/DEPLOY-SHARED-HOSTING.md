@@ -103,3 +103,13 @@ You'll receive `election-shield-shared-hosting-update.zip`. It contains no `.env
 - Switch to live Africa's Talking: set `AFRICASTALKING_USERNAME` to your app's username, use the live API key and your live service code, and set the callback URL on the live channel.
 - Remove the test agents.
 - Change the mail password, and update `MAIL_PASSWORD`.
+
+## Troubleshooting
+
+| Problem | Fix |
+| --- | --- |
+| **419 Page Expired** when logging in or pressing a button | The browser didn't send the session cookie back. Turn on SSL and open the console with `https://`. Packages built before 24 Sep 2026 also need `SESSION_SECURE_COOKIE=true` removed from `.env` (or apply the update zip, which handles this automatically). Then reload the login page. |
+| Blank page or **500 error** | Check that the PHP version is 8.3+ and that `election-shield/.env` has no `CHANGE-ME` left in the `DB_*` lines. The error details are in `election-shield/storage/logs/`. |
+| "the election-shield folder was not found" | `election-shield/` must sit next to `public_html/` (or up to two folders higher), not inside it. |
+| Cron check stays red | The PHP path or folder path in the cron command is wrong; ask your host for the PHP 8.3/8.4 CLI path. |
+| The simulator shows an error or nothing | The callback URL must be `https://` and match the one on the Overview page exactly. Some hosts' firewall (ModSecurity) blocks automated POSTs: ask them to allow `/api/ussd`. |

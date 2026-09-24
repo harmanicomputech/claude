@@ -11,7 +11,9 @@ use App\Services\ElectionRecorder;
 use App\Support\SystemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Route;
 use Tests\Concerns\InteractsWithUssd;
 use Tests\TestCase;
 
@@ -234,5 +236,32 @@ class AdminConsoleTest extends TestCase
     public function test_root_redirects_to_console(): void
     {
         $this->get('/')->assertRedirect('/admin');
+    }
+
+    public function test_session_cookie_is_secure_only_over_https(): void
+    {
+        config(['session.secure' => true]); // e.g. SESSION_SECURE_COOKIE=true in .env
+
+        $this->get('http://localhost/admin/login')->assertCookieNotExpired(config('session.cookie'));
+        $this->assertFalse(config('session.secure'));
+
+        $this->get('https://localhost/admin/login');
+        $this->assertTrue(config('session.secure'));
+    }
+
+    public function test_expired_session_on_login_explains_instead_of_419(): void
+    {
+        // CSRF checks are skipped in tests, so raise the same exception directly.
+        Route::post('/admin/csrf-probe', fn () => throw new TokenMismatchException)->middleware('web');
+
+        $this->post('/admin/csrf-probe')
+            ->assertRedirect('/admin/login')
+            ->assertSessionHas('error', fn ($error) => str_contains($error, 'session expired'));
+    }
+
+    public function test_checklist_flags_missing_https(): void
+    {
+        $this->asAdmin()->get('http://localhost/admin')->assertSee('Not in use: turn on SSL', false);
+        $this->asAdmin()->get('https://localhost/admin')->assertDontSee('Not in use: turn on SSL', false);
     }
 }
