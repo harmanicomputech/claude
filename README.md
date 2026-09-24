@@ -158,6 +158,7 @@ For your dashboard. Set `ELECTION_API_TOKEN` and send `Authorization: Bearer {to
 | `GET /api/corrections?status=pending` | Corrections (`pending`, `accepted` or `rejected`) |
 | `POST /api/corrections/{reference}/approve` | Body: `reviewed_by`, `note` (both optional). Returns 409 if the correction has already been reviewed. |
 | `POST /api/corrections/{reference}/reject` | Same body as approve |
+| `GET /api/results`, `/api/results/{reference}`, `/api/incidents`, `/api/presences`, `/api/materials`, `/api/polling-units`, `/api/agents` | Read API for the web app, in the same shapes as the webhook events. Filters: `lga`, `ward`, `polling_unit`, plus `status`, `type` or `latest` where relevant. `updated_since` for incremental sync; `per_page` (up to 500) and `cursor` for paging. See `docs/WEB-APP-HANDOFF.md`. |
 | `GET /api/reports/summary` | The same figures as the hourly email: turnout, party totals, incidents, and a breakdown by LGA |
 | `GET /api/reports/missing?type=presence\|results&lga=…` | PUs missing presence or a result, with their assigned agents |
 

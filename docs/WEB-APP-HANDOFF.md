@@ -125,21 +125,83 @@ Every `data` object also has **`rehearsal: true|false`**. Keep rehearsal data ap
 
 After connecting the webhook, press **Settings → Send all existing data to the dashboard** in the USSD admin console, or run `php artisan dashboard:backfill`. It re-sends everything with the same idempotency keys, so it's safe to repeat.
 
-### 2. Pull: the coordinator API (optional)
+### 2. Pull: the read API (fetch and show USSD data)
 
-`Authorization: Bearer {ELECTION_API_TOKEN}`. The token is in the USSD server's `.env`.
+The web app can also **fetch** everything the USSD service holds. Use this for the first full import, for staying in sync if a webhook is missed, and for pages that query the USSD data directly.
 
-| Endpoint | Returns |
-| --- | --- |
-| `GET https://ussd.techatronagency.com/api/reports/summary` | Totals, turnout, party votes, incidents, and a breakdown by LGA |
-| `GET /api/reports/missing?type=presence\|results&lga=…` | PUs with no check-in or no result, with their assigned agents |
-| `GET /api/corrections?status=pending\|accepted\|rejected` | Corrections |
-| `POST /api/corrections/{reference}/approve` and `/reject` | Body: `reviewed_by`, `note`. Lets the web app review corrections. |
+- **Base URL:** `https://ussd.techatronagency.com/api`
+- **Auth:** `Authorization: Bearer {ELECTION_API_TOKEN}`. The token is in the USSD server's `.env`.
+- **Call it from the web app's server only, never from the browser.** The token gives access to every agent's name and phone number, so it must never be shipped in front-end JavaScript. Pages and the PWA read from the web app's own backend.
+
+| Endpoint | Returns | Filters |
+| --- | --- | --- |
+| `GET /results` | Results in the webhook shape, including `votes`, `status` and `corrects_reference` | `status`, `lga`, `ward`, `polling_unit` |
+| `GET /results/{reference}` | One result | |
+| `GET /incidents` | Incidents | `type`, `lga`, `ward`, `polling_unit` |
+| `GET /presences` | Check-ins | `lga`, `ward`, `polling_unit` |
+| `GET /materials` | Materials reports. `latest=1` gives the current status per PU. | `status`, `latest`, `lga`, `ward`, `polling_unit` |
+| `GET /polling-units` | The register (code, name, ward, LGA, registered voters) | `lga`, `ward` |
+| `GET /agents` | Agents: name, phone, assigned PU, `locked`, `last_seen_at`. PINs are never returned. | `lga` |
+| `GET /reports/summary` | Totals, turnout, party votes, materials, incidents, and a breakdown by LGA | |
+| `GET /reports/missing?type=presence\|results` | PUs with no check-in or no result, with their agents | `lga` |
+| `GET /corrections`, `POST /corrections/{ref}/approve\|reject` | Correction review | `status` |
+
+**Every list endpoint** accepts:
+- `updated_since=<ISO time>`: only records created or changed since then. Status changes count, for example a result becoming `superseded`.
+- `per_page` (up to 500, default 100).
+- `cursor`, taken from the previous response.
+
+Responses look like this:
+
+```json
+{
+  "data": [ { "...": "same fields as the webhook event", "created_at": "…", "updated_at": "…" } ],
+  "next_cursor": "eyJ…" ,
+  "next_page_url": "https://…/api/results?cursor=eyJ…",
+  "server_time": "2027-02-06T15:30:00+00:00",
+  "rehearsal_mode": false
+}
+```
+
+Records are ordered by `updated_at`, then `id`. Keep following `next_cursor` until it's `null`.
+
+### Recommended sync strategy (both paths together)
+
+1. **First import:** page through `/polling-units`, `/agents`, `/results?status=…` (all statuses), `/incidents`, `/presences` and `/materials`. **Upsert** results and incidents by `reference`, and the others by `id`.
+2. **Real time:** the webhook (section 1) delivers each event within seconds.
+3. **Safety net:** every 2–5 minutes, a scheduled job calls each list endpoint with `updated_since` set to the last `server_time` seen, minus 1 minute of overlap. Upserting makes the overlap harmless. This catches anything a webhook missed.
+4. **Rehearsals:** webhook events carry `rehearsal: true|false`. Pulled records don't, but each response has `rehearsal_mode`. Rehearsal data is cleared in the USSD console before the real election.
+
+## Web app requirements: mobile first and installable (PWA)
+
+Most coordinators and field supervisors will use phones, often on weak networks. Treat these as acceptance criteria, not extras.
+
+### Mobile responsive
+
+- **Design mobile-first.** Build for a 360px-wide screen first, then scale up for tablet (≥ 768px) and desktop (≥ 1024px). No horizontal page scrolling at any width. Use a 16px side margin on phones.
+- **Tap targets at least 44×44px.** Use a bottom tab bar or collapsible menu on phones, not a long top bar.
+- **Wide tables become stacked cards on phones:** results, collation, PUs and incidents. Keep the key figure and status visible, and put details behind a tap.
+- **Keep charts and maps readable at phone width.** Bars get direct labels. The map supports pinch-zoom and has a list alternative.
+- **Keep the data small** for 3G: paginated lists, compressed JSON, no huge client-side bundles.
+- **Test on real Android phones** (low and mid range, Chrome) and iPhone (Safari), not only desktop dev tools.
+
+### Progressive Web App (installable, works offline)
+
+- **Web app manifest:** name "Election Shield", short name, theme and background colours, `display: standalone`, `start_url`, and icons at 192px, 512px and a 512px maskable version.
+- **HTTPS everywhere.** A service worker needs it.
+- **Service worker:**
+  - **App shell** (HTML, CSS, JS, icons) cached for an instant start and offline launch.
+  - **Data** fetched *network-first, falling back to the last cached copy*, with a visible "Offline: showing data from 3:42 PM" banner and the time of the last successful sync.
+  - **Queued actions:** anything the user submits while offline (a correction review, an incident acknowledgement, an EC8A photo upload) is stored locally and sent when the connection returns (Background Sync, with a retry on reopen as a fallback). The user sees "queued" and then "sent".
+- **Install prompt:** an "Install app" button on Android (`beforeinstallprompt`) and a short "Add to Home Screen" guide for iPhone.
+- **Push notifications (Web Push)** for urgent incidents (violence, vote suppression, malpractice) and for corrections waiting for review, sent by the web app's backend when the matching webhook event arrives. Users opt in per device. On iPhone this needs iOS 16.4+ and the app installed to the Home Screen.
+- **Offline-safe authentication:** sessions survive going offline. Cached data is cleared on logout, and nothing sensitive (agent phone numbers) is kept longer than needed.
+- **Target:** pass Chrome Lighthouse's PWA/installability checks, and score at least 90 for Performance on mobile.
 
 ## Decisions for the new chat
 
 - **What the web app is for:** an internal situation room for coordinators, public or partner results, or both. This decides the authentication and what is shown.
-- **Stack and hosting:** the same shared host (Laravel suits it), or somewhere else. If it's a separate app, the webhook above is the integration. Don't share the USSD database directly.
+- **Stack and hosting:** the same shared host (Laravel suits it), or somewhere else. Integrate through the webhook and read API above; don't share the USSD database directly. The front end must meet the mobile-first and PWA requirements above.
 - **Features:** build in order of election-day value.
   1. PVT dashboard with collation and the 25% tracker
   2. PU monitoring board and incident feed
