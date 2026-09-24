@@ -28,6 +28,16 @@ class ElectionCalendar
         return $this->date()->setTimezone(config('app.timezone'));
     }
 
+    /**
+     * Presence check-ins that count as "checked in": from the start of
+     * election day once it has begun; before that (testing, rehearsals)
+     * every check-in counts. Null means no lower bound.
+     */
+    public function presenceCountsFrom(): ?CarbonImmutable
+    {
+        return now()->greaterThanOrEqualTo($this->date()) ? $this->dayStartsAt() : null;
+    }
+
     public function presenceOpensAt(): CarbonImmutable
     {
         return $this->onElectionDay(config('election.presence_opens_at'));

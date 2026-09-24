@@ -218,12 +218,10 @@ class AdminConsoleTest extends TestCase
         $this->asAdmin()->get('/admin/corrections')->assertSee('Recently reviewed');
     }
 
-    public function test_missing_page(): void
+    public function test_missing_page_redirects_to_polling_unit_filters(): void
     {
-        PollingUnit::factory()->create(['code' => '21202633555', 'name' => 'Silent Hall', 'lga' => 'Ikwo']);
-
-        $this->asAdmin()->get('/admin/missing?type=results')->assertOk()->assertSee('Silent Hall')->assertSee('2 polling unit(s)');
-        $this->asAdmin()->get('/admin/missing?type=results&lga=Ikwo')->assertSee('1 polling unit(s)');
+        $this->asAdmin()->get('/admin/missing?type=results&lga=Ikwo')->assertRedirect('/admin/polling-units?status=no_result&lga=Ikwo');
+        $this->asAdmin()->get('/admin/missing?type=presence')->assertRedirect('/admin/polling-units?status=no_presence');
     }
 
     public function test_data_pages_wait_for_the_database(): void

@@ -150,9 +150,12 @@ class ElectionStats
             ->map(fn ($total) => (int) $total);
     }
 
-    private function presenceQuery(): Builder
+    public function presenceQuery(): Builder
     {
-        return Presence::where('confirmed_at', '>=', $this->calendar->dayStartsAt());
+        return Presence::query()->when(
+            $this->calendar->presenceCountsFrom(),
+            fn (Builder $query, $from) => $query->where('confirmed_at', '>=', $from),
+        );
     }
 
     private function percent(int $part, int $whole): float

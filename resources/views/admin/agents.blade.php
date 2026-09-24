@@ -53,9 +53,16 @@
     </div>
 
     <div class="card" style="margin-top:20px">
+        <div class="tabs">
+            @foreach (['all' => 'All', 'checked_in' => 'Checked in', 'not_checked_in' => 'Not checked in', 'locked' => 'Locked'] as $value => $label)
+                <a href="{{ route('admin.agents.index', [...request()->except('status', 'page'), 'status' => $value]) }}" @class(['on' => $filters['status'] === $value])>{{ $label }}</a>
+            @endforeach
+        </div>
         <form method="get" class="row" style="margin-bottom:12px">
+            <input type="hidden" name="status" value="{{ $filters['status'] }}">
             <input type="search" name="q" value="{{ $search }}" placeholder="Search name, phone or PU code">
             <button type="submit" class="secondary">Search</button>
+            <a class="button secondary" href="{{ route('admin.agents.export', request()->query()) }}">Export (CSV)</a>
         </form>
         <p class="muted">{{ number_format($agents->total()) }} agent(s)</p>
         <table>
@@ -67,9 +74,9 @@
                     <td>{{ $agent->polling_unit_code ?? '—' }}@if ($agent->pollingUnit)<br><span class="muted">{{ $agent->pollingUnit->name }}, {{ $agent->pollingUnit->lga }}</span>@endif</td>
                     <td>
                         @if ($agent->isLocked()) <span class="badge bad">Locked</span>
-                        @elseif ($agent->is_active) <span class="badge ok">Checked in</span>
+                        @elseif (isset($checkedIn[$agent->id])) <span class="badge ok">Checked in</span><span class="sub">{{ \Illuminate\Support\Carbon::parse($checkedIn[$agent->id])->timezone(config('election.timezone'))->format('j M, g:i A') }}</span>
+                        @else <span class="badge neutral">Not checked in</span>
                         @endif
-                        @if ($agent->last_seen_at)<br><span class="muted">{{ $agent->last_seen_at->diffForHumans() }}</span>@endif
                     </td>
                     <td>
                         <details>

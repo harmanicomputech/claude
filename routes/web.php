@@ -4,8 +4,11 @@ use App\Http\Controllers\Admin\AgentController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\CoordinatorController;
 use App\Http\Controllers\Admin\CorrectionController;
+use App\Http\Controllers\Admin\IncidentController;
 use App\Http\Controllers\Admin\MissingController;
 use App\Http\Controllers\Admin\OverviewController;
+use App\Http\Controllers\Admin\PollingUnitController;
+use App\Http\Controllers\Admin\ResultController;
 use App\Http\Controllers\Admin\SystemController;
 use App\Http\Middleware\AuthenticateAdmin;
 use App\Http\Middleware\EnsureDatabaseReady;
@@ -31,7 +34,19 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/system/jobs/run', [SystemController::class, 'runJobs'])->name('system.jobs.run');
             Route::post('/system/jobs/retry', [SystemController::class, 'retryFailedJobs'])->name('system.jobs.retry');
 
+            Route::get('/results', [ResultController::class, 'index'])->name('results.index');
+            Route::get('/results/export', [ResultController::class, 'export'])->name('results.export');
+            Route::get('/results/export-collation', [ResultController::class, 'exportBreakdown'])->name('results.export-breakdown');
+            Route::get('/results/{result:reference}', [ResultController::class, 'show'])->name('results.show');
+
+            Route::get('/incidents', [IncidentController::class, 'index'])->name('incidents.index');
+            Route::get('/incidents/export', [IncidentController::class, 'export'])->name('incidents.export');
+
+            Route::get('/polling-units', [PollingUnitController::class, 'index'])->name('polling-units.index');
+            Route::get('/polling-units/export', [PollingUnitController::class, 'export'])->name('polling-units.export');
+
             Route::get('/agents', [AgentController::class, 'index'])->name('agents.index');
+            Route::get('/agents/export', [AgentController::class, 'export'])->name('agents.export');
             Route::post('/agents', [AgentController::class, 'store'])->name('agents.store');
             Route::post('/agents/import', [AgentController::class, 'import'])->name('agents.import');
             Route::post('/agents/{agent}/pin', [AgentController::class, 'resetPin'])->name('agents.pin');
@@ -42,6 +57,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::delete('/coordinators/{coordinator}', [CoordinatorController::class, 'destroy'])->name('coordinators.destroy');
 
             Route::get('/corrections', [CorrectionController::class, 'index'])->name('corrections.index');
+            Route::get('/corrections/export', [CorrectionController::class, 'export'])->name('corrections.export');
             Route::post('/corrections/{result:reference}/approve', [CorrectionController::class, 'approve'])->name('corrections.approve');
             Route::post('/corrections/{result:reference}/reject', [CorrectionController::class, 'reject'])->name('corrections.reject');
 

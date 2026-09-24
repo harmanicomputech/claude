@@ -6,27 +6,103 @@ use App\Http\Controllers\Controller;
 use App\Models\Agent;
 use App\Services\AgentImporter;
 use App\Services\AgentRegistrar;
+use App\Services\ElectionStats;
+use App\Support\CsvExport;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AgentController extends Controller
 {
+    private const STATUSES = ['all', 'checked_in', 'not_checked_in', 'locked'];
+
+    public function __construct(private ElectionStats $stats) {}
+
     public function index(Request $request): View
     {
-        $search = trim((string) $request->query('q'));
+        $filters = $this->filters($request);
 
-        $agents = Agent::with('pollingUnit')
+        return view('admin.agents', [
+            'agents' => $this->query($filters)->with('pollingUnit')->paginate(50)->withQueryString(),
+            'search' => $filters['q'],
+            'filters' => $filters,
+            'checkedIn' => $this->checkedInAt($filters),
+        ]);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $filters = $this->filters($request);
+        $timezone = config('election.timezone');
+        $checkedIn = $this->checkedInAt($filters);
+
+        $rows = function () use ($filters, $timezone, $checkedIn) {
+            foreach ($this->query($filters)->with('pollingUnit')->withCount('results', 'incidents')->lazy(500) as $agent) {
+                yield [
+                    $agent->name,
+                    $agent->phone_number,
+                    $agent->polling_unit_code,
+                    $agent->pollingUnit?->name,
+                    $agent->pollingUnit?->ward,
+                    $agent->pollingUnit?->lga,
+                    isset($checkedIn[$agent->id]) ? Carbon::parse($checkedIn[$agent->id])->timezone($timezone)->format('Y-m-d H:i') : '',
+                    $agent->results_count,
+                    $agent->incidents_count,
+                    $agent->isLocked() ? 'yes' : 'no',
+                ];
+            }
+        };
+
+        return CsvExport::download(CsvExport::filename('agents'), [
+            'Name', 'Phone', 'Assigned PU', 'Polling unit', 'Ward', 'LGA', 'Checked in', 'Results submitted', 'Incidents reported', 'Locked',
+        ], $rows());
+    }
+
+    /**
+     * @return array{q: string, status: string}
+     */
+    private function filters(Request $request): array
+    {
+        $status = $request->query('status', 'all');
+
+        return [
+            'q' => trim((string) $request->query('q')),
+            'status' => in_array($status, self::STATUSES, true) ? $status : 'all',
+        ];
+    }
+
+    private function query(array $filters): Builder
+    {
+        $search = $filters['q'];
+        $checkedIn = fn () => $this->stats->presenceQuery()->select('agent_id');
+
+        return Agent::query()
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                 ->where('name', 'like', "%{$search}%")
                 ->orWhere('phone_number', 'like', '%'.ltrim($search, '0').'%')
                 ->orWhere('polling_unit_code', 'like', '%'.preg_replace('/\D/', '', $search).'%')))
-            ->orderBy('name')
-            ->paginate(50)
-            ->withQueryString();
+            ->when($filters['status'] === 'checked_in', fn ($query) => $query->whereIn('id', $checkedIn()))
+            ->when($filters['status'] === 'not_checked_in', fn ($query) => $query->whereNotIn('id', $checkedIn()))
+            ->when($filters['status'] === 'locked', fn ($query) => $query->where('locked_until', '>', now()))
+            ->orderBy('name');
+    }
 
-        return view('admin.agents', ['agents' => $agents, 'search' => $search]);
+    /**
+     * Latest counted check-in per agent id.
+     *
+     * @return Collection<int, string>
+     */
+    private function checkedInAt(array $filters): Collection
+    {
+        return $this->stats->presenceQuery()
+            ->selectRaw('agent_id, max(confirmed_at) as confirmed_at')
+            ->groupBy('agent_id')
+            ->pluck('confirmed_at', 'agent_id');
     }
 
     public function store(Request $request, AgentRegistrar $registrar): RedirectResponse

@@ -5,13 +5,16 @@
 @php($figures = fn ($result) => collect($result->votesByParty())->map(fn ($votes, $party) => "{$party} ".number_format($votes))->implode(' · ').' · Rejected '.number_format($result->rejected_votes).' · Accredited '.number_format($result->accredited_voters))
 
 @section('content')
-    <h1>Corrections</h1>
+    <div class="page-head">
+        <h1>Corrections</h1>
+        <div class="actions"><a class="button secondary" href="{{ route('admin.corrections.export') }}">Export all corrections (CSV)</a></div>
+    </div>
 
     <div class="card">
         <h2>Waiting for review ({{ $pending->count() }})</h2>
         @forelse ($pending as $correction)
             <div style="border-top:1px solid var(--line);padding:14px 0">
-                <p><b>{{ $correction->reference }}</b> · PU {{ $correction->polling_unit_code }}@if ($correction->pollingUnit) — {{ $correction->pollingUnit->name }}, {{ $correction->pollingUnit->lga }}@endif
+                <p><a href="{{ route('admin.results.show', $correction) }}"><b>{{ $correction->reference }}</b></a> · PU {{ $correction->polling_unit_code }}@if ($correction->pollingUnit) — {{ $correction->pollingUnit->name }}, {{ $correction->pollingUnit->lga }}@endif
                     <br><span class="muted">Requested by {{ $correction->agent->name }} ({{ $correction->agent->phone_number }}), {{ $correction->created_at->timezone(config('election.timezone'))->format('j M, g:i A') }}</span></p>
                 <table>
                     @if ($correction->corrects)
@@ -44,7 +47,7 @@
                 <tr><th>Reference</th><th>PU</th><th>Agent</th><th>Decision</th><th>Note</th><th>When</th></tr>
                 @foreach ($reviewed as $correction)
                     <tr>
-                        <td>{{ $correction->reference }}</td>
+                        <td><a href="{{ route('admin.results.show', $correction) }}">{{ $correction->reference }}</a></td>
                         <td>{{ $correction->polling_unit_code }}</td>
                         <td>{{ $correction->agent->name }}</td>
                         <td>{{ $correction->status === \App\Enums\ResultStatus::Rejected ? 'Rejected' : 'Approved' }}</td>
