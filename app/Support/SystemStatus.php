@@ -9,6 +9,7 @@ use App\Models\PollingUnit;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -88,6 +89,30 @@ class SystemStatus
         }
     }
 
+    /**
+     * Background-job counts and the latest failures, for the Overview page.
+     *
+     * @return array{pending: int, failed: int, failures: list<array{job: string, failed_at: string, error: string}>}
+     */
+    public function jobs(): array
+    {
+        try {
+            $failures = DB::table('failed_jobs')->latest('failed_at')->limit(5)->get()->map(fn ($row) => [
+                'job' => class_basename(json_decode($row->payload, true)['displayName'] ?? 'Job'),
+                'failed_at' => Carbon::parse($row->failed_at)->diffForHumans(),
+                'error' => Str::limit(strtok((string) $row->exception, "\n"), 300),
+            ])->all();
+
+            return [
+                'pending' => DB::table('jobs')->count(),
+                'failed' => DB::table('failed_jobs')->count(),
+                'failures' => $failures,
+            ];
+        } catch (Throwable) {
+            return ['pending' => 0, 'failed' => 0, 'failures' => []];
+        }
+    }
+
     public function isReady(): bool
     {
         return $this->databaseReachable() && $this->pendingMigrations() === 0;
@@ -137,12 +162,13 @@ class SystemStatus
     private function queueHealthy(): bool
     {
         try {
-            $oldest = DB::table('jobs')->min('created_at');
+            $oldest = DB::table('jobs')->whereNull('reserved_at')->where('available_at', '<=', now()->getTimestamp())->min('created_at');
+            $failed = DB::table('failed_jobs')->count();
         } catch (Throwable) {
             return false;
         }
 
-        return $oldest === null || (int) $oldest > now()->subMinutes(5)->getTimestamp();
+        return $failed === 0 && ($oldest === null || (int) $oldest > now()->subMinutes(5)->getTimestamp());
     }
 
     private function queueDetail(): string

@@ -18,6 +18,7 @@ class OverviewController extends Controller
             'callbackUrl' => $status->callbackUrl(),
             'ready' => $ready,
             'summary' => $ready ? $stats->summary() : null,
+            'jobs' => $ready ? $status->jobs() : null,
         ]);
     }
 }

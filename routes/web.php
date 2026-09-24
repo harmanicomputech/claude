@@ -28,6 +28,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::middleware(EnsureDatabaseReady::class)->group(function () {
             Route::post('/system/polling-units', [SystemController::class, 'importPollingUnits'])->name('system.polling-units');
             Route::post('/system/summary', [SystemController::class, 'sendSummary'])->name('system.summary');
+            Route::post('/system/jobs/run', [SystemController::class, 'runJobs'])->name('system.jobs.run');
+            Route::post('/system/jobs/retry', [SystemController::class, 'retryFailedJobs'])->name('system.jobs.retry');
 
             Route::get('/agents', [AgentController::class, 'index'])->name('agents.index');
             Route::post('/agents', [AgentController::class, 'store'])->name('agents.store');

@@ -34,6 +34,20 @@ class SystemController extends Controller
         return $this->run('election:test-email', array_filter(['to' => $validated['to'] ?? null]), 'Test email sent');
     }
 
+    /**
+     * Work the queue right now (what the cron job does every minute), so
+     * emails and SMS go out and any error shows up immediately.
+     */
+    public function runJobs(): RedirectResponse
+    {
+        return $this->run('queue:work', ['--stop-when-empty' => true, '--max-time' => 20, '--tries' => 3], 'Background jobs processed');
+    }
+
+    public function retryFailedJobs(): RedirectResponse
+    {
+        return $this->run('queue:retry', ['id' => ['all']], 'Failed jobs queued again: press "Run background jobs now" to send them');
+    }
+
     public function sendSummary(): RedirectResponse
     {
         return $this->run('election:summary', [], 'Summary email queued');

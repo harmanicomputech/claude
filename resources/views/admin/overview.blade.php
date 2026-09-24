@@ -46,6 +46,27 @@
         <p class="muted">USSD callback URL for Africa's Talking:<br><code>{{ $callbackUrl }}</code></p>
     </div>
 
+    @if ($jobs)
+        <div class="card">
+            <h2>Background jobs (SMS, email, dashboard)</h2>
+            <p class="muted">{{ number_format($jobs['pending']) }} waiting · {{ number_format($jobs['failed']) }} failed. The cron job sends these every minute; you can also send them now.</p>
+            <div class="row" style="justify-content:flex-start">
+                <form method="post" action="{{ route('admin.system.jobs.run') }}">@csrf<button type="submit">Run background jobs now</button></form>
+                @if ($jobs['failed'])
+                    <form method="post" action="{{ route('admin.system.jobs.retry') }}">@csrf<button type="submit" class="secondary">Retry failed jobs</button></form>
+                @endif
+            </div>
+            @if ($jobs['failures'])
+                <table style="margin-top:12px">
+                    <tr><th>Failed job</th><th>When</th><th>Error</th></tr>
+                    @foreach ($jobs['failures'] as $failure)
+                        <tr><td>{{ $failure['job'] }}</td><td class="muted">{{ $failure['failed_at'] }}</td><td style="word-break:break-word">{{ $failure['error'] }}</td></tr>
+                    @endforeach
+                </table>
+            @endif
+        </div>
+    @endif
+
     <div class="grid">
         <div class="card">
             <h2>Database</h2>
