@@ -206,6 +206,8 @@ Set `NOTIFY_EMAILS` (comma-separated) and configure a real mailer (`MAIL_MAILER`
 - one email per correction request, showing the old and proposed figures side by side
 - the hourly summary: turnout, votes per party, incidents, and results received per LGA (turn off with `NOTIFY_HOURLY_SUMMARY=false`)
 
+Check the settings with `php artisan election:test-email` (or `election:test-email you@example.com`). It sends one email immediately and prints the SMTP error if it fails.
+
 Election day will produce thousands of emails. Personal Gmail accounts can only *send* about 500 a day, so use a transactional provider such as Resend, Mailgun, Brevo or Amazon SES. The address the emails are sent *to* can still be a Gmail address.
 
 ## Securing the USSD callback
