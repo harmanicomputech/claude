@@ -25,13 +25,16 @@ export const social = [
 ];
 
 // Public campaign contact details. Never put a private number or address here.
+// While a value is still a [placeholder], it is left out of the footer and the Get involved page.
+export const isSet = (v: string) => !v.startsWith('[');
+
 export const contact = {
   office: '[Campaign office address]',
   phone: '[Campaign phone number]',
   email: '[Campaign email address]',
 };
 
-export const authorisedBy = '[Name of campaign organisation / principal officer]';
+export const authorisedBy = 'the Media team';
 // Data controller named in the privacy notice.
 export const dataController = '[Name of campaign organisation]';
 

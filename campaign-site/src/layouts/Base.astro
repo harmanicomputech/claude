@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import Icon from '../components/Icon.astro';
-import { site, social, contact, authorisedBy } from '../config';
+import { site, social, authorisedBy } from '../config';
 import { srcset } from '../lib/media';
 
 interface Props {
@@ -116,43 +116,42 @@ const jsonLd = {
     </dialog>
 
     <footer class="site-footer on-night">
+      <div class="footer-flag" aria-hidden="true"><i></i><i></i><i></i></div>
       <div class="wrap">
-        <div class="footer-grid">
-          <div>
-            <div class="footer-brand">
-              <img src="/media/img/pdp-logo-96.webp" width="48" height="48" alt="Peoples Democratic Party logo" loading="lazy" />
-              <div><b>{site.name}</b><span>PDP candidate for Governor, Ebonyi State 2027</span></div>
-            </div>
-            <p style="margin-top:20px">{site.slogan}. {site.hashtags.join(' ')}</p>
-          </div>
-          <div>
-            <h2>Follow</h2>
-            <div class="socials">
-              {social.map((s) => (
-                <a href={s.url} rel="noopener" target="_blank" aria-label={`${s.name} (opens in a new tab)`}><Icon name={s.icon} size={20} /></a>
-              ))}
+        <div class="footer-top">
+          <div class="footer-brand">
+            <img src="/media/img/pdp-logo-96.webp" width="64" height="64" alt="Peoples Democratic Party logo" loading="lazy" />
+            <div>
+              <p class="footer-name">{site.name}</p>
+              <p class="footer-office">PDP candidate for Governor, Ebonyi State 2027</p>
             </div>
           </div>
-          <div>
-            <h2>Contact</h2>
-            <ul>
-              <li>{contact.office}</li>
-              <li>{contact.phone}</li>
-              <li>{contact.email}</li>
-            </ul>
+          <div class="footer-slogan">
+            <span class="footer-badge">{site.slogan}</span>
           </div>
-          <div>
-            <h2>Explore</h2>
-            <ul class="footer-links">
+        </div>
+
+        <div class="footer-mid">
+          <nav aria-label="Footer">
+            <ul class="footer-nav">
+              <li><a href="/">Home</a></li>
               {nav.map(([label, href]) => <li><a href={href}>{label}</a></li>)}
               <li><a href="/get-involved/">Get involved</a></li>
-              <li><a href="/privacy/">Privacy notice</a></li>
+            </ul>
+          </nav>
+          <div class="footer-follow">
+            <p class="footer-label">Follow the campaign</p>
+            <ul class="footer-socials">
+              {social.map((s) => (
+                <li><a href={s.url} rel="noopener" target="_blank"><Icon name={s.icon} size={18} /><span>{s.name}</span><span class="sr-only"> (opens in a new tab)</span></a></li>
+              ))}
             </ul>
           </div>
         </div>
+
         <div class="footer-base">
-          <p>Authorised by {authorisedBy}.</p>
-          <p>© {year} {site.shortName} Campaign</p>
+          <p class="footer-auth">Authorised by {authorisedBy}.</p>
+          <p>© {year} {site.shortName} Campaign · <a href="/privacy/">Privacy notice</a></p>
         </div>
       </div>
     </footer>

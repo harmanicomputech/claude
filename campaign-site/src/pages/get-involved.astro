@@ -4,8 +4,9 @@ import PageHeader from '../components/PageHeader.astro';
 import Pic from '../components/Pic.astro';
 import Icon from '../components/Icon.astro';
 import VolunteerForm from '../components/sections/VolunteerForm.astro';
-import { site, social, contact, helpOptions } from '../config';
+import { site, social, contact, helpOptions, isSet } from '../config';
 const shareText = encodeURIComponent(`${site.name} for Governor, Ebonyi State 2027. ${site.slogan}! Join the movement: ${site.url} ${site.hashtags.join(' ')}`);
+const contactItems = [['map', contact.office], ['phone', contact.phone], ['mail', contact.email]].filter(([, v]) => isSet(v));
 const helpIcons = ['map', 'check', 'whatsapp', 'people', 'shield', 'truck', 'book'];
 ---
 <Base title="Get involved" path="/get-involved/" description="Volunteer for Dr. Ifeanyi Odii’s campaign in your LGA and ward, follow the campaign and share the message.">
@@ -49,14 +50,14 @@ const helpIcons = ['map', 'check', 'whatsapp', 'people', 'shield', 'truck', 'boo
           {social.map((s) => <a href={s.url} rel="noopener" target="_blank"><Icon name={s.icon} size={18} /> {s.name}<span class="sr-only"> (opens in a new tab)</span></a>)}
         </div>
       </div>
-      <aside class="card reveal">
-        <h3>Contact the campaign</h3>
-        <ul style="list-style:none;padding:0;display:grid;gap:12px">
-          <li style="display:flex;gap:10px"><Icon name="map" size={20} /> {contact.office}</li>
-          <li style="display:flex;gap:10px"><Icon name="phone" size={20} /> {contact.phone}</li>
-          <li style="display:flex;gap:10px"><Icon name="mail" size={20} /> {contact.email}</li>
-        </ul>
-      </aside>
+      {contactItems.length > 0 && (
+        <aside class="card reveal">
+          <h3>Contact the campaign</h3>
+          <ul style="list-style:none;padding:0;display:grid;gap:12px">
+            {contactItems.map(([icon, v]) => <li style="display:flex;gap:10px"><Icon name={icon} size={20} /> {v}</li>)}
+          </ul>
+        </aside>
+      )}
     </div>
   </section>
 </Base>
