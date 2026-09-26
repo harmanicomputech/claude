@@ -1,0 +1,259 @@
+{
+  "images": {
+    "hero-tall": {
+      "widths": [
+        480,
+        720,
+        960
+      ],
+      "width": 1440,
+      "height": 1800
+    },
+    "hero-wide": {
+      "widths": [
+        720,
+        1051
+      ],
+      "width": 1051,
+      "height": 995
+    },
+    "about": {
+      "widths": [
+        480,
+        720,
+        767
+      ],
+      "width": 767,
+      "height": 959
+    },
+    "portrait-hat": {
+      "widths": [
+        400,
+        700
+      ],
+      "width": 853,
+      "height": 853
+    },
+    "join": {
+      "widths": [
+        480,
+        720,
+        1000
+      ],
+      "width": 1017,
+      "height": 1271
+    },
+    "leadership": {
+      "widths": [
+        480,
+        720,
+        1000
+      ],
+      "width": 1152,
+      "height": 1440
+    },
+    "office": {
+      "widths": [
+        480,
+        720,
+        1000
+      ],
+      "width": 1198,
+      "height": 1497
+    },
+    "meeting": {
+      "widths": [
+        480,
+        720
+      ],
+      "width": 755,
+      "height": 877
+    },
+    "agbada": {
+      "widths": [
+        480,
+        900
+      ],
+      "width": 1440,
+      "height": 1800
+    },
+    "white-cap": {
+      "widths": [
+        480,
+        900
+      ],
+      "width": 1017,
+      "height": 1271
+    },
+    "handshake-1": {
+      "widths": [
+        480,
+        900
+      ],
+      "width": 1440,
+      "height": 1800
+    },
+    "blue-suit": {
+      "widths": [
+        480,
+        900
+      ],
+      "width": 1162,
+      "height": 1440
+    },
+    "evening-event": {
+      "widths": [
+        480,
+        900,
+        1280
+      ],
+      "width": 1440,
+      "height": 960
+    },
+    "black-cap": {
+      "widths": [
+        480,
+        900,
+        1280
+      ],
+      "width": 1440,
+      "height": 959
+    },
+    "ceremony": {
+      "widths": [
+        480,
+        900,
+        1280
+      ],
+      "width": 1440,
+      "height": 995
+    },
+    "with-supporters": {
+      "widths": [
+        480,
+        900,
+        1280
+      ],
+      "width": 1440,
+      "height": 960
+    },
+    "fedora": {
+      "widths": [
+        480,
+        853
+      ],
+      "width": 853,
+      "height": 853
+    },
+    "grey-suit": {
+      "widths": [
+        480,
+        900
+      ],
+      "width": 1198,
+      "height": 1497
+    },
+    "fdn-students": {
+      "widths": [
+        480,
+        960
+      ],
+      "width": 960,
+      "height": 720
+    },
+    "fdn-books": {
+      "widths": [
+        480,
+        960
+      ],
+      "width": 960,
+      "height": 720
+    },
+    "fdn-school-visit": {
+      "widths": [
+        480,
+        960
+      ],
+      "width": 960,
+      "height": 960
+    },
+    "fdn-presentation": {
+      "widths": [
+        480,
+        960
+      ],
+      "width": 960,
+      "height": 540
+    },
+    "fdn-community": {
+      "widths": [
+        480,
+        960
+      ],
+      "width": 960,
+      "height": 960
+    },
+    "fdn-machines": {
+      "widths": [
+        480,
+        960,
+        1440
+      ],
+      "width": 1920,
+      "height": 1280
+    },
+    "fdn-sewing": {
+      "widths": [
+        480,
+        960,
+        1440
+      ],
+      "width": 1920,
+      "height": 1280
+    },
+    "fdn-women": {
+      "widths": [
+        480,
+        960,
+        1440
+      ],
+      "width": 1920,
+      "height": 1280
+    },
+    "fdn-rice": {
+      "widths": [
+        480,
+        960,
+        1440
+      ],
+      "width": 1920,
+      "height": 1280
+    },
+    "fdn-celebration": {
+      "widths": [
+        480,
+        960,
+        1440
+      ],
+      "width": 1920,
+      "height": 1280
+    },
+    "fdn-aerial": {
+      "widths": [
+        480,
+        960,
+        1440
+      ],
+      "width": 1920,
+      "height": 1280
+    }
+  },
+  "videos": {
+    "bbc-igbo-interview": {
+      "mb": 17.3
+    },
+    "interview-2022": {
+      "mb": 1.3
+    }
+  }
+}

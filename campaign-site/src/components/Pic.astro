@@ -1,0 +1,32 @@
+---
+// Responsive <picture>: AVIF, then WebP, with a JPEG fallback, from src/data/media.json.
+import { images, srcset } from '../lib/media';
+
+interface Props {
+  name: string;
+  alt: string;
+  sizes?: string;
+  class?: string;
+  eager?: boolean;
+}
+const { name, alt, sizes = '100vw', class: className, eager = false } = Astro.props;
+const info = images[name];
+if (!info) throw new Error(`Unknown image "${name}". Add it to scripts/optimize-media.mjs and run npm run media.`);
+const set = (ext: string) => srcset(name, ext);
+const fallback = `/media/img/${name}-${info.widths[Math.min(1, info.widths.length - 1)]}.jpg`;
+---
+<picture class={className}>
+  <source type="image/avif" srcset={set('avif')} sizes={sizes} />
+  <source type="image/webp" srcset={set('webp')} sizes={sizes} />
+  <img
+    src={fallback}
+    srcset={set('jpg')}
+    sizes={sizes}
+    width={info.width}
+    height={info.height}
+    alt={alt}
+    loading={eager ? 'eager' : 'lazy'}
+    decoding="async"
+    fetchpriority={eager ? 'high' : undefined}
+  />
+</picture>

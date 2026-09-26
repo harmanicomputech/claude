@@ -1,0 +1,371 @@
+---
+import Base from '../layouts/Base.astro';
+import Pic from '../components/Pic.astro';
+import Icon from '../components/Icon.astro';
+import media from '../data/media.json';
+import { srcset } from '../lib/media';
+import { site, social, lgas, helpOptions } from '../config';
+import { facts, pillars, quotes, companies, education, boards, gallery } from '../data/content';
+
+const electionMs = Date.parse(site.electionDate);
+const initial = Math.max(0, electionMs - Date.now());
+const days = Math.floor(initial / 86400000);
+const hours = Math.floor((initial % 86400000) / 3600000);
+const mins = Math.floor((initial % 3600000) / 60000);
+const videoMb = media.videos as Record<string, { mb: number }>;
+const shareText = encodeURIComponent(`${site.name} for Governor, Ebonyi State 2027. ${site.slogan}! Join the movement: ${site.url} ${site.hashtags.join(' ')}`);
+const pos = (i: number) => String(i);
+---
+<Base preloadHero>
+  <!-- 1. Hero -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-grid">
+      <div class="hero-media">
+        <picture>
+          <source media="(min-width: 900px)" type="image/avif" srcset={srcset('hero-wide', 'avif')} sizes="56vw" />
+          <source media="(min-width: 900px)" type="image/webp" srcset={srcset('hero-wide', 'webp')} sizes="56vw" />
+          <source media="(min-width: 900px)" srcset={srcset('hero-wide', 'jpg')} sizes="56vw" />
+          <source type="image/avif" srcset={srcset('hero-tall', 'avif')} sizes="100vw" />
+          <source type="image/webp" srcset={srcset('hero-tall', 'webp')} sizes="100vw" />
+          <img src="/media/img/hero-tall-720.jpg" srcset={srcset('hero-tall', 'jpg')} sizes="100vw"
+            width="1440" height="1800" alt="Dr. Ifeanyi Chukwuma Odii in a red cap, smiling" fetchpriority="high" decoding="async" />
+        </picture>
+      </div>
+      <div class="wrap hero-copy">
+        <p class="hero-party"><img src="/media/img/pdp-logo-96.webp" width="26" height="26" alt="" />PDP · Ebonyi State</p>
+        <h1 id="hero-title"><span class="pre">Dr.</span>Ifeanyi Chukwuma Odii</h1>
+        <p class="hero-office">{site.office}</p>
+        <p class="hero-slogan">{site.slogan}<span class="tags">{site.hashtags.join(' ')}</span></p>
+        <div class="flag" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="countdown" data-countdown={site.electionDate}>
+          <p class="countdown-label">Election day: <time datetime="2027-02-06">{site.electionDateLabel}</time></p>
+          <div class="countdown-units" role="timer" aria-live="off" aria-label="Time until election day">
+            <div class="countdown-unit"><b data-d>{days}</b><span>Days</span></div>
+            <div class="countdown-unit"><b data-h>{hours}</b><span>Hours</span></div>
+            <div class="countdown-unit"><b data-m>{mins}</b><span>Minutes</span></div>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <a class="btn btn--light" href="#join">Join the movement <Icon name="arrow" size={18} /></a>
+          <a class="btn btn--ghost" href="#watch"><Icon name="play" size={18} /> Watch</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. About -->
+  <section class="section" id="about" aria-labelledby="about-title">
+    <div class="wrap about-grid">
+      <div class="about-photo reveal">
+        <Pic name="about" alt="Dr. Ifeanyi Chukwuma Odii in a black cap and shirt, smiling" sizes="(min-width: 900px) 440px, 100vw" />
+      </div>
+      <div class="about-text reveal">
+        <p class="eyebrow">About</p>
+        <h2 id="about-title" class="title">Builder. Philanthropist. Son of Ebonyi.</h2>
+        <div style="margin-top:26px">
+          <p>Dr. Ifeanyi Chukwuma Odii is a businessman and philanthropist with more than 20 years’ experience building and managing businesses across many sectors.</p>
+          <p>He is the Founder and Chairman of Orient Global Group, whose subsidiaries include Orient Global Manufacturing, Orient Haulage &amp; Logistics and Purity Agro-Allied Ltd. He is also the President and CEO of Ultimus Holdings, whose subsidiaries include Ultimus Construction, Ultimus Properties and Ultimus Global Integrated, owners of The Classroom by Ultimus and Viarmor Healthcare Ltd. With investments in manufacturing, logistics, construction, real estate, healthcare, trade and services, he has grown these businesses beyond Nigeria into Sub-Saharan Africa.</p>
+          <p>He is an alumnus of Lagos Business School, where he completed the Chief Executive Programme, and holds a B.Sc. in Business Administration from the National Open University of Nigeria. He was conferred with a Doctor of Science degree in Strategic Business Management &amp; Corporate Governance by the European American University in the Republic of Panama. He is a member of the Governing Council of Lagos State University and sits on the board of Prosperis Holdings.</p>
+          <p>Through the Ebele and Anyichuks Foundation, which he founded with his wife and named after them both, he has built more than 100 homes for the indigent in rural areas, 6 churches and 3 floors of a primary and secondary school, given scholarships to more than 1,000 students at home and abroad, and provided medical screening and support every year. His love of sport led him to establish the Anyichuks Unity Cup, a yearly tournament in his hometown that encourages and empowers young people and promotes grassroots sport.</p>
+          <p>Beyond his businesses and his family, he enjoys reading, swimming, keeping fit and golf; he is a member of several golf clubs in Lagos.</p>
+        </div>
+        <div class="about-sign">
+          <span class="chip"><Icon name="check" size={16} /> 20+ years in business</span>
+          <span class="chip"><Icon name="check" size={16} /> Founder, Ebele and Anyichuks Foundation</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Track record -->
+  <section class="section section--night on-night" id="record" aria-labelledby="record-title">
+    <div class="wrap">
+      <div class="head reveal">
+        <p class="eyebrow">Track record</p>
+        <h2 id="record-title" class="title">A record you can count.</h2>
+        <p class="lede">Before asking for your vote, he has already delivered, in business and in communities across Ebonyi.</p>
+      </div>
+      <div class="facts reveal">
+        {facts.map((f) => (
+          <div class="fact">
+            {'value' in f && f.value !== undefined
+              ? <b><span data-count={f.value}>{f.value.toLocaleString('en-NG')}</span>{f.suffix && <small>{f.suffix}</small>}</b>
+              : <b>{f.text}</b>}
+            <span>{f.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Agenda -->
+  <section class="section" id="agenda" aria-labelledby="agenda-title">
+    <div class="wrap">
+      <div class="head reveal">
+        <p class="eyebrow">Agenda for Ebonyi</p>
+        <h2 id="agenda-title" class="title">Eight commitments. <br />One plan, from day one.</h2>
+        <p class="lede">A plan built on what Dr. Odii has already done through his businesses and his foundation, and on what he has promised the people of Ebonyi.</p>
+      </div>
+      <div class="pillars">
+        {pillars.map((p) => (
+          <article class="pillar reveal" id={`pillar-${p.id}`}>
+            {p.image
+              ? <div class="pillar-media"><Pic name={p.image} alt={p.alt ?? ''} sizes="(min-width: 1100px) 280px, (min-width: 700px) 50vw, 100vw" /></div>
+              : <div class="pillar-media pillar-media--icon" aria-hidden="true"><Icon name={p.icon} size={64} /></div>}
+            <div class="pillar-body">
+              <div class="pillar-top"><span class="pillar-icon"><Icon name={p.icon} /></span><span class="pillar-num"></span></div>
+              <h3>{p.title}</h3>
+              <p>{p.body}</p>
+              {p.quote && <blockquote>“{p.quote}”</blockquote>}
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Watch -->
+  <section class="section section--night on-night" id="watch" aria-labelledby="watch-title">
+    <div class="wrap">
+      <div class="head reveal">
+        <p class="eyebrow">In his own words</p>
+        <h2 id="watch-title" class="title">Why he is running.</h2>
+        <p class="lede">In an interview with BBC News Igbo, Dr. Odii explains what drives him: poverty, women, security and a government that works from day one.</p>
+      </div>
+      <div class="watch-grid">
+        <div class="video-card reveal">
+          <div class="video-frame" data-video data-src="/media/video/bbc-igbo-interview.mp4" data-poster="/media/video/bbc-igbo-interview-poster.jpg" data-track="/media/video/bbc-igbo-interview.en.vtt" data-title="Interview with BBC News Igbo">
+            <picture>
+              <source type="image/webp" srcset="/media/video/bbc-igbo-interview-poster.webp" />
+              <img src="/media/video/bbc-igbo-interview-poster.jpg" width="540" height="960" alt="" loading="lazy" decoding="async" />
+            </picture>
+            <button class="video-play" type="button" aria-label={`Tap to play · 4:20, the BBC News Igbo interview. About ${videoMb['bbc-igbo-interview'].mb} MB, Igbo with English captions`}>
+              <span class="disc"><Icon name="play" size={30} /></span>
+              <span class="meta"><b>Tap to play · 4:20</b>About {videoMb['bbc-igbo-interview'].mb} MB · Igbo with English captions</span>
+            </button>
+          </div>
+          <div class="video-info">
+            <h3>Interview with BBC News Igbo</h3>
+            <p>Video used with permission of BBC News Igbo. English captions are a translation.</p>
+          </div>
+        </div>
+        <div class="quotes">
+          {quotes.map((q) => (
+            <figure class="quote reveal">
+              <blockquote style="margin:0"><p>{q}</p></blockquote>
+              <figcaption class="quote-note" style="margin-top:12px">Dr. Ifeanyi Odii, BBC News Igbo (translated from Igbo)</figcaption>
+            </figure>
+          ))}
+          <div class="video-card reveal">
+            <div class="video-info video-row">
+              <button class="btn btn--ghost" type="button" data-open-video="interview-2022"><Icon name="play" size={18} /> Play</button>
+              <div>
+                <h3>On ease of doing business (2022)</h3>
+                <p>A short interview recorded in 2022 · 0:51 · about {videoMb['interview-2022'].mb} MB</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Philanthropy -->
+  <section class="section section--sand" id="foundation" aria-labelledby="foundation-title">
+    <div class="wrap">
+      <div class="head reveal">
+        <p class="eyebrow">Philanthropy</p>
+        <h2 id="foundation-title" class="title">The Ebele and Anyichuks Foundation</h2>
+        <p class="lede">For more than ten years, Dr. Odii and his wife have supported and empowered people through their foundation, with a focus on young people, education and caring for the less privileged.</p>
+      </div>
+      <div class="impact">
+        <div class="impact-item reveal"><span class="ico"><Icon name="home" /></span><h3>Homes</h3><p>More than 100 homes built for indigent families in rural areas.</p></div>
+        <div class="impact-item reveal"><span class="ico"><Icon name="church" /></span><h3>Churches</h3><p>Six churches built for communities.</p></div>
+        <div class="impact-item reveal"><span class="ico"><Icon name="school" /></span><h3>Schools</h3><p>Three floors of primary and secondary school, and a new building for Isu Achara Primary School with an ICT centre, laboratory and multipurpose hall.</p></div>
+        <div class="impact-item reveal"><span class="ico"><Icon name="book" /></span><h3>Scholarships and exam support</h3><p>Scholarships for more than 1,000 students at home and abroad, and 10,000 copies of WAEC past questions and answers donated to secondary schools in Ebonyi.</p></div>
+        <div class="impact-item reveal"><span class="ico"><Icon name="medical" /></span><h3>Medical outreach</h3><p>Yearly medical screening and support, including free mobile medical testing and free prescribed drugs.</p></div>
+        <div class="impact-item reveal"><span class="ico"><Icon name="gift" /></span><h3>Empowerment</h3><p>Annual empowerment programmes providing motorcycles, sewing machines, grinding machines, bags of rice and wrappers to families, with a focus on women.</p></div>
+      </div>
+      <div class="mosaic">
+        <figure class="reveal"><Pic name="fdn-aerial" alt="Aerial view of the foundation’s empowerment programme, with motorcycles and bags of rice laid out" sizes="(min-width: 900px) 580px, 100vw" /></figure>
+        <figure class="reveal"><Pic name="fdn-books" alt="WAEC past-question books stacked in front of seated students" sizes="(min-width: 900px) 290px, 50vw" /></figure>
+        <figure class="reveal"><Pic name="fdn-sewing" alt="Rows of new sewing machines ready for distribution" sizes="(min-width: 900px) 290px, 50vw" /></figure>
+        <figure class="reveal"><Pic name="fdn-women" alt="Women seated together at the empowerment programme" sizes="(min-width: 900px) 290px, 50vw" /></figure>
+        <figure class="reveal"><Pic name="fdn-presentation" alt="Dr. Odii presenting books at a school event" sizes="(min-width: 900px) 290px, 50vw" /></figure>
+      </div>
+      <div class="cup reveal">
+        <span class="cup-icon"><Icon name="trophy" size={32} /></span>
+        <div>
+          <p class="eyebrow">Grassroots sport</p>
+          <h3>The Anyichuks Unity Cup</h3>
+          <p>Born of Dr. Odii’s passion for football, the Anyichuks Unity Cup is a yearly grassroots tournament in his hometown, Isu. It encourages and empowers young people and promotes sport at the grassroots, and has become something the community looks forward to every year.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Business and leadership -->
+  <section class="section" id="leadership" aria-labelledby="leadership-title">
+    <div class="wrap lead-grid">
+      <div class="lead-photo reveal">
+        <Pic name="leadership" alt="Dr. Odii in a blue suit, smiling and pointing" sizes="(min-width: 900px) 380px, 100vw" />
+      </div>
+      <div>
+        <div class="head reveal">
+          <p class="eyebrow">Business and leadership</p>
+          <h2 id="leadership-title" class="title">He has built. He will build Ebonyi.</h2>
+          <p class="lede">Two groups spanning seven sectors, grown from Nigeria across Sub-Saharan Africa.</p>
+        </div>
+        <div class="companies">
+          {companies.map((c) => (
+            <div class="company reveal">
+              <h3>{c.group}</h3>
+              <p class="role">{c.role}</p>
+              <ul>{c.subsidiaries.map((s) => <li>{s}</li>)}</ul>
+            </div>
+          ))}
+        </div>
+        <div class="creds">
+          <div class="reveal">
+            <h3>Education</h3>
+            <ul>{education.map((e) => <li><b>{e.title}</b><span>{e.place}</span></li>)}</ul>
+          </div>
+          <div class="reveal">
+            <h3>Boards</h3>
+            <ul>{boards.map((b) => <li><b>{b}</b></li>)}</ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Gallery -->
+  <section class="section section--sand" id="gallery" aria-labelledby="gallery-title">
+    <div class="wrap">
+      <div class="head reveal">
+        <p class="eyebrow">Gallery</p>
+        <h2 id="gallery-title" class="title">Moments.</h2>
+        <p class="lede">Tap any photo to enlarge it. Videos only download when you tap play.</p>
+      </div>
+      <div class="gallery" data-gallery>
+        {gallery.map((g, i) => (
+          <button type="button" class:list={['g-item', { wide: g.wide }]} data-index={pos(i)}
+            data-full={g.image ? `/media/img/${g.image}-${(media.images as any)[g.image].widths.at(-1)}.jpg` : undefined}
+            data-full-webp={g.image ? `/media/img/${g.image}-${(media.images as any)[g.image].widths.at(-1)}.webp` : undefined}
+            data-video={g.video} data-caption={g.caption} aria-label={g.video ? `Video · ${videoMb[g.video].mb} MB: play ${g.caption}` : `Enlarge photo: ${g.caption}`}>
+            {g.image
+              ? <Pic name={g.image} alt={g.alt} sizes={g.wide ? '(min-width: 760px) 50vw, 100vw' : '(min-width: 760px) 25vw, 50vw'} />
+              : <picture><source type="image/webp" srcset={`/media/video/${g.video}-poster.webp`} /><img src={`/media/video/${g.video}-poster.jpg`} alt={g.alt} loading="lazy" decoding="async" width="540" height="960" /></picture>}
+            {g.video && <span class="badge"><Icon name="play" size={14} /> Video · {videoMb[g.video].mb} MB</span>}
+          </button>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. News -->
+  <section class="section" id="news" aria-labelledby="news-title">
+    <div class="wrap">
+      <div class="head reveal">
+        <p class="eyebrow">News and events</p>
+        <h2 id="news-title" class="title">On the road to 6 February.</h2>
+      </div>
+      <ul class="news" data-news>
+        <li><p>Loading the latest news…</p></li>
+      </ul>
+      <noscript><p>Follow <a href="https://www.facebook.com/ifeanyiCodii/">Dr. Odii on Facebook</a> for the latest news.</p></noscript>
+    </div>
+  </section>
+
+  <!-- 9. Get involved -->
+  <section class="section section--sand" id="join" aria-labelledby="join-title">
+    <div class="wrap join-grid">
+      <div class="head reveal join-head">
+        <p class="eyebrow">Get involved</p>
+        <h2 id="join-title" class="title">Join the movement.</h2>
+        <p class="lede">Every ward, every polling unit, every voice. Sign up to volunteer and the campaign team in your LGA will be in touch.</p>
+      </div>
+      <div class="join-aside">
+        <div class="join-photo reveal"><Pic name="join" alt="Dr. Odii in a white shirt and cap, smiling and pointing" sizes="(min-width: 900px) 440px, 100vw" /></div>
+        <div class="reveal">
+          <div class="follow" aria-label="Follow Dr. Odii">
+            {social.map((s) => <a href={s.url} rel="noopener" target="_blank"><Icon name={s.icon} size={18} /> {s.name}<span class="sr-only"> (opens in a new tab)</span></a>)}
+          </div>
+          <a class="btn btn--primary share" href={`https://wa.me/?text=${shareText}`} rel="noopener" target="_blank"><Icon name="whatsapp" size={20} /> Share on WhatsApp</a>
+        </div>
+      </div>
+
+      <form class="form reveal" method="post" action="/volunteer.php" data-form novalidate>
+        <h3>Volunteer sign-up</h3>
+        <p>It takes one minute. Fields marked optional can be left blank.</p>
+
+        <div class="field">
+          <label for="f-name">Full name</label>
+          <input id="f-name" name="name" type="text" autocomplete="name" required maxlength="100" />
+        </div>
+        <div class="field">
+          <label for="f-phone">Phone number <span class="hint">(WhatsApp if you have it)</span></label>
+          <input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required maxlength="20" placeholder="0803 000 0000" />
+        </div>
+        <div class="field">
+          <label for="f-lga">Local Government Area</label>
+          <select id="f-lga" name="lga" required>
+            <option value="">Choose your LGA</option>
+            {lgas.map((l) => <option value={l}>{l}</option>)}
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-ward">Ward <span class="hint">(optional)</span></label>
+          <input id="f-ward" name="ward" type="text" maxlength="100" />
+        </div>
+        <fieldset class="field">
+          <legend>How can you help? <span class="hint">(choose any)</span></legend>
+          <div class="checks">
+            {helpOptions.map((h, i) => (
+              <label class="check" for={`f-help-${i}`}><input id={`f-help-${i}`} type="checkbox" name="help[]" value={h} /> {h}</label>
+            ))}
+          </div>
+        </fieldset>
+        <div class="field">
+          <label for="f-message">Anything else? <span class="hint">(optional)</span></label>
+          <textarea id="f-message" name="message" maxlength="1000"></textarea>
+        </div>
+        <div class="hp" aria-hidden="true">
+          <label for="f-website">Leave this empty</label>
+          <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+        <input type="hidden" name="started" value="" data-started />
+        <div class="consent">
+          <label class="check" for="f-consent">
+            <input id="f-consent" type="checkbox" name="consent" value="yes" required />
+            <span>I agree that the campaign may store these details and contact me by phone, SMS or WhatsApp about volunteering and the campaign, as explained in the <a href="/privacy/" target="_blank">privacy notice</a>. I can withdraw my consent at any time.</span>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn--primary" type="submit">Sign me up</button>
+        </div>
+        <p class="form-status" role="status" aria-live="polite" hidden data-status></p>
+      </form>
+    </div>
+  </section>
+
+  <dialog class="lightbox" data-lightbox aria-label="Gallery viewer">
+    <div class="lightbox-inner">
+      <div class="lightbox-stage" data-stage></div>
+      <p class="lightbox-caption" data-caption></p>
+      <button class="lb-btn lb-close" type="button" data-close aria-label="Close"><Icon name="close" /></button>
+      <button class="lb-btn lb-prev" type="button" data-prev aria-label="Previous"><Icon name="prev" /></button>
+      <button class="lb-btn lb-next" type="button" data-next aria-label="Next"><Icon name="next" /></button>
+    </div>
+  </dialog>
+</Base>
+
+<script>
+  import { initCountdown, initCounters, initVideos, initGallery, initNews, initForm } from '../scripts/home';
+  initCountdown();
+  initCounters();
+  initVideos();
+  initGallery();
+  initNews();
+  initForm();
+</script>

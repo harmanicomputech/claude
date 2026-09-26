@@ -1,0 +1,60 @@
+---
+import Base from '../layouts/Base.astro';
+import { contact, dataController } from '../config';
+const updated = '26 September 2026';
+---
+<Base title="Privacy notice" description="How the campaign collects, uses and protects the personal data of volunteers and supporters, under the Nigeria Data Protection Act 2023." path="/privacy/">
+  <section class="section">
+    <div class="wrap prose">
+      <p class="eyebrow">Privacy notice</p>
+      <h1>Your data, respected.</h1>
+      <p class="lede" style="color:var(--muted)">This notice explains what personal data the campaign collects through this website, why, and your rights under the Nigeria Data Protection Act 2023 (NDPA).</p>
+      <p><small>Last updated: {updated}</small></p>
+
+      <h2>Who we are</h2>
+      <p>The data controller is {dataController}, the campaign organisation for Dr. Ifeanyi Chukwuma Odii’s candidacy for Governor of Ebonyi State. You can contact us at {contact.email}, {contact.phone} or {contact.office}.</p>
+
+      <h2>What we collect</h2>
+      <p>When you sign up to volunteer we collect:</p>
+      <ul>
+        <li>your name and phone number;</li>
+        <li>your Local Government Area and, if you choose, your ward;</li>
+        <li>how you would like to help, and anything else you choose to tell us;</li>
+        <li>a record of your consent: the date and time, and the wording you agreed to;</li>
+        <li>a one-way scrambled code (hash) of your internet address, used only to stop spam and abuse. We cannot recover your internet address from it.</li>
+      </ul>
+      <p>This website sets no advertising or tracking cookies and uses no third-party analytics. Videos and images are served from this website, and are only downloaded when you view them.</p>
+
+      <h2>Why we use it, and our lawful basis</h2>
+      <p>We use your details only to organise volunteers and to contact you about volunteering and the campaign, by phone, SMS or WhatsApp. Our lawful basis is your consent. Because your details show support for a political candidate, we treat them as sensitive personal data and handle them with extra care.</p>
+
+      <h2>Who can see it</h2>
+      <p>Only authorised members of the campaign team who coordinate volunteers can see your details. We may use service providers, such as our web host and email provider, who process data on our behalf under contract. <strong>We will never sell your data or share it with anyone for marketing.</strong></p>
+
+      <h2>How long we keep it</h2>
+      <p>We keep volunteer details until the end of the 2027 Ebonyi State governorship election cycle, and delete them no later than 31 December 2027, unless you ask us to keep you on as a volunteer, or to delete them sooner.</p>
+
+      <h2>How we protect it</h2>
+      <p>Submissions are sent over an encrypted connection (HTTPS) and stored in a location on our server that cannot be reached from the web. Access is limited to authorised team members.</p>
+
+      <h2>Your rights</h2>
+      <p>Under the NDPA you have the right to:</p>
+      <ul>
+        <li>be informed about how your data is used (this notice);</li>
+        <li>get a copy of the data we hold about you;</li>
+        <li>have inaccurate data corrected;</li>
+        <li>have your data deleted;</li>
+        <li>withdraw your consent at any time, without affecting anything done before you withdrew it;</li>
+        <li>object to, or ask us to restrict, how we use your data;</li>
+        <li>receive your data in a portable format.</li>
+      </ul>
+      <p>To use any of these rights, contact us at {contact.email} or {contact.phone}. We will respond within 30 days. If you are not satisfied, you can complain to the Nigeria Data Protection Commission (NDPC) at <a href="https://ndpc.gov.ng" rel="noopener">ndpc.gov.ng</a>.</p>
+
+      <h2>Children</h2>
+      <p>Volunteer sign-up is for people aged 18 and over. We do not knowingly collect data from children.</p>
+
+      <h2>Changes</h2>
+      <p>If we change this notice, we will update the date at the top of this page.</p>
+    </div>
+  </section>
+</Base>

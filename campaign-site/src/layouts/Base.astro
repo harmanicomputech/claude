@@ -1,0 +1,180 @@
+---
+import '../styles/global.css';
+import Icon from '../components/Icon.astro';
+import { site, social, contact, authorisedBy } from '../config';
+import { srcset } from '../lib/media';
+
+interface Props {
+  title?: string;
+  description?: string;
+  path?: string;
+  noindex?: boolean;
+  preloadHero?: boolean;
+}
+const { title, description = site.description, path = '/', noindex = false, preloadHero = false } = Astro.props;
+const fullTitle = title ? `${title} · ${site.shortName} for Governor` : `${site.name}: ${site.slogan} · Ebonyi 2027`;
+const canonical = new URL(path, site.url).href;
+const ogImage = new URL('/media/img/og.jpg', site.url).href;
+const year = new Date().getFullYear();
+const nav = [
+  ['About', '/#about'],
+  ['Agenda', '/#agenda'],
+  ['Watch', '/#watch'],
+  ['Foundation', '/#foundation'],
+  ['Gallery', '/#gallery'],
+  ['News', '/#news'],
+];
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Ifeanyi Chukwuma Odii',
+  honorificPrefix: 'Dr.',
+  jobTitle: 'Candidate for Governor of Ebonyi State',
+  affiliation: { '@type': 'PoliticalParty', name: 'Peoples Democratic Party' },
+  url: site.url,
+  image: ogImage,
+  sameAs: social.map((s) => s.url),
+};
+---
+<!doctype html>
+<html lang="en-NG">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="theme-color" content="#0e1712" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={`${site.shortName} for Governor`} />
+    <meta property="og:title" content={title ? fullTitle : `${site.name} for Governor, Ebonyi State 2027`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:secure_url" content={ogImage} />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Dr. Ifeanyi Chukwuma Odii, PDP candidate for Governor of Ebonyi State" />
+    <meta property="og:locale" content="en_NG" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@ifeanyiCodii" />
+
+    {preloadHero && (
+      <>
+        <link rel="preload" as="image" type="image/avif" media="(max-width: 899px)" imagesrcset={srcset('hero-tall', 'avif')} imagesizes="100vw" fetchpriority="high" />
+        <link rel="preload" as="image" type="image/avif" media="(min-width: 900px)" imagesrcset={srcset('hero-wide', 'avif')} imagesizes="56vw" fetchpriority="high" />
+      </>
+    )}
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header" data-header>
+      <div class="wrap">
+        <a class="brand" href="/" aria-label={`${site.shortName} for Governor, home`}>
+          <img src="/media/img/pdp-logo-96.webp" width="32" height="32" alt="" />
+          <span>{site.shortName}</span>
+        </a>
+        <nav class="nav" aria-label="Main">
+          <ul class="nav-links">
+            {nav.map(([label, href]) => <li><a href={href}>{label}</a></li>)}
+          </ul>
+          <a class="btn btn--primary" href="/#join">Join</a>
+          <button class="menu-btn" type="button" aria-expanded="false" aria-controls="mobile-nav" data-menu>
+            <Icon name="menu" />
+            <span class="sr-only">Menu</span>
+          </button>
+        </nav>
+      </div>
+      <div class="mobile-nav" id="mobile-nav" hidden>
+        <ul>
+          {nav.map(([label, href]) => <li><a href={href}>{label}</a></li>)}
+          <li><a href="/#join">Get involved</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="site-footer on-night">
+      <div class="wrap">
+        <div class="footer-grid">
+          <div>
+            <div class="footer-brand">
+              <img src="/media/img/pdp-logo-96.webp" width="48" height="48" alt="Peoples Democratic Party logo" loading="lazy" />
+              <div><b>{site.name}</b><span>PDP candidate for Governor, Ebonyi State 2027</span></div>
+            </div>
+            <p style="margin-top:20px">{site.slogan}. {site.hashtags.join(' ')}</p>
+          </div>
+          <div>
+            <h2>Follow</h2>
+            <div class="socials">
+              {social.map((s) => (
+                <a href={s.url} rel="noopener" target="_blank" aria-label={`${s.name} (opens in a new tab)`}><Icon name={s.icon} size={20} /></a>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h2>Contact</h2>
+            <ul>
+              <li>{contact.office}</li>
+              <li>{contact.phone}</li>
+              <li>{contact.email}</li>
+            </ul>
+          </div>
+          <div>
+            <h2>Site</h2>
+            <ul>
+              <li><a href="/#join">Volunteer</a></li>
+              <li><a href="/privacy/">Privacy notice</a></li>
+              <li><a href="/#news">News and events</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-base">
+          <p>Authorised by {authorisedBy}.</p>
+          <p>© {year} {site.shortName} Campaign</p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Header border on scroll, mobile menu, reveal on scroll.
+      const header = document.querySelector('[data-header]');
+      const onScroll = () => header?.classList.toggle('is-scrolled', window.scrollY > 8);
+      addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+
+      const btn = document.querySelector<HTMLButtonElement>('[data-menu]');
+      const menu = document.getElementById('mobile-nav');
+      btn?.addEventListener('click', () => {
+        const open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (menu) menu.hidden = open;
+      });
+      menu?.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).closest('a')) { menu.hidden = true; btn?.setAttribute('aria-expanded', 'false'); }
+      });
+
+      const items = document.querySelectorAll('.reveal');
+      if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const io = new IntersectionObserver((entries) => {
+          for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+        }, { rootMargin: '0px 0px -8% 0px' });
+        items.forEach((el) => io.observe(el));
+      } else {
+        items.forEach((el) => el.classList.add('is-in'));
+      }
+    </script>
+  </body>
+</html>

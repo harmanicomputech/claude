@@ -1,0 +1,11 @@
+node_modules/
+dist/
+release/
+.astro/
+# Original, full-size media: only the optimised copies in public/media are committed.
+media-src/
+# Volunteer submissions and the real config must never be committed.
+volunteer-data/
+_data/
+volunteer-config.php
+screenshots/

@@ -1,0 +1,14 @@
+---
+// Shown when the volunteer form is submitted without JavaScript and fails validation.
+import Base from '../layouts/Base.astro';
+---
+<Base title="Please check your details" path="/sign-up-problem/" noindex>
+  <section class="section">
+    <div class="wrap prose">
+      <p class="eyebrow">Get involved</p>
+      <h1>Please check your details.</h1>
+      <p class="lede" style="color:var(--muted)">We could not save your sign-up. Please make sure your name, a Nigerian phone number and your LGA are filled in, and that you ticked the consent box. If you have signed up several times in the last hour, please wait a little and try again.</p>
+      <p style="margin-top:28px"><a class="btn btn--primary" href="/#join">Back to the form</a></p>
+    </div>
+  </section>
+</Base>
