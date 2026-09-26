@@ -1,0 +1,208 @@
+---
+// Home page hero. Three design directions (a: light and classic, b: poster, c: party colours).
+import Icon from './Icon.astro';
+import { srcset } from '../lib/media';
+import { site } from '../config';
+
+interface Props { variant?: 'a' | 'b' | 'c' }
+const { variant = 'a' } = Astro.props;
+
+const left = Math.max(0, Date.parse(site.electionDate) - Date.now());
+const days = Math.floor(left / 86400000);
+const hours = Math.floor((left % 86400000) / 3600000);
+const mins = Math.floor((left % 3600000) / 60000);
+const alt = 'Dr. Ifeanyi Chukwuma Odii in a black agbada and red cap';
+---
+{variant === 'a' && (
+  <section class="ha" aria-labelledby="hero-title">
+    <div class="wrap ha-grid">
+      <div class="ha-portrait">
+        <div class="ha-arch-line" aria-hidden="true"></div>
+        <div class="ha-arch">
+          <picture>
+            <source type="image/avif" srcset={srcset('hero-tall', 'avif')} sizes="(min-width: 900px) 440px, 78vw" />
+            <source type="image/webp" srcset={srcset('hero-tall', 'webp')} sizes="(min-width: 900px) 440px, 78vw" />
+            <img src="/media/img/hero-tall-720.jpg" srcset={srcset('hero-tall', 'jpg')} sizes="(min-width: 900px) 440px, 78vw" width="1440" height="1800" alt={alt} fetchpriority="high" decoding="async" />
+          </picture>
+        </div>
+        <span class="ha-dot" aria-hidden="true"></span>
+      </div>
+      <div class="ha-copy">
+        <p class="ha-party"><img src="/media/img/pdp-logo-96.webp" width="28" height="28" alt="" /><span>PDP · Ebonyi State 2027</span></p>
+        <h1 id="hero-title">Dr. Ifeanyi <br />Chukwuma Odii</h1>
+        <p class="ha-office">{site.office}</p>
+        <p class="ha-slogan">{site.slogan}</p>
+        <p class="ha-tags">{site.hashtags.join('  ')}</p>
+        <div class="ha-actions">
+          <a class="btn btn--primary" href="#join">Join the movement <Icon name="arrow" size={18} /></a>
+          <a class="btn btn--outline" href="#watch"><Icon name="play" size={16} /> Watch</a>
+        </div>
+        <div class="ha-count" data-countdown={site.electionDate}>
+          <div class="ha-units" role="timer" aria-label="Time until election day">
+            <div><b data-d>{days}</b><span>days</span></div>
+            <div><b data-h>{hours}</b><span>hours</span></div>
+            <div><b data-m>{mins}</b><span>mins</span></div>
+          </div>
+          <p class="countdown-label">to election day, <time datetime="2027-02-06">{site.electionDateLabel}</time></p>
+        </div>
+      </div>
+    </div>
+  </section>
+)}
+
+{variant === 'b' && (
+  <section class="hb" aria-labelledby="hero-title">
+    <picture class="hb-bg">
+      <source media="(min-width: 900px)" type="image/avif" srcset={srcset('ceremony', 'avif')} sizes="100vw" />
+      <source media="(min-width: 900px)" type="image/webp" srcset={srcset('ceremony', 'webp')} sizes="100vw" />
+      <source media="(min-width: 900px)" srcset={srcset('ceremony', 'jpg')} sizes="100vw" />
+      <source type="image/avif" srcset={srcset('hero-tall', 'avif')} sizes="100vw" />
+      <source type="image/webp" srcset={srcset('hero-tall', 'webp')} sizes="100vw" />
+      <img src="/media/img/hero-tall-720.jpg" srcset={srcset('hero-tall', 'jpg')} sizes="100vw" width="1440" height="1800" alt={alt} fetchpriority="high" decoding="async" />
+    </picture>
+    <div class="wrap hb-copy">
+      <p class="hb-party"><img src="/media/img/pdp-logo-96.webp" width="28" height="28" alt="" /><span>PDP · for Governor, Ebonyi State 2027</span></p>
+      <h1 id="hero-title">Dr. Ifeanyi Chukwuma Odii</h1>
+      <p class="hb-slogan">{site.slogan}.</p>
+      <p class="hb-tags">{site.hashtags.join('  ')}</p>
+      <div class="hb-actions">
+        <a class="btn btn--light" href="#join">Join the movement <Icon name="arrow" size={18} /></a>
+        <a class="btn btn--ghost" href="#watch"><Icon name="play" size={16} /> Watch</a>
+      </div>
+      <div class="hb-count" data-countdown={site.electionDate}>
+        <span class="countdown-label">Election day, <time datetime="2027-02-06">{site.electionDateLabel}</time></span>
+        <span class="hb-units" role="timer" aria-label="Time until election day"><b data-d>{days}</b> days <b data-h>{hours}</b> hrs <b data-m>{mins}</b> min</span>
+      </div>
+    </div>
+  </section>
+)}
+
+{variant === 'c' && (
+  <section class="hc" aria-labelledby="hero-title">
+    <div class="wrap hc-grid">
+      <div class="hc-photo">
+        <span class="hc-block" aria-hidden="true"></span>
+        <div class="hc-frame">
+          <picture>
+            <source type="image/avif" srcset={srcset('hero-tall', 'avif')} sizes="(min-width: 900px) 460px, 86vw" />
+            <source type="image/webp" srcset={srcset('hero-tall', 'webp')} sizes="(min-width: 900px) 460px, 86vw" />
+            <img src="/media/img/hero-tall-720.jpg" srcset={srcset('hero-tall', 'jpg')} sizes="(min-width: 900px) 460px, 86vw" width="1440" height="1800" alt={alt} fetchpriority="high" decoding="async" />
+          </picture>
+        </div>
+        <div class="hc-count" data-countdown={site.electionDate}>
+          <p class="countdown-label">Until election day</p>
+          <div class="hc-units" role="timer" aria-label="Time until election day">
+            <div><b data-d>{days}</b><span>Days</span></div>
+            <div><b data-h>{hours}</b><span>Hrs</span></div>
+            <div><b data-m>{mins}</b><span>Min</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="hc-copy">
+        <p class="hc-party"><img src="/media/img/pdp-logo-96.webp" width="30" height="30" alt="" /><span>PDP · Ebonyi State 2027</span></p>
+        <h1 id="hero-title">Dr. Ifeanyi Chukwuma Odii</h1>
+        <p class="hc-office">{site.office}</p>
+        <p class="hc-slogan"><span>{site.slogan}</span></p>
+        <p class="hc-tags">{site.hashtags.join('  ')}</p>
+        <div class="hc-actions">
+          <a class="btn btn--light" href="#join">Join the movement <Icon name="arrow" size={18} /></a>
+          <a class="btn btn--ghost" href="#watch"><Icon name="play" size={16} /> Watch</a>
+        </div>
+        <p class="hc-date"><time datetime="2027-02-06">{site.electionDateLabel}</time></p>
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  h1 { margin: 0; }
+  .countdown-label { margin: 0; }
+
+  /* ---------- A: light and classic ---------- */
+  .ha { background: var(--paper); padding: 28px 0 64px; overflow: hidden; }
+  .ha-grid { display: grid; gap: 34px; }
+  .ha-portrait { position: relative; width: min(78%, 330px); margin: 8px auto 0; }
+  .ha-arch { position: relative; aspect-ratio: 4 / 5; border-radius: 999px 999px 22px 22px; overflow: hidden; background: #d9d4cc; box-shadow: 0 30px 60px -30px rgba(17, 24, 20, .35); }
+  .ha-arch img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; }
+  .ha-arch-line { position: absolute; inset: -12px -12px 12px 12px; border: 1.5px solid var(--green); border-radius: 999px 999px 26px 26px; }
+  .ha-dot { position: absolute; right: -6px; top: 22%; width: 18px; height: 18px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 6px var(--paper); }
+  .ha-party { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; font: 600 .78rem/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .ha h1 { font-size: clamp(2.5rem, 11vw, 5rem); line-height: 1; color: var(--ink); }
+  .ha-office { margin: 14px 0 0; font-size: clamp(1.05rem, 3.6vw, 1.25rem); color: var(--muted); }
+  .ha-slogan { position: relative; display: inline-block; margin: 26px 0 0; padding-bottom: 12px; font: 600 clamp(1.6rem, 6.4vw, 2.4rem)/1.1 var(--serif); letter-spacing: -.01em; color: var(--green-700); }
+  .ha-slogan::after { content: ''; position: absolute; left: 0; bottom: 0; width: 64px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--green) 0 33%, var(--line) 33% 66%, var(--red) 66%); }
+  .ha-tags { margin: 12px 0 0; font-weight: 600; font-size: .92rem; color: var(--muted); }
+  .ha-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+  .ha-actions .btn { flex: 1 1 170px; }
+  .ha-count { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 26px; padding: 16px 18px; border-radius: 16px; background: #fff; border: 1px solid var(--line); }
+  .ha-units { display: flex; gap: 18px; }
+  .ha-units div { display: flex; align-items: baseline; gap: 5px; }
+  .ha-units b { font: 600 1.7rem/1 var(--serif); font-variant-numeric: tabular-nums; color: var(--ink); }
+  .ha-units span { font-size: .85rem; color: var(--muted); }
+  .ha-count .countdown-label { font-size: .88rem; color: var(--muted); }
+  @media (min-width: 900px) {
+    .ha { padding: 56px 0 96px; }
+    .ha-grid { grid-template-columns: 1.15fr .85fr; gap: 64px; align-items: center; }
+    .ha-portrait { order: 2; width: min(100%, 440px); margin: 0 0 0 auto; }
+    .ha-actions .btn { flex: 0 0 auto; }
+    .ha-count { display: inline-flex; }
+  }
+
+  /* ---------- B: poster ---------- */
+  .hb { position: relative; background: #120d0a; color: #fff; overflow: hidden; padding-bottom: 32px; }
+  .hb-bg { position: relative; display: block; aspect-ratio: 4 / 5; max-height: 80svh; width: 100%; }
+  .hb-bg img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 8%; }
+  .hb-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(18, 13, 10, 0) 42%, rgba(18, 13, 10, .7) 70%, #120d0a 100%); }
+  .hb-copy { position: relative; z-index: 1; margin-top: -150px; }
+  .hb-party { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font: 600 .78rem/1.3 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: #e8dcd0; }
+  .hb-party img { border-radius: 50%; background: #fff; flex: none; }
+  .hb h1 { font: 600 clamp(1.25rem, 4.6vw, 1.7rem)/1.2 var(--sans); letter-spacing: 0; color: #fff; }
+  .hb-slogan { margin: 8px 0 0; font: 600 clamp(3rem, 15vw, 7rem)/.95 var(--serif); letter-spacing: -.03em; max-width: 11ch; }
+  .hb-tags { margin: 16px 0 0; font-weight: 600; font-size: .95rem; color: #f3c9c2; }
+  .hb-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+  .hb-actions .btn { flex: 1 1 170px; }
+  .hb-count { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; margin-top: 28px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, .22); font-size: .9rem; color: #e8dcd0; }
+  .hb-units b { font: 600 1.15rem/1 var(--serif); color: #fff; font-variant-numeric: tabular-nums; margin-left: 6px; }
+  .hb-units b:first-child { margin-left: 0; }
+  @media (min-width: 900px) {
+    .hb { display: flex; align-items: flex-end; min-height: min(calc(100vh - 64px), 820px); padding-bottom: 0; }
+    .hb-bg { position: absolute; inset: 0; aspect-ratio: auto; max-height: none; height: 100%; }
+    .hb-bg img { object-position: 50% 35%; }
+    .hb-bg::after { background: linear-gradient(90deg, rgba(10, 8, 6, .88) 0%, rgba(10, 8, 6, .55) 38%, rgba(10, 8, 6, 0) 62%), linear-gradient(0deg, rgba(10, 8, 6, .6), rgba(10, 8, 6, 0) 35%); }
+    .hb-copy { margin-top: 0; padding-block: 96px 48px; }
+    .hb-copy > *:not(.hb-count) { max-width: 620px; }
+    .hb-actions .btn { flex: 0 0 auto; }
+  }
+
+  /* ---------- C: party colours ---------- */
+  .hc { position: relative; background: radial-gradient(120% 90% at 85% 10%, #0f7a4d 0%, var(--green-700) 40%, #064a2c 100%); color: #fff; overflow: hidden; padding: 32px 0 60px; }
+  .hc::before { content: ''; position: absolute; left: -10%; bottom: -35%; width: 70%; aspect-ratio: 1; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .08); }
+  .hc-grid { position: relative; display: grid; gap: 64px; }
+  .hc-photo { position: relative; width: min(86%, 380px); margin: 0 auto; }
+  .hc-block { position: absolute; right: -16px; bottom: -16px; width: 70%; height: 60%; border-radius: 20px; background: var(--red); }
+  .hc-frame { position: relative; aspect-ratio: 4 / 5; border-radius: 20px; overflow: hidden; background: #d9d4cc; box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .45); }
+  .hc-frame img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; }
+  .hc-count { position: absolute; left: -12px; bottom: -34px; padding: 12px 14px 12px; border-radius: 16px; background: #fff; color: var(--ink); box-shadow: 0 16px 40px -12px rgba(0, 0, 0, .45); }
+  .hc-count .countdown-label { font: 600 .7rem/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--red-600); margin-bottom: 8px; }
+  .hc-units { display: flex; gap: 14px; }
+  .hc-units div { text-align: center; }
+  .hc-units b { display: block; font: 600 1.6rem/1 var(--serif); font-variant-numeric: tabular-nums; }
+  .hc-units span { display: block; margin-top: 4px; font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .hc-party { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; font: 600 .78rem/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: #d6efe2; }
+  .hc-party img { border-radius: 50%; background: #fff; }
+  .hc h1 { font-size: clamp(2.5rem, 11vw, 4.8rem); line-height: 1; }
+  .hc-office { margin: 12px 0 0; font-size: clamp(1.05rem, 3.6vw, 1.25rem); color: #d6efe2; }
+  .hc-slogan { margin: 24px 0 0; }
+  .hc-slogan span { display: inline-block; padding: 10px 18px 12px; border-radius: 12px; background: #fff; color: var(--red-600); font: 600 clamp(1.45rem, 6vw, 2.2rem)/1.1 var(--serif); letter-spacing: -.01em; transform: rotate(-1.5deg); box-shadow: 0 10px 30px -12px rgba(0, 0, 0, .4); }
+  .hc-tags { margin: 16px 0 0; font-weight: 600; font-size: .95rem; color: #d6efe2; }
+  .hc-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+  .hc-actions .btn { flex: 1 1 170px; }
+  .hc-date { margin: 18px 0 0; font-size: .9rem; color: #d6efe2; }
+  @media (min-width: 900px) {
+    .hc { padding: 72px 0 104px; }
+    .hc-grid { grid-template-columns: 1.1fr .9fr; gap: 72px; align-items: center; }
+    .hc-photo { order: 2; width: min(100%, 440px); margin: 0 0 0 auto; }
+    .hc-actions .btn { flex: 0 0 auto; }
+  }
+  @media (prefers-reduced-motion: reduce) { .hc-slogan span { transform: none; } }
+</style>
