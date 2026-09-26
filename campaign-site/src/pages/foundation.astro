@@ -1,0 +1,82 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Pic from '../components/Pic.astro';
+import FoundationImpact from '../components/sections/FoundationImpact.astro';
+import UnityCup from '../components/sections/UnityCup.astro';
+import CtaBand from '../components/sections/CtaBand.astro';
+import { waecSchools, empowerment2017 } from '../data/content';
+---
+<Base title="The Ebele and Anyichuks Foundation" path="/foundation/" description="Homes, churches, schools, scholarships, medical outreach, empowerment programmes and the Anyichuks Unity Cup: the work of the Ebele and Anyichuks Foundation.">
+  <PageHeader eyebrow="Philanthropy" title="The Ebele and Anyichuks Foundation"
+    lede="A non-profit set up to make a positive difference in the lives of young people: creating opportunities in entrepreneurship, education and entertainment, while caring for the less privileged."
+    image="fdn-celebration" alt="Women celebrating at the foundation’s annual empowerment programme" />
+
+  <section class="section" aria-labelledby="mandate-title">
+    <div class="wrap">
+      <h2 id="mandate-title" class="sr-only">What the foundation has done</h2>
+      <figure class="reveal" style="margin:0 0 56px">
+        <blockquote class="pull">For over 10 years, my wife and I have been running with the divine mandate of supporting and empowering people through our foundation.</blockquote>
+        <figcaption class="pull-cite">Dr. Ifeanyi Odii</figcaption>
+      </figure>
+      <FoundationImpact />
+    </div>
+  </section>
+
+  <section class="section section--sand" aria-labelledby="waec-title">
+    <div class="wrap split">
+      <div class="reveal">
+        <p class="eyebrow">Education</p>
+        <h2 id="waec-title" class="title">10,000 WAEC books for Ebonyi students.</h2>
+        <p class="lede">The foundation donated 10,000 copies of West African Examinations Council (WAEC) past questions and answers to students in Ebonyi State, part of its commitment to improving results in external examinations such as WAEC and NECO. The project includes free academic materials, free tutorials and university scholarships.</p>
+        <div class="stat-row">
+          <div class="stat"><b>10,000</b><span>WAEC past-question books</span></div>
+          <div class="stat"><b>11</b><span>Beneficiary secondary schools</span></div>
+          <div class="stat"><b>1,000+</b><span>Scholarships, at home and abroad</span></div>
+        </div>
+      </div>
+      <aside class="reveal">
+        <div class="card">
+          <h3>Beneficiary schools</h3>
+          <ol class="schools" style="columns:1">
+            {waecSchools.map((s) => <li>{s}</li>)}
+          </ol>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="emp-title">
+    <div class="wrap">
+      <div class="head reveal">
+        <p class="eyebrow">Annual empowerment project</p>
+        <h2 id="emp-title" class="title">Tools to earn a living.</h2>
+        <p class="lede">Each year, the foundation’s empowerment project gives families the means to work and trade.</p>
+      </div>
+      <div class="split">
+        <div class="reveal">
+          <h3 style="font-size:1.6rem;margin-bottom:10px">2017: education and women’s empowerment</h3>
+          <p style="color:var(--ink-soft)">The foundation donated a new school building to Isu Achara Primary School, with an ICT centre, laboratory and multipurpose hall, and distributed:</p>
+          <div class="stat-row">
+            {empowerment2017.map(([n, what]) => <div class="stat"><b>{n}</b><span>{what}</span></div>)}
+          </div>
+          <h3 style="font-size:1.6rem;margin:40px 0 10px">2016: health and livelihoods</h3>
+          <p style="color:var(--ink-soft)">The foundation provided free mobile medical testing and free drugs on prescription, and equipped people in Ebonyi State with motorcycles (okada), sewing machines, bags of rice, bundles of wrappers and educational scholarships.</p>
+        </div>
+        <aside class="reveal">
+          <div class="lead-photo" style="position:static;aspect-ratio:4/3"><Pic name="fdn-machines" alt="Grinding machines and generators lined up for distribution" sizes="(min-width: 900px) 440px, 100vw" /></div>
+        </aside>
+      </div>
+      <div class="mosaic">
+        <figure class="reveal"><Pic name="fdn-aerial" alt="Aerial view of the empowerment programme, with motorcycles and bags of rice laid out" sizes="(min-width: 900px) 580px, 100vw" /></figure>
+        <figure class="reveal"><Pic name="fdn-sewing" alt="Rows of new sewing machines ready for distribution" sizes="(min-width: 900px) 290px, 50vw" /></figure>
+        <figure class="reveal"><Pic name="fdn-rice" alt="Bags of rice stacked for distribution" sizes="(min-width: 900px) 290px, 50vw" /></figure>
+        <figure class="reveal"><Pic name="fdn-women" alt="Women seated together at the empowerment programme" sizes="(min-width: 900px) 290px, 50vw" /></figure>
+        <figure class="reveal"><Pic name="fdn-books" alt="WAEC past-question books stacked in front of students" sizes="(min-width: 900px) 290px, 50vw" /></figure>
+      </div>
+      <UnityCup />
+    </div>
+  </section>
+
+  <CtaBand />
+</Base>

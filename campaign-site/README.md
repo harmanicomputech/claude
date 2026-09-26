@@ -1,6 +1,6 @@
 # Campaign website: Dr. Ifeanyi Chukwuma Odii for Governor, Ebonyi 2027
 
-A static one-page campaign site (Astro), compiled to plain HTML/CSS/JS, plus one small PHP file for the volunteer form. It runs on ordinary shared hosting (DirectAdmin or cPanel) with no terminal and no database.
+A static multi-page campaign site (Astro), compiled to plain HTML/CSS/JS, plus one small PHP file for the volunteer form. It runs on ordinary shared hosting (DirectAdmin or cPanel) with no terminal and no database.
 
 ## Uploading to DirectAdmin (no terminal needed)
 
@@ -43,15 +43,17 @@ php -S 127.0.0.1:8080 -t dist &     # serves the built site, including volunteer
 node scripts/check.mjs              # screenshots at 360/768/1280px, fails on horizontal scroll or console errors
 ```
 
-Last run (26 Sept 2026, Lighthouse mobile, home page): Performance 98–99, Accessibility 100, Best Practices 100, SEO 100. The page is about 217 KB on first load; videos download only when tapped.
+Last run (26 Sept 2026, Lighthouse mobile): Performance 98–99, Accessibility 100, Best Practices 100 and SEO 100 on the home, agenda, foundation and get-involved pages. Each page is 130–220 KB on first load; videos download only when tapped.
 
 ## What is where
 
 | Path | What |
 |---|---|
 | `src/config.ts` | Domain, slogan, hashtags, socials, contact, "Authorised by", LGAs, volunteer options |
-| `src/data/content.ts` | Approved agenda pillars, track-record facts, quotes, companies, gallery |
-| `src/pages/index.astro` | The one-page home (hero, about, record, agenda, watch, foundation, leadership, gallery, news, join) |
+| `src/data/content.ts` | Approved agenda pillars and their detail (his words, his record), track-record facts, quotes, companies, foundation facts, timeline, gallery |
+| `src/pages/index.astro` | Home: hero, intro, track record, agenda cards, video, foundation, leadership, gallery and news previews |
+| `src/pages/about.astro`, `agenda.astro`, `foundation.astro`, `leadership.astro`, `media.astro`, `news.astro`, `get-involved.astro` | The inner pages |
+| `src/components/Hero.astro`, `PageHeader.astro`, `sections/` | The home hero, the green inner-page header, and sections shared between pages |
 | `src/pages/privacy.astro` | Privacy notice (NDPA 2023). Have it reviewed by a lawyer before launch |
 | `public/volunteer.php` | Form handler: honeypot, time trap, rate limit, consent record, CSV and email |
 | `public/.htaccess` | Caching, compression, security headers, blocks config and data files |

@@ -1,17 +1,17 @@
 {
-  "_help": "Add news items to the list below. date is YYYY-MM-DD (optional); link can be a web address or a section like /#watch (optional). Newest dates show first. Keep the commas between items.",
+  "_help": "Add news items to the list below. date is YYYY-MM-DD (optional); link can be a web address or a page like /media/ (optional). Newest dates show first. Keep the commas between items.",
   "items": [
     {
       "date": "",
       "title": "Why I am running: interview with BBC News Igbo",
       "summary": "Dr. Odii speaks about poverty, women in government, security and change from day one.",
-      "link": "/#watch"
+      "link": "/media/"
     },
     {
       "date": "",
       "title": "Volunteer sign-up is open in all 13 LGAs",
       "summary": "Join the movement in your ward and polling unit.",
-      "link": "/#join"
+      "link": "/get-involved/"
     }
   ]
 }

@@ -75,12 +75,20 @@ const videoSources: Record<string, { src: string; poster: string; track?: string
   'interview-2022': { src: '/media/video/interview-2022.mp4', poster: '/media/video/interview-2022-poster.jpg' },
 };
 
+type LightboxItem = { image?: string; imageWebp?: string; alt?: string; video?: string; caption: string };
+
 export function initGallery() {
   const dialog = document.querySelector<HTMLDialogElement>('[data-lightbox]');
-  const items = [...document.querySelectorAll<HTMLButtonElement>('[data-gallery] .g-item')];
   if (!dialog || typeof dialog.showModal !== 'function') return;
   const stage = dialog.querySelector<HTMLElement>('[data-stage]')!;
-  const caption = dialog.querySelector<HTMLElement>('[data-caption]')!;
+  const caption = dialog.querySelector<HTMLElement>('[data-lb-caption]')!;
+  const prev = dialog.querySelector<HTMLElement>('[data-prev]')!;
+  const next = dialog.querySelector<HTMLElement>('[data-next]')!;
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-gallery] .g-item')];
+  const galleryItems: LightboxItem[] = buttons.map((b) => ({
+    image: b.dataset.full, imageWebp: b.dataset.fullWebp, alt: b.querySelector('img')?.alt, video: b.dataset.video, caption: b.dataset.caption || '',
+  }));
+  let items: LightboxItem[] = [];
   let index = 0;
   let opener: HTMLElement | null = null;
 
@@ -88,42 +96,42 @@ export function initGallery() {
     index = (i + items.length) % items.length;
     const it = items[index];
     stage.replaceChildren();
-    if (it.dataset.video) {
-      const v = videoSources[it.dataset.video];
-      const el = makeVideo(v.src, v.poster, v.track, it.dataset.caption);
+    if (it.video) {
+      const v = videoSources[it.video];
+      const el = makeVideo(v.src, v.poster, v.track, it.caption);
       stage.append(el);
       el.play().catch(() => {});
     } else {
       const pic = document.createElement('picture');
       const s = document.createElement('source');
-      s.type = 'image/webp'; s.srcset = it.dataset.fullWebp!;
+      s.type = 'image/webp'; s.srcset = it.imageWebp!;
       const img = document.createElement('img');
-      img.src = it.dataset.full!;
-      img.alt = it.querySelector('img')?.alt || '';
+      img.src = it.image!; img.alt = it.alt || '';
       pic.append(s, img);
       stage.append(pic);
     }
-    caption.textContent = `${it.dataset.caption}  ·  ${index + 1} of ${items.length}`;
+    caption.textContent = items.length > 1 ? `${it.caption}  ·  ${index + 1} of ${items.length}` : it.caption;
+    prev.hidden = next.hidden = items.length < 2;
   };
-  const open = (i: number, from: HTMLElement | null) => { opener = from; show(i); dialog.showModal(); };
-  const close = () => dialog.close();
+  const open = (list: LightboxItem[], i: number, from: HTMLElement | null) => { items = list; opener = from; show(i); dialog.showModal(); };
 
-  items.forEach((it, i) => it.addEventListener('click', () => open(i, it)));
-  dialog.querySelector('[data-close]')!.addEventListener('click', close);
-  dialog.querySelector('[data-prev]')!.addEventListener('click', () => show(index - 1));
-  dialog.querySelector('[data-next]')!.addEventListener('click', () => show(index + 1));
-  dialog.addEventListener('click', (e) => { if (e.target === dialog || e.target === stage) close(); });
+  buttons.forEach((b, i) => b.addEventListener('click', () => open(galleryItems, i, b)));
+  dialog.querySelector('[data-close]')!.addEventListener('click', () => dialog.close());
+  prev.addEventListener('click', () => show(index - 1));
+  next.addEventListener('click', () => show(index + 1));
+  dialog.addEventListener('click', (e) => { if (e.target === dialog || e.target === stage) dialog.close(); });
   dialog.addEventListener('keydown', (e) => {
+    if (items.length < 2) return;
     if (e.key === 'ArrowLeft') show(index - 1);
     if (e.key === 'ArrowRight') show(index + 1);
   });
   dialog.addEventListener('close', () => { stage.replaceChildren(); opener?.focus(); });
 
-  // "Play" buttons elsewhere on the page open the matching gallery video.
+  // "Play" buttons elsewhere open that one video.
   document.querySelectorAll<HTMLElement>('[data-open-video]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const i = items.findIndex((it) => it.dataset.video === btn.dataset.openVideo);
-      if (i >= 0) open(i, btn);
+      const id = btn.dataset.openVideo!;
+      open([{ video: id, caption: btn.dataset.caption || 'Video' }], 0, btn);
     });
   });
 
@@ -132,7 +140,7 @@ export function initGallery() {
   stage.addEventListener('touchend', (e) => {
     if (x0 === null) return;
     const dx = e.changedTouches[0].clientX - x0;
-    if (Math.abs(dx) > 50 && !items[index].dataset.video) show(index + (dx < 0 ? 1 : -1));
+    if (items.length > 1 && Math.abs(dx) > 50 && !items[index].video) show(index + (dx < 0 ? 1 : -1));
     x0 = null;
   });
 }
@@ -180,7 +188,8 @@ export async function initNews() {
     const data = await res.json();
     const items: NewsItem[] = (Array.isArray(data) ? data : data.items || []).filter((n: NewsItem) => n && n.title);
     items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    render(items);
+    const limit = Number(list.dataset.limit) || items.length;
+    render(items.slice(0, limit));
   } catch {
     render([]);
   }

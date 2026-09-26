@@ -1,0 +1,26 @@
+---
+// Photo and video grid; items open in the site-wide lightbox (see Base.astro).
+import Pic from '../Pic.astro';
+import Icon from '../Icon.astro';
+import media from '../../data/media.json';
+import { images } from '../../lib/media';
+import { gallery } from '../../data/content';
+interface Props { limit?: number }
+const { limit } = Astro.props;
+const items = limit ? gallery.filter((g) => g.image).slice(0, limit) : gallery;
+const mb = media.videos as Record<string, { mb: number }>;
+---
+<div class="gallery" data-gallery>
+  {items.map((g) => (
+    <button type="button" class:list={['g-item', { wide: g.wide }]}
+      data-full={g.image ? `/media/img/${g.image}-${images[g.image].widths.at(-1)}.jpg` : undefined}
+      data-full-webp={g.image ? `/media/img/${g.image}-${images[g.image].widths.at(-1)}.webp` : undefined}
+      data-video={g.video} data-caption={g.caption}
+      aria-label={g.video ? `Video · ${mb[g.video].mb} MB: play ${g.caption}` : `Enlarge photo: ${g.caption}`}>
+      {g.image
+        ? <Pic name={g.image} alt={g.alt} sizes={g.wide ? '(min-width: 760px) 50vw, 100vw' : '(min-width: 760px) 25vw, 50vw'} />
+        : <picture><source type="image/webp" srcset={`/media/video/${g.video}-poster.webp`} /><img src={`/media/video/${g.video}-poster.jpg`} alt={g.alt} loading="lazy" decoding="async" width="540" height="960" /></picture>}
+      {g.video && <span class="badge"><Icon name="play" size={14} /> Video · {mb[g.video].mb} MB</span>}
+    </button>
+  ))}
+</div>

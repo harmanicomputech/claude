@@ -1,0 +1,74 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Pic from '../components/Pic.astro';
+import Icon from '../components/Icon.astro';
+import Record from '../components/sections/Record.astro';
+import CtaBand from '../components/sections/CtaBand.astro';
+import { timeline, education, boards } from '../data/content';
+---
+<Base title="About Dr. Odii" path="/about/" description="The story of Dr. Ifeanyi Chukwuma Odii: businessman, philanthropist and PDP candidate for Governor of Ebonyi State in 2027.">
+  <PageHeader eyebrow="About" title="Builder. Philanthropist. Son of Ebonyi."
+    lede="More than 20 years building businesses across Nigeria and Sub-Saharan Africa, and more than ten years giving back through his foundation."
+    image="about" alt="Dr. Ifeanyi Chukwuma Odii in a black cap and shirt, smiling" />
+
+  <section class="section" aria-labelledby="bio-title">
+    <div class="wrap split">
+      <div class="prose reveal">
+        <h2 id="bio-title" class="sr-only">Biography</h2>
+        <p style="font-size:1.25rem;color:var(--ink)">Dr. Ifeanyi Chukwuma Odii is a businessman and philanthropist with more than 20 years’ experience building and managing businesses across many sectors.</p>
+        <p>He is the Founder and Chairman of Orient Global Group, whose subsidiaries include Orient Global Manufacturing, Orient Haulage &amp; Logistics and Purity Agro-Allied Ltd. He is also the President and CEO of Ultimus Holdings, whose subsidiaries include Ultimus Construction, Ultimus Properties and Ultimus Global Integrated, owners of The Classroom by Ultimus and Viarmor Healthcare Ltd. With investments in manufacturing, logistics, construction, real estate, healthcare, trade and services, he has grown these businesses beyond Nigeria into Sub-Saharan Africa.</p>
+        <p>He is an alumnus of Lagos Business School, where he completed the Chief Executive Programme, and holds a B.Sc. in Business Administration from the National Open University of Nigeria. He was conferred with a Doctor of Science degree in Strategic Business Management &amp; Corporate Governance by the European American University in the Republic of Panama. He is a member of the Governing Council of Lagos State University and sits on the board of Prosperis Holdings. Over the years he has honed his skills in leadership, management and business strategy.</p>
+        <p>Through the Ebele and Anyichuks Foundation, which he founded with his wife and named after them both, he has built more than 100 homes for the indigent in rural areas, 6 churches and 3 floors of a primary and secondary school, given scholarships to more than 1,000 students at home and abroad, and provided medical screening and support every year. His love of sport led him to establish the Anyichuks Unity Cup, a yearly tournament in his hometown that encourages and empowers young people and promotes grassroots sport.</p>
+        <p>Beyond his businesses and his family, he enjoys reading, swimming, keeping fit and golf; he is a member of several golf clubs in Lagos.</p>
+      </div>
+      <aside class="reveal" style="display:grid;gap:16px">
+        <div class="card">
+          <h3>Education</h3>
+          <ul>{education.map((e) => <li><b>{e.title}</b><br /><span style="color:var(--muted)">{e.place}</span></li>)}</ul>
+        </div>
+        <div class="card">
+          <h3>Boards</h3>
+          <ul>{boards.map((b) => <li>{b}</li>)}</ul>
+        </div>
+        <div class="card">
+          <h3>Away from work</h3>
+          <ul><li>Reading</li><li>Swimming</li><li>Keeping fit</li><li>Golf: a member of several golf clubs in Lagos</li></ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section section--sand" aria-labelledby="why-title">
+    <div class="wrap split">
+      <div class="reveal">
+        <p class="eyebrow">Why he is running</p>
+        <h2 id="why-title" class="title">“Governance is for the welfare of the people.”</h2>
+        <p class="lede">In his interview with BBC News Igbo, Dr. Odii speaks about his mother, a widow, and the women in his family, and about why he believes change can begin on the first day in office.</p>
+        <figure style="margin:28px 0 0">
+          <blockquote class="pull" style="font-size:clamp(1.3rem,3.6vw,1.8rem)">Ebonyi is a land blessed by God, but the problem we have in Ebonyi State today is leadership. Get a good leader who understands governance, and everything will change in the blink of an eye.</blockquote>
+          <figcaption class="pull-cite">Dr. Ifeanyi Odii, BBC News Igbo (translated from Igbo)</figcaption>
+        </figure>
+        <p style="margin-top:28px"><a class="btn btn--primary" href="/media/">Watch the interview <Icon name="play" size={16} /></a></p>
+      </div>
+      <aside class="reveal">
+        <div class="lead-photo" style="position:static"><Pic name="white-cap" alt="Dr. Odii in a white shirt and cap, smiling and pointing" sizes="(min-width: 900px) 420px, 100vw" /></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="journey-title">
+    <div class="wrap split">
+      <div class="reveal">
+        <p class="eyebrow">Journey</p>
+        <h2 id="journey-title" class="title">The road to 2027.</h2>
+      </div>
+      <ol class="timeline reveal">
+        {timeline.map((t) => <li><b>{t.when}</b><p>{t.what}</p></li>)}
+      </ol>
+    </div>
+  </section>
+
+  <Record />
+  <CtaBand />
+</Base>

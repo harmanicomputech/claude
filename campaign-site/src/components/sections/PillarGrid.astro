@@ -1,0 +1,23 @@
+---
+// The eight agenda pillars as cards. With `link`, each card links to its section on /agenda/.
+import Pic from '../Pic.astro';
+import Icon from '../Icon.astro';
+import { pillars } from '../../data/content';
+interface Props { link?: boolean; compact?: boolean }
+const { link = false, compact = false } = Astro.props;
+---
+<div class:list={['pillars', { 'pillars--compact': compact }]}>
+  {pillars.map((p) => (
+    <article class="pillar reveal">
+      {!compact && (p.image
+        ? <div class="pillar-media"><Pic name={p.image} alt={p.alt ?? ''} sizes="(min-width: 1100px) 280px, (min-width: 700px) 50vw, 100vw" /></div>
+        : <div class="pillar-media pillar-media--icon" aria-hidden="true"><Icon name={p.icon} size={64} /></div>)}
+      <div class="pillar-body">
+        <div class="pillar-top"><span class="pillar-icon"><Icon name={p.icon} /></span><span class="pillar-num"></span></div>
+        <h3>{link ? <a class="stretched" href={`/agenda/#${p.id}`}>{p.title}</a> : p.title}</h3>
+        <p>{p.body}</p>
+        {link && <p class="more">Read more <Icon name="arrow" size={16} /></p>}
+      </div>
+    </article>
+  ))}
+</div>

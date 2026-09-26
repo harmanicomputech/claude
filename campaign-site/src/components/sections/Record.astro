@@ -1,0 +1,24 @@
+---
+import { facts } from '../../data/content';
+interface Props { title?: string; lede?: string }
+const { title = 'A record you can count.', lede = 'Before asking for your vote, he has already delivered, in business and in communities across Ebonyi.' } = Astro.props;
+---
+<section class="section section--night on-night" id="record" aria-labelledby="record-title">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Track record</p>
+      <h2 id="record-title" class="title">{title}</h2>
+      <p class="lede">{lede}</p>
+    </div>
+    <div class="facts reveal">
+      {facts.map((f) => (
+        <div class="fact">
+          {'value' in f && f.value !== undefined
+            ? <b><span data-count={f.value}>{f.value.toLocaleString('en-NG')}</span>{f.suffix && <small>{f.suffix}</small>}</b>
+            : <b>{f.text}</b>}
+          <span>{f.label}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

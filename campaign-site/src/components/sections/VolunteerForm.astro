@@ -1,0 +1,53 @@
+---
+import { lgas, helpOptions } from '../../config';
+---
+<form class="form reveal" method="post" action="/volunteer.php" data-form novalidate>
+  <h3>Volunteer sign-up</h3>
+  <p>It takes one minute. Fields marked optional can be left blank.</p>
+  <div class="field">
+    <label for="f-name">Full name</label>
+    <input id="f-name" name="name" type="text" autocomplete="name" required maxlength="100" />
+  </div>
+  <div class="field">
+    <label for="f-phone">Phone number <span class="hint">(WhatsApp if you have it)</span></label>
+    <input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required maxlength="20" placeholder="0803 000 0000" />
+  </div>
+  <div class="field">
+    <label for="f-lga">Local Government Area</label>
+    <select id="f-lga" name="lga" required>
+      <option value="">Choose your LGA</option>
+      {lgas.map((l) => <option value={l}>{l}</option>)}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-ward">Ward <span class="hint">(optional)</span></label>
+    <input id="f-ward" name="ward" type="text" maxlength="100" />
+  </div>
+  <fieldset class="field">
+    <legend>How can you help? <span class="hint">(choose any)</span></legend>
+    <div class="checks">
+      {helpOptions.map((h, i) => (
+        <label class="check" for={`f-help-${i}`}><input id={`f-help-${i}`} type="checkbox" name="help[]" value={h} /> {h}</label>
+      ))}
+    </div>
+  </fieldset>
+  <div class="field">
+    <label for="f-message">Anything else? <span class="hint">(optional)</span></label>
+    <textarea id="f-message" name="message" maxlength="1000"></textarea>
+  </div>
+  <div class="hp" aria-hidden="true">
+    <label for="f-website">Leave this empty</label>
+    <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+  </div>
+  <input type="hidden" name="started" value="" data-started />
+  <div class="consent">
+    <label class="check" for="f-consent">
+      <input id="f-consent" type="checkbox" name="consent" value="yes" required />
+      <span>I agree that the campaign may store these details and contact me by phone, SMS or WhatsApp about volunteering and the campaign, as explained in the <a href="/privacy/" target="_blank">privacy notice</a>. I can withdraw my consent at any time.</span>
+    </label>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn--primary" type="submit">Sign me up</button>
+  </div>
+  <p class="form-status" role="status" aria-live="polite" hidden data-status></p>
+</form>

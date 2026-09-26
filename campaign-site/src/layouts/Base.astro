@@ -17,13 +17,14 @@ const canonical = new URL(path, site.url).href;
 const ogImage = new URL('/media/img/og.jpg', site.url).href;
 const year = new Date().getFullYear();
 const nav = [
-  ['About', '/#about'],
-  ['Agenda', '/#agenda'],
-  ['Watch', '/#watch'],
-  ['Foundation', '/#foundation'],
-  ['Gallery', '/#gallery'],
-  ['News', '/#news'],
+  ['About', '/about/'],
+  ['Agenda', '/agenda/'],
+  ['Foundation', '/foundation/'],
+  ['Leadership', '/leadership/'],
+  ['Media', '/media/'],
+  ['News', '/news/'],
 ];
+const current = (href: string) => (path.startsWith(href) ? 'page' : undefined);
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
@@ -67,10 +68,7 @@ const jsonLd = {
     <meta name="twitter:site" content="@ifeanyiCodii" />
 
     {preloadHero && (
-      <>
-        <link rel="preload" as="image" type="image/avif" media="(max-width: 899px)" imagesrcset={srcset('hero-tall', 'avif')} imagesizes="100vw" fetchpriority="high" />
-        <link rel="preload" as="image" type="image/avif" media="(min-width: 900px)" imagesrcset={srcset('hero-wide', 'avif')} imagesizes="56vw" fetchpriority="high" />
-      </>
+      <link rel="preload" as="image" type="image/avif" imagesrcset={srcset('hero-tall', 'avif')} imagesizes="(min-width: 900px) 460px, 72vw" fetchpriority="high" />
     )}
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     <script is:inline>document.documentElement.classList.add('js');</script>
@@ -85,9 +83,9 @@ const jsonLd = {
         </a>
         <nav class="nav" aria-label="Main">
           <ul class="nav-links">
-            {nav.map(([label, href]) => <li><a href={href}>{label}</a></li>)}
+            {nav.map(([label, href]) => <li><a href={href} aria-current={current(href)}>{label}</a></li>)}
           </ul>
-          <a class="btn btn--primary" href="/#join">Join</a>
+          <a class="btn btn--primary" href="/get-involved/" aria-current={current('/get-involved/')}>Join</a>
           <button class="menu-btn" type="button" aria-expanded="false" aria-controls="mobile-nav" data-menu>
             <Icon name="menu" />
             <span class="sr-only">Menu</span>
@@ -96,8 +94,9 @@ const jsonLd = {
       </div>
       <div class="mobile-nav" id="mobile-nav" hidden>
         <ul>
-          {nav.map(([label, href]) => <li><a href={href}>{label}</a></li>)}
-          <li><a href="/#join">Get involved</a></li>
+          <li><a href="/" aria-current={path === '/' ? 'page' : undefined}>Home</a></li>
+          {nav.map(([label, href]) => <li><a href={href} aria-current={current(href)}>{label}</a></li>)}
+          <li><a href="/get-involved/" aria-current={current('/get-involved/')}>Get involved</a></li>
         </ul>
       </div>
     </header>
@@ -105,6 +104,16 @@ const jsonLd = {
     <main id="main">
       <slot />
     </main>
+
+    <dialog class="lightbox" data-lightbox aria-label="Media viewer">
+      <div class="lightbox-inner">
+        <div class="lightbox-stage" data-stage></div>
+        <p class="lightbox-caption" data-lb-caption></p>
+        <button class="lb-btn lb-close" type="button" data-close aria-label="Close"><Icon name="close" /></button>
+        <button class="lb-btn lb-prev" type="button" data-prev aria-label="Previous"><Icon name="prev" /></button>
+        <button class="lb-btn lb-next" type="button" data-next aria-label="Next"><Icon name="next" /></button>
+      </div>
+    </dialog>
 
     <footer class="site-footer on-night">
       <div class="wrap">
@@ -133,11 +142,11 @@ const jsonLd = {
             </ul>
           </div>
           <div>
-            <h2>Site</h2>
-            <ul>
-              <li><a href="/#join">Volunteer</a></li>
+            <h2>Explore</h2>
+            <ul class="footer-links">
+              {nav.map(([label, href]) => <li><a href={href}>{label}</a></li>)}
+              <li><a href="/get-involved/">Get involved</a></li>
               <li><a href="/privacy/">Privacy notice</a></li>
-              <li><a href="/#news">News and events</a></li>
             </ul>
           </div>
         </div>
@@ -149,6 +158,14 @@ const jsonLd = {
     </footer>
 
     <script>
+      import { initCountdown, initCounters, initVideos, initGallery, initNews, initForm } from '../scripts/home';
+      initCountdown();
+      initCounters();
+      initVideos();
+      initGallery();
+      initNews();
+      initForm();
+
       // Header border on scroll, mobile menu, reveal on scroll.
       const header = document.querySelector('[data-header]');
       const onScroll = () => header?.classList.toggle('is-scrolled', window.scrollY > 8);

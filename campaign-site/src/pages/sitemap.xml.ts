@@ -1,6 +1,6 @@
 import { site } from '../config';
 
-const pages = ['/', '/privacy/'];
+const pages = ['/', '/about/', '/agenda/', '/foundation/', '/leadership/', '/media/', '/news/', '/get-involved/', '/privacy/'];
 
 export function GET() {
   const today = new Date().toISOString().slice(0, 10);

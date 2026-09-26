@@ -8,7 +8,7 @@ const out = process.argv[3] || 'screenshots';
 const exe = process.env.CHROMIUM || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 mkdirSync(out, { recursive: true });
 
-const pages = [['home', '/'], ['privacy', '/privacy/'], ['thank-you', '/thank-you/'], ['404', '/404.html']];
+const pages = [['home', '/'], ['about', '/about/'], ['agenda', '/agenda/'], ['foundation', '/foundation/'], ['leadership', '/leadership/'], ['media', '/media/'], ['news', '/news/'], ['get-involved', '/get-involved/'], ['privacy', '/privacy/'], ['thank-you', '/thank-you/'], ['404', '/404.html']];
 const widths = [360, 768, 1280];
 const browser = await chromium.launch({ executablePath: exe });
 let problems = 0;
@@ -32,7 +32,7 @@ for (const w of widths) {
     const overflow = await page.evaluate(() => {
       const docW = document.documentElement.clientWidth;
       const wide = [...document.querySelectorAll('body *')]
-        .filter((el) => { const r = el.getBoundingClientRect(); return r.width > 0 && (r.right > docW + 1 || r.left < -1) && getComputedStyle(el).position !== 'fixed' && !el.closest('.hp, dialog, .sr-only, .skip'); })
+        .filter((el) => { const r = el.getBoundingClientRect(); return r.width > 0 && (r.right > docW + 1 || r.left < -1) && getComputedStyle(el).position !== 'fixed' && !el.closest('.hp, dialog, .sr-only, .skip, .toc'); })
         .slice(0, 5).map((el) => `${el.tagName.toLowerCase()}.${[...el.classList].join('.')} (${Math.round(el.getBoundingClientRect().right)}px)`);
       return { scroll: document.documentElement.scrollWidth, docW, wide };
     });
@@ -41,7 +41,7 @@ for (const w of widths) {
       console.log(`✗ ${name} @${w}: scrollWidth ${overflow.scroll} > ${overflow.docW}`, overflow.wide);
     } else console.log(`✓ ${name} @${w}: no horizontal scroll`);
     await page.screenshot({ path: `${out}/${name}-${w}-fold.png` });
-    if (name === 'home' || w === 360) await page.screenshot({ path: `${out}/${name}-${w}-full.png`, fullPage: true });
+    await page.screenshot({ path: `${out}/${name}-${w}-full.png`, fullPage: true });
   }
   if (errors.length) { problems++; console.log(`✗ console errors @${w}:`, errors); }
   await ctx.close();

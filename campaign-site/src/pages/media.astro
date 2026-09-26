@@ -1,0 +1,45 @@
+---
+import { readFileSync } from 'node:fs';
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Icon from '../components/Icon.astro';
+import VideoFeature from '../components/sections/VideoFeature.astro';
+import Gallery from '../components/sections/Gallery.astro';
+import CtaBand from '../components/sections/CtaBand.astro';
+
+// English transcript, built from the caption file and grouped into paragraphs by topic.
+const vtt = readFileSync('public/media/video/bbc-igbo-interview.en.vtt', 'utf8');
+const cues = [...vtt.matchAll(/(\d\d):(\d\d):(\d\d)\.\d{3} --> [^\n]+\n([^\n]+)/g)].map((m) => ({ t: +m[1] * 3600 + +m[2] * 60 + +m[3], text: m[4] }));
+const breaks = [0, 26, 70, 112, 137, 171, 187, 215, 229, 999];
+const paras = breaks.slice(0, -1).map((b, i) => ({
+  at: `${Math.floor(b / 60)}:${String(b % 60).padStart(2, '0')}`,
+  text: cues.filter((c) => c.t >= b && c.t < breaks[i + 1]).map((c) => c.text).join(' '),
+})).filter((p) => p.text);
+---
+<Base title="Watch and gallery" path="/media/" description="Watch Dr. Ifeanyi Odii’s interview with BBC News Igbo, read the English transcript, and browse photos from the campaign and the foundation.">
+  <PageHeader eyebrow="Media" title="Watch, read and see."
+    lede="Dr. Odii in his own words, and moments from the campaign trail and the foundation’s work. Videos only download when you tap play." />
+
+  <VideoFeature heading={false}>
+    <details class="transcript reveal">
+      <summary><Icon name="book" size={18} /> Read the full interview in English</summary>
+      <div class="transcript-body">
+        {paras.map((p) => <p><time>{p.at}</time>{p.text}</p>)}
+        <p style="font-size:.88rem;color:var(--on-night-muted)">Translated from the Igbo subtitles of the BBC News Igbo interview.</p>
+      </div>
+    </details>
+  </VideoFeature>
+
+  <section class="section section--sand" id="gallery" aria-labelledby="gallery-title">
+    <div class="wrap">
+      <div class="head reveal">
+        <p class="eyebrow">Gallery</p>
+        <h2 id="gallery-title" class="title">Moments.</h2>
+        <p class="lede">Tap any photo to enlarge it.</p>
+      </div>
+      <Gallery />
+    </div>
+  </section>
+
+  <CtaBand />
+</Base>

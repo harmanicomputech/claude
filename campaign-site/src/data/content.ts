@@ -130,3 +130,101 @@ export const gallery: GalleryItem[] = [
   { image: 'fdn-aerial', alt: 'Aerial view of the empowerment programme grounds with motorcycles and rice', caption: 'Annual empowerment programme', wide: true },
   { image: 'black-cap', alt: 'Dr. Odii in a black cap and shirt, smiling', caption: 'Portrait', wide: true },
 ];
+
+// ---- Detail for the Agenda page -------------------------------------------------
+// "said": Dr. Odii's own words, translated from Igbo (BBC News Igbo interview).
+// "record": things he has already done, from his biography and ifeanyiodii.com.
+export const pillarDetail: Record<string, { said: string[]; record: string[] }> = {
+  'day-one': {
+    said: [
+      'Many people think you must be in office for eight or twenty years before you produce visible results. But if you have a plan and you know the process, change will begin on your first day in office.',
+      'A governance plan tells people what your government intends, and makes them begin to trust government. When they trust the government, the government can begin to work for the public.',
+    ],
+    record: ['More than 20 years building and managing businesses across seven sectors.', 'Founder and Chairman of Orient Global Group; President and CEO of Ultimus Holdings.'],
+  },
+  poverty: {
+    said: [
+      'As Governor, within three months, if you see anyone hawking on the street, know that the person is not from Ebonyi, because I will bring out a plan that stops them from hawking on the streets.',
+      'That is why government must stand firm on changing the mindset of Ebonyi people and rescuing them from poverty.',
+    ],
+    record: ['Annual empowerment programmes through his foundation, providing motorcycles, sewing machines, grinding machines, bags of rice and wrappers to families.'],
+  },
+  women: {
+    said: [
+      'Support a woman, and you have supported the whole community.',
+      'If God gives me victory, and men make up 60 percent of the government, women will be 40 percent of those who work with me, because I know what they are capable of.',
+    ],
+    record: ['His foundation’s 2017 annual programme was dedicated to education and women’s empowerment.'],
+  },
+  business: {
+    said: ['The second reason I am going into government is to bring out policies that will promote business. I know how to do it.'],
+    record: ['Built Orient Global Group and Ultimus Holdings, with businesses in manufacturing, logistics, construction, real estate, healthcare, trade and services.', 'Grew these businesses beyond Nigeria into Sub-Saharan Africa.'],
+  },
+  farms: {
+    said: ['If farmers can farm their land, there will be no trouble.'],
+    record: ['Founder of Purity Agro-Allied Ltd., part of Orient Global Group.'],
+  },
+  youth: {
+    said: ['If young people are supported, none of them will go into the bush looking for someone to kill. It is poverty.'],
+    record: ['Founded the Anyichuks Unity Cup, a yearly grassroots tournament in Isu for young people.', 'Scholarships for more than 1,000 students at home and abroad.'],
+  },
+  infrastructure: {
+    said: [
+      'With my own hands I have built roads in the past. I have provided electricity and built houses for people.',
+      'If I can do these things through the plans I use to run my foundation, then I will make it multiply.',
+    ],
+    record: ['More than 100 homes built for indigent families in rural areas.', 'Six churches built for communities.'],
+  },
+  'education-health': {
+    said: ['I have given people free education, and run medical outreach every year. Governance is for the welfare of the people.'],
+    record: [
+      'Scholarships for more than 1,000 students, and 10,000 WAEC past-question books for 11 secondary schools in Ebonyi.',
+      'A new building for Isu Achara Primary School, with an ICT centre, laboratory and multipurpose hall.',
+      'Yearly medical screening and support, including free mobile medical testing and free prescribed drugs.',
+    ],
+  },
+};
+
+// ---- Foundation (from ifeanyiodii.com/philanthropy) -----------------------------
+export const waecSchools = [
+  'Community Secondary School, Abaomege',
+  'Uzem Comprehensive Secondary School, Amangwu Edda',
+  'Government Secondary School, Owutu Edda',
+  'Itim Secondary School, Edda',
+  'Modern Secondary School, Ebunwana Edda',
+  'Technical Secondary School, Osu Edda',
+  'Akaeze Comprehensive Secondary School, Akaeze',
+  'Community Secondary School, Iyioji, Ivo LGA',
+  'Ishiagu High School, Ishiagu, Ivo LGA',
+  'Modern Secondary School, Ishiagu, Ivo LGA',
+  'Echille Secondary School, Amara Ishiagu',
+];
+
+export const empowerment2017 = [
+  ['50', 'motorcycles'],
+  ['50', 'sewing machines'],
+  ['50', 'grinding machines'],
+  ['1,000', 'bags of rice'],
+  ['500', 'wrappers'],
+  ['20', 'hair dryers'],
+];
+
+// ---- Timeline (dated facts only) -----------------------------------------------
+export const timeline = [
+  { when: 'Over 20 years', what: 'Builds and manages businesses across seven sectors, growing them from Nigeria into Sub-Saharan Africa.' },
+  { when: 'Over 10 years', what: 'Runs the Ebele and Anyichuks Foundation with his wife, supporting and empowering people.' },
+  { when: '2016', what: 'The foundation provides free mobile medical testing, free prescribed drugs, empowerment items and scholarships in Ebonyi State.' },
+  { when: '2017', what: 'The foundation’s annual programme focuses on education and women’s empowerment, including a new building for Isu Achara Primary School.' },
+  { when: '2023', what: 'Runs for Governor of Ebonyi State and pursues the result to the Supreme Court.' },
+  { when: '2027', what: 'PDP candidate for Governor of Ebonyi State. Election day is Saturday, 6 February 2027.' },
+];
+
+export const sectors = [
+  { name: 'Manufacturing', icon: 'factory' },
+  { name: 'Logistics', icon: 'truck' },
+  { name: 'Construction', icon: 'crane' },
+  { name: 'Real estate', icon: 'home' },
+  { name: 'Healthcare', icon: 'medical' },
+  { name: 'Trade', icon: 'trade' },
+  { name: 'Services', icon: 'people' },
+];

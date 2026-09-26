@@ -1,0 +1,53 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Pic from '../components/Pic.astro';
+import Icon from '../components/Icon.astro';
+import CtaBand from '../components/sections/CtaBand.astro';
+import { pillars, pillarDetail } from '../data/content';
+---
+<Base title="Agenda for Ebonyi" path="/agenda/" description="Eight commitments for Ebonyi State: change from day one, out of poverty, women at the table, open for business, farms and agro-processing, youth and security, roads, power and homes, education and health.">
+  <PageHeader eyebrow="Agenda for Ebonyi" title="Eight commitments. One plan, from day one."
+    lede="A plan built on what Dr. Odii has already done through his businesses and his foundation, and on what he has promised the people of Ebonyi." />
+
+  <nav class="toc-bar" aria-label="Agenda sections">
+    <div class="wrap">
+      <div class="toc">
+        {pillars.map((p, i) => <a href={`#${p.id}`}><Icon name={p.icon} size={16} /> {String(i + 1).padStart(2, '0')} {p.title}</a>)}
+      </div>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    {pillars.map((p, i) => {
+      const d = pillarDetail[p.id];
+      return (
+        <section class="plank" id={p.id} aria-labelledby={`${p.id}-title`}>
+          {p.image
+            ? <div class="plank-media reveal"><Pic name={p.image} alt={p.alt ?? ''} sizes="(min-width: 900px) 440px, 100vw" /></div>
+            : <div class="plank-media plank-media--icon reveal" aria-hidden="true"><Icon name={p.icon} size={88} /></div>}
+          <div class="plank-body reveal">
+            <p class="plank-num">{String(i + 1).padStart(2, '0')} / 08</p>
+            <h2 id={`${p.id}-title`}>{p.title}</h2>
+            <p>{p.body}</p>
+            {d?.said.length > 0 && (
+              <figure class="said">
+                <figcaption>In his words</figcaption>
+                {d.said.map((q) => <blockquote>“{q}”</blockquote>)}
+                <figcaption style="text-transform:none;letter-spacing:0;font-weight:400">BBC News Igbo interview, translated from Igbo</figcaption>
+              </figure>
+            )}
+            {d?.record.length > 0 && (
+              <div class="record">
+                <p class="record-title">What he has already done</p>
+                <ul>{d.record.map((r) => <li><Icon name="check" size={18} />{r}</li>)}</ul>
+              </div>
+            )}
+          </div>
+        </section>
+      );
+    })}
+  </div>
+
+  <CtaBand />
+</Base>

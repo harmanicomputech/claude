@@ -1,0 +1,9 @@
+---
+// News is read from /news.json in the browser, so it can be edited on the server without a rebuild.
+interface Props { limit?: number }
+const { limit } = Astro.props;
+---
+<ul class="news" data-news data-limit={limit}>
+  <li><p>Loading the latest news…</p></li>
+</ul>
+<noscript><p>Follow <a href="https://www.facebook.com/ifeanyiCodii/">Dr. Odii on Facebook</a> for the latest news.</p></noscript>

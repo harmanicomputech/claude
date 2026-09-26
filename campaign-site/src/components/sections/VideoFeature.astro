@@ -1,0 +1,56 @@
+---
+// The BBC News Igbo interview (tap to play), with quotes and the 2022 clip.
+import Icon from '../Icon.astro';
+import media from '../../data/media.json';
+import { quotes } from '../../data/content';
+interface Props { showQuotes?: number; heading?: boolean }
+const { showQuotes = 3, heading = true } = Astro.props;
+const mb = media.videos as Record<string, { mb: number }>;
+---
+<section class="section section--night on-night" id="watch" aria-labelledby="watch-title">
+  <div class="wrap">
+    {heading && (
+      <div class="head reveal">
+        <p class="eyebrow">In his own words</p>
+        <h2 id="watch-title" class="title">Why he is running.</h2>
+        <p class="lede">In an interview with BBC News Igbo, Dr. Odii explains what drives him: poverty, women, security and a government that works from day one.</p>
+      </div>
+    )}
+    <div class="watch-grid">
+      <div class="video-card reveal">
+        <div class="video-frame" data-video data-src="/media/video/bbc-igbo-interview.mp4" data-poster="/media/video/bbc-igbo-interview-poster.jpg" data-track="/media/video/bbc-igbo-interview.en.vtt" data-title="Interview with BBC News Igbo">
+          <picture>
+            <source type="image/webp" srcset="/media/video/bbc-igbo-interview-poster.webp" />
+            <img src="/media/video/bbc-igbo-interview-poster.jpg" width="540" height="960" alt="" loading="lazy" decoding="async" />
+          </picture>
+          <button class="video-play" type="button" aria-label={`Tap to play · 4:20, the BBC News Igbo interview. About ${mb['bbc-igbo-interview'].mb} MB, Igbo with English captions`}>
+            <span class="disc"><Icon name="play" size={30} /></span>
+            <span class="meta"><b>Tap to play · 4:20</b>About {mb['bbc-igbo-interview'].mb} MB · Igbo with English captions</span>
+          </button>
+        </div>
+        <div class="video-info">
+          <h3>Interview with BBC News Igbo</h3>
+          <p>Video used with permission of BBC News Igbo. English captions are a translation.</p>
+        </div>
+      </div>
+      <div class="quotes">
+        {quotes.slice(0, showQuotes).map((q) => (
+          <figure class="quote reveal">
+            <blockquote style="margin:0"><p>{q}</p></blockquote>
+            <figcaption class="quote-note" style="margin-top:12px">Dr. Ifeanyi Odii, BBC News Igbo (translated from Igbo)</figcaption>
+          </figure>
+        ))}
+        <div class="video-card reveal">
+          <div class="video-info video-row">
+            <button class="btn btn--ghost" type="button" data-open-video="interview-2022" data-caption="Interview, 2022: ease of doing business"><Icon name="play" size={18} /> Play</button>
+            <div>
+              <h3>On ease of doing business (2022)</h3>
+              <p>A short interview recorded in 2022 · 0:51 · about {mb['interview-2022'].mb} MB</p>
+            </div>
+          </div>
+        </div>
+        <slot />
+      </div>
+    </div>
+  </div>
+</section>

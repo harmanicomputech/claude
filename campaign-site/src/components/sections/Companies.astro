@@ -1,0 +1,22 @@
+---
+import { companies, education, boards } from '../../data/content';
+---
+<div class="companies">
+  {companies.map((c) => (
+    <div class="company reveal">
+      <h3>{c.group}</h3>
+      <p class="role">{c.role}</p>
+      <ul>{c.subsidiaries.map((s) => <li>{s}</li>)}</ul>
+    </div>
+  ))}
+</div>
+<div class="creds">
+  <div class="reveal">
+    <h3>Education</h3>
+    <ul>{education.map((e) => <li><b>{e.title}</b><span>{e.place}</span></li>)}</ul>
+  </div>
+  <div class="reveal">
+    <h3>Boards</h3>
+    <ul>{boards.map((b) => <li><b>{b}</b></li>)}</ul>
+  </div>
+</div>

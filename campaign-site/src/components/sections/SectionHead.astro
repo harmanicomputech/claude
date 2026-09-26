@@ -1,0 +1,14 @@
+---
+// Section heading with an optional "see more" link.
+import Icon from '../Icon.astro';
+interface Props { eyebrow: string; title: string; lede?: string; id?: string; href?: string; linkText?: string }
+const { eyebrow, title, lede, id, href, linkText = 'See more' } = Astro.props;
+---
+<div class="head head--row reveal">
+  <div>
+    <p class="eyebrow">{eyebrow}</p>
+    <h2 id={id} class="title">{title}</h2>
+    {lede && <p class="lede">{lede}</p>}
+  </div>
+  {href && <a class="more-link" href={href}>{linkText} <Icon name="arrow" size={18} /></a>}
+</div>

@@ -1,0 +1,40 @@
+---
+// Green page header for inner pages, matching the home hero.
+import Pic from './Pic.astro';
+interface Props { eyebrow: string; title: string; lede?: string; image?: string; alt?: string }
+const { eyebrow, title, lede, image, alt = '' } = Astro.props;
+---
+<header class="ph">
+  <div class="wrap ph-grid">
+    <div class="ph-copy">
+      <p class="ph-eyebrow"><img src="/media/img/pdp-logo-96.webp" width="26" height="26" alt="" />{eyebrow}</p>
+      <h1>{title}</h1>
+      {lede && <p class="ph-lede">{lede}</p>}
+      <slot />
+    </div>
+    {image && (
+      <div class="ph-photo">
+        <span class="ph-block" aria-hidden="true"></span>
+        <div class="ph-frame"><Pic name={image} alt={alt} eager sizes="(min-width: 900px) 360px, 70vw" /></div>
+      </div>
+    )}
+  </div>
+</header>
+
+<style>
+  .ph { position: relative; overflow: hidden; color: #fff; padding: 44px 0 56px; background: radial-gradient(120% 90% at 85% 10%, #0f7a4d 0%, var(--green-700) 40%, #064a2c 100%); }
+  .ph::before { content: ''; position: absolute; left: -12%; bottom: -60%; width: 60%; aspect-ratio: 1; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .08); }
+  .ph-grid { position: relative; display: grid; gap: 40px; align-items: center; }
+  .ph-eyebrow { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; font: 600 .78rem/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: #d6efe2; }
+  .ph-eyebrow img { border-radius: 50%; background: #fff; }
+  h1 { font-size: clamp(2.3rem, 8vw, 4rem); line-height: 1.02; }
+  .ph-lede { margin: 18px 0 0; max-width: 40rem; font-size: clamp(1.08rem, 2.6vw, 1.25rem); color: #d6efe2; }
+  .ph-photo { position: relative; width: min(70%, 300px); }
+  .ph-block { position: absolute; right: -14px; bottom: -14px; width: 70%; height: 60%; border-radius: 18px; background: var(--red); }
+  .ph-frame { position: relative; aspect-ratio: 4 / 5; border-radius: 18px; overflow: hidden; background: #d9d4cc; box-shadow: 0 24px 48px -20px rgba(0, 0, 0, .45); }
+  @media (min-width: 900px) {
+    .ph { padding: 72px 0 80px; }
+    .ph-grid { grid-template-columns: 1fr 340px; gap: 72px; }
+    .ph-photo { width: 100%; }
+  }
+</style>

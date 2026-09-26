@@ -1,0 +1,19 @@
+---
+// Closing call to action used at the foot of every page.
+import Icon from '../Icon.astro';
+import { site } from '../../config';
+const shareText = encodeURIComponent(`${site.name} for Governor, Ebonyi State 2027. ${site.slogan}! Join the movement: ${site.url} ${site.hashtags.join(' ')}`);
+---
+<section class="cta" aria-labelledby="cta-title">
+  <div class="wrap cta-inner reveal">
+    <div>
+      <p class="cta-eyebrow">{site.hashtags.join('  ')}</p>
+      <h2 id="cta-title">Join the movement.</h2>
+      <p>Every ward, every polling unit, every voice. Sign up to volunteer in your LGA, and share the message.</p>
+    </div>
+    <div class="cta-actions">
+      <a class="btn btn--light" href="/get-involved/">Volunteer now <Icon name="arrow" size={18} /></a>
+      <a class="btn btn--ghost" href={`https://wa.me/?text=${shareText}`} rel="noopener" target="_blank"><Icon name="whatsapp" size={20} /> Share on WhatsApp</a>
+    </div>
+  </div>
+</section>

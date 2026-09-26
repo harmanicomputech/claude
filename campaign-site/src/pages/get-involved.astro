@@ -1,0 +1,62 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Pic from '../components/Pic.astro';
+import Icon from '../components/Icon.astro';
+import VolunteerForm from '../components/sections/VolunteerForm.astro';
+import { site, social, contact, helpOptions } from '../config';
+const shareText = encodeURIComponent(`${site.name} for Governor, Ebonyi State 2027. ${site.slogan}! Join the movement: ${site.url} ${site.hashtags.join(' ')}`);
+const helpIcons = ['map', 'check', 'whatsapp', 'people', 'shield', 'truck', 'book'];
+---
+<Base title="Get involved" path="/get-involved/" description="Volunteer for Dr. Ifeanyi Odii’s campaign in your LGA and ward, follow the campaign and share the message.">
+  <PageHeader eyebrow="Get involved" title="Join the movement."
+    lede="Every ward, every polling unit, every voice. Sign up to volunteer and the campaign team in your LGA will be in touch." />
+
+  <section class="section section--sand" id="join" aria-labelledby="join-title">
+    <div class="wrap join-grid">
+      <div class="head reveal join-head">
+        <p class="eyebrow">Volunteer</p>
+        <h2 id="join-title" class="title">Sign up in one minute.</h2>
+        <p class="lede">Choose your LGA and how you would like to help. Your details are used only to organise volunteers; see the <a href="/privacy/">privacy notice</a>.</p>
+      </div>
+      <div class="join-aside">
+        <div class="join-photo reveal"><Pic name="join" alt="Dr. Odii in a white shirt and cap, smiling and pointing" sizes="(min-width: 900px) 440px, 100vw" /></div>
+      </div>
+      <VolunteerForm />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="ways-title">
+    <div class="wrap">
+      <div class="head reveal">
+        <p class="eyebrow">Ways to help</p>
+        <h2 id="ways-title" class="title">There is a role for everyone.</h2>
+      </div>
+      <div class="ways">
+        {helpOptions.map((h, i) => <div class="way reveal"><span><Icon name={helpIcons[i] ?? 'check'} /></span><b>{h}</b></div>)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--sand" aria-labelledby="spread-title">
+    <div class="wrap split">
+      <div class="reveal">
+        <p class="eyebrow">Spread the word</p>
+        <h2 id="spread-title" class="title">Share. Follow. Bring one more.</h2>
+        <p class="lede">Send the campaign to your family and community WhatsApp groups, and follow Dr. Odii for updates.</p>
+        <p style="margin-top:24px"><a class="btn btn--primary" href={`https://wa.me/?text=${shareText}`} rel="noopener" target="_blank"><Icon name="whatsapp" size={20} /> Share on WhatsApp</a></p>
+        <div class="follow">
+          {social.map((s) => <a href={s.url} rel="noopener" target="_blank"><Icon name={s.icon} size={18} /> {s.name}<span class="sr-only"> (opens in a new tab)</span></a>)}
+        </div>
+      </div>
+      <aside class="card reveal">
+        <h3>Contact the campaign</h3>
+        <ul style="list-style:none;padding:0;display:grid;gap:12px">
+          <li style="display:flex;gap:10px"><Icon name="map" size={20} /> {contact.office}</li>
+          <li style="display:flex;gap:10px"><Icon name="phone" size={20} /> {contact.phone}</li>
+          <li style="display:flex;gap:10px"><Icon name="mail" size={20} /> {contact.email}</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+</Base>

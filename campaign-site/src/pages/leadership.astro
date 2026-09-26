@@ -1,0 +1,53 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Pic from '../components/Pic.astro';
+import Icon from '../components/Icon.astro';
+import Companies from '../components/sections/Companies.astro';
+import CtaBand from '../components/sections/CtaBand.astro';
+import { sectors } from '../data/content';
+---
+<Base title="Business and leadership" path="/leadership/" description="Founder and Chairman of Orient Global Group and President and CEO of Ultimus Holdings: Dr. Ifeanyi Odii’s businesses, education and board roles.">
+  <PageHeader eyebrow="Business and leadership" title="He has built. He will build Ebonyi."
+    lede="Two groups spanning seven sectors, grown from Nigeria across Sub-Saharan Africa."
+    image="leadership" alt="Dr. Odii in a blue suit, smiling and pointing" />
+
+  <section class="section" aria-labelledby="groups-title">
+    <div class="wrap">
+      <div class="head reveal">
+        <p class="eyebrow">The groups</p>
+        <h2 id="groups-title" class="title">Orient Global Group and Ultimus Holdings</h2>
+      </div>
+      <Companies />
+    </div>
+  </section>
+
+  <section class="section section--sand" aria-labelledby="sectors-title">
+    <div class="wrap split">
+      <div class="reveal">
+        <p class="eyebrow">Seven sectors</p>
+        <h2 id="sectors-title" class="title">Experience across the economy.</h2>
+        <p class="lede">Investments that cut across manufacturing, logistics, construction, real estate, healthcare, trade and services, grown beyond Nigeria into Sub-Saharan Africa.</p>
+        <div class="sectors" style="margin-top:28px">
+          {sectors.map((s) => <div class="sector"><span><Icon name={s.icon} /></span>{s.name}</div>)}
+        </div>
+      </div>
+      <aside class="reveal">
+        <div class="lead-photo" style="position:static"><Pic name="office" alt="Dr. Odii in a grey suit, arms folded, in an office" sizes="(min-width: 900px) 420px, 100vw" /></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section section--night on-night" aria-labelledby="gov-title">
+    <div class="wrap">
+      <p class="eyebrow">From business to government</p>
+      <figure style="margin:0">
+        <blockquote class="pull" id="gov-title">The first reason I am going into government is to show what government can do. The second is to bring out policies that will promote business. I know how to do it.</blockquote>
+        <figcaption class="pull-cite">Dr. Ifeanyi Odii, BBC News Igbo (translated from Igbo)</figcaption>
+      </figure>
+      <p style="margin-top:28px"><a class="btn btn--light" href="/agenda/#business">Open for Business: the plan <Icon name="arrow" size={18} /></a></p>
+    </div>
+  </section>
+
+  <CtaBand />
+</Base>

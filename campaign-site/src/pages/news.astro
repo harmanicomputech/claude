@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Icon from '../components/Icon.astro';
+import NewsList from '../components/sections/NewsList.astro';
+import CtaBand from '../components/sections/CtaBand.astro';
+import { social } from '../config';
+---
+<Base title="News and events" path="/news/" description="The latest news and events from Dr. Ifeanyi Odii’s campaign for Governor of Ebonyi State, 2027.">
+  <PageHeader eyebrow="News and events" title="On the road to 6 February." lede="Campaign news, events and appearances." />
+  <section class="section">
+    <div class="wrap split">
+      <div><NewsList /></div>
+      <aside class="card reveal">
+        <h3>Follow the campaign</h3>
+        <p style="color:var(--ink-soft)">For daily updates, follow Dr. Odii on social media.</p>
+        <div class="follow">
+          {social.map((s) => <a href={s.url} rel="noopener" target="_blank"><Icon name={s.icon} size={18} /> {s.name}<span class="sr-only"> (opens in a new tab)</span></a>)}
+        </div>
+      </aside>
+    </div>
+  </section>
+  <CtaBand />
+</Base>
