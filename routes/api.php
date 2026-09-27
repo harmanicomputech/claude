@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\AgentAccountController;
 use App\Http\Controllers\Api\CorrectionController;
 use App\Http\Controllers\Api\DataController;
+use App\Http\Controllers\Api\FieldController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\UssdController;
 use App\Http\Middleware\AuthenticateApiToken;
@@ -28,6 +30,15 @@ Route::middleware(AuthenticateApiToken::class)->group(function () {
     Route::get('/materials', [DataController::class, 'materials']);
     Route::get('/polling-units', [DataController::class, 'pollingUnits']);
     Route::get('/agents', [DataController::class, 'agents']);
+
+    // Agent accounts and agents' submissions from the web app (channel "web").
+    Route::post('/agents', [AgentAccountController::class, 'store']);
+    Route::post('/agents/reset-pin', [AgentAccountController::class, 'resetPin']);
+    Route::post('/agents/verify-pin', [AgentAccountController::class, 'verifyPin'])->middleware('throttle:30,1');
+    Route::post('/field/results', [FieldController::class, 'result']);
+    Route::post('/field/incidents', [FieldController::class, 'incident']);
+    Route::post('/field/presence', [FieldController::class, 'presence']);
+    Route::post('/field/materials', [FieldController::class, 'materials']);
 
     Route::get('/reports/summary', [ReportController::class, 'summary']);
     Route::get('/reports/missing', [ReportController::class, 'missing']);

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'reference', 'agent_id', 'polling_unit_code', 'status', 'accepted_polling_unit_code',
     'corrects_result_id', 'accredited_voters', 'rejected_votes', 'total_valid_votes',
-    'total_votes_cast', 'reviewed_at', 'reviewed_by', 'review_note',
+    'total_votes_cast', 'reviewed_at', 'reviewed_by', 'review_note', 'channel',
 ])]
 class Result extends Model
 {
@@ -84,6 +84,7 @@ class Result extends Model
             'total_votes_cast' => $this->total_votes_cast,
             'corrects_reference' => $this->corrects?->reference,
             'agent' => $this->agent->toSummaryArray(),
+            'channel' => $this->channel ?? 'ussd',
             'submitted_at' => $this->created_at->toIso8601String(),
             'reviewed_at' => $this->reviewed_at?->toIso8601String(),
             'reviewed_by' => $this->reviewed_by,

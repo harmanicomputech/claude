@@ -15,7 +15,8 @@ USSD service (Africa's Talking) for the Ebonyi State election (6 Feb 2027) that 
 - `app/Http/Controllers/UssdController.php` — phone-number auth, error fallback
 - `app/Http/Middleware/VerifyUssdRequest.php` — callback secret + IP allowlist
 - `app/Ussd/UssdMenu.php` — the menu state machine (all screens and texts)
-- `app/Services/ElectionRecorder.php` — every write the USSD flows make, plus the SMS / email / dashboard / alert side effects
+- `app/Services/ElectionRecorder.php` — every write the USSD flows make, plus the SMS / email / dashboard / alert side effects. Each record has a `channel` (`ussd`, or `web` for the web app's agent pages)
+- `app/Http/Controllers/Api/AgentAccountController.php`, `FieldController.php` — the web app's agent API: add agents, reset and verify PINs (shared lock-out), and agents' web submissions with the same rules as the USSD menu (keep the two in step)
 - `app/Services/CorrectionReviewer.php` — approving / rejecting corrections
 - `app/Services/DashboardOutbox.php`, `DashboardClient.php`, `app/Jobs/PushToDashboard.php` — outbox + signed webhook (contract documented in README; keep them in sync)
 - `app/Services/ElectionStats.php` — summary and missing-PU figures (summary email, reports API, `election:missing`)

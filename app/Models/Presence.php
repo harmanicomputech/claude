@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['agent_id', 'polling_unit_code', 'confirmed_at'])]
+#[Fillable(['agent_id', 'polling_unit_code', 'confirmed_at', 'channel'])]
 class Presence extends Model
 {
     protected function casts(): array
@@ -37,6 +37,7 @@ class Presence extends Model
             'id' => $this->id,
             'polling_unit' => $this->pollingUnit?->toSummaryArray() ?? ['code' => $this->polling_unit_code],
             'agent' => $this->agent->toSummaryArray(),
+            'channel' => $this->channel ?? 'ussd',
             'confirmed_at' => $this->confirmed_at->toIso8601String(),
         ];
     }

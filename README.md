@@ -159,6 +159,10 @@ For your dashboard. Set `ELECTION_API_TOKEN` and send `Authorization: Bearer {to
 | `POST /api/corrections/{reference}/approve` | Body: `reviewed_by`, `note` (both optional). Returns 409 if the correction has already been reviewed. |
 | `POST /api/corrections/{reference}/reject` | Same body as approve |
 | `GET /api/results`, `/api/results/{reference}`, `/api/incidents`, `/api/presences`, `/api/materials`, `/api/polling-units`, `/api/agents` | Read API for the web app, in the same shapes as the webhook events. Filters: `lga`, `ward`, `polling_unit`, plus `status`, `type` or `latest` where relevant. `updated_since` for incremental sync; `per_page` (up to 500) and `cursor` for paging. See `docs/WEB-APP-HANDOFF.md`. |
+| `POST /api/agents` | Add or update an agent from the web app. Body: `name`, `phone_number`, `polling_unit`, `pin` (optional; random if new), `sms_pin`, `by` (who, for the audit log). Returns the agent and the PIN when one was set. |
+| `POST /api/agents/reset-pin` | Body: `phone_number`, `pin` (optional), `sms_pin`, `by` |
+| `POST /api/agents/verify-pin` | Web app sign-in with the agent's USSD PIN. Body: `phone_number`, `pin`. 200 with the agent; 401 wrong PIN (`tries_left`); 423 locked; 404 unknown; 409 no PIN. Wrong PINs count towards the same lock-out as on USSD. |
+| `POST /api/field/results`, `/api/field/incidents`, `/api/field/presence`, `/api/field/materials` | Submissions an agent makes in the web app, identified by `phone_number`. The USSD rules apply (windows, assigned PU, register, votes against accredited, one accepted result per PU with `correction: true` for a second), and the records are marked `"channel": "web"`. Errors are JSON `{error, message}`: 404 unknown agent, 409 `closed` or `result_exists`, 422 for bad figures or PU. |
 | `GET /api/reports/summary` | The same figures as the hourly email: turnout, party totals, incidents, and a breakdown by LGA |
 | `GET /api/reports/missing?type=presence\|results&lga=…` | PUs missing presence or a result, with their assigned agents |
 
@@ -188,6 +192,7 @@ X-Election-Shield-Signature: sha256=<HMAC-SHA256 of the raw body using DASHBOARD
     "total_votes_cast": 1146,
     "corrects_reference": null,
     "agent": { "name": "Ada Obi", "phone_number": "+2348012345678" },
+    "channel": "ussd",
     "submitted_at": "2027-02-06T15:04:10+00:00",
     "reviewed_at": null, "reviewed_by": null, "review_note": null
   }

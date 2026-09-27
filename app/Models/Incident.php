@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['reference', 'agent_id', 'polling_unit_code', 'type', 'note'])]
+#[Fillable(['reference', 'agent_id', 'polling_unit_code', 'type', 'note', 'channel'])]
 class Incident extends Model
 {
     protected function casts(): array
@@ -47,6 +47,7 @@ class Incident extends Model
             'urgent' => $this->isUrgent(),
             'note' => $this->note,
             'agent' => $this->agent->toSummaryArray(),
+            'channel' => $this->channel ?? 'ussd',
             'reported_at' => $this->created_at->toIso8601String(),
         ];
     }

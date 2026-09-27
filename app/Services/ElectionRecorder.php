@@ -52,6 +52,7 @@ class ElectionRecorder
         array $votes,
         int $rejectedVotes,
         bool $correction = false,
+        string $channel = 'ussd',
     ): ?Result {
         $current = $correction
             ? Result::where('accepted_polling_unit_code', $pollingUnitCode)->first()
@@ -60,7 +61,7 @@ class ElectionRecorder
         $validVotes = array_sum($votes);
 
         try {
-            $result = DB::transaction(function () use ($agent, $pollingUnitCode, $accreditedVoters, $votes, $rejectedVotes, $current, $validVotes) {
+            $result = DB::transaction(function () use ($agent, $pollingUnitCode, $accreditedVoters, $votes, $rejectedVotes, $current, $validVotes, $channel) {
                 $result = $agent->results()->create([
                     'reference' => $this->references->generate('RS', Result::class),
                     'polling_unit_code' => $pollingUnitCode,
@@ -71,6 +72,7 @@ class ElectionRecorder
                     'rejected_votes' => $rejectedVotes,
                     'total_valid_votes' => $validVotes,
                     'total_votes_cast' => $validVotes + $rejectedVotes,
+                    'channel' => $channel,
                 ]);
 
                 foreach ($votes as $party => $count) {
@@ -95,13 +97,14 @@ class ElectionRecorder
         return $result;
     }
 
-    public function logIncident(Agent $agent, string $pollingUnitCode, IncidentType $type, string $note): Incident
+    public function logIncident(Agent $agent, string $pollingUnitCode, IncidentType $type, string $note, string $channel = 'ussd'): Incident
     {
         $incident = $agent->incidents()->create([
             'reference' => $this->references->generate('IN', Incident::class),
             'polling_unit_code' => $pollingUnitCode,
             'type' => $type,
             'note' => $note,
+            'channel' => $channel,
         ]);
 
         $this->outbox->record('incident.reported', $incident->reference, $incident->toDashboardArray());
@@ -114,7 +117,7 @@ class ElectionRecorder
         return $incident;
     }
 
-    public function confirmPresence(Agent $agent, string $pollingUnitCode): Presence
+    public function confirmPresence(Agent $agent, string $pollingUnitCode, string $channel = 'ussd'): Presence
     {
         $now = now();
 
@@ -123,6 +126,7 @@ class ElectionRecorder
         $presence = $agent->presences()->create([
             'polling_unit_code' => $pollingUnitCode,
             'confirmed_at' => $now,
+            'channel' => $channel,
         ]);
 
         $this->outbox->record('presence.confirmed', (string) $presence->id, $presence->toDashboardArray());
@@ -134,12 +138,13 @@ class ElectionRecorder
      * Record the election materials status at a PU. Agents may report again
      * as things change; the latest report is the PU's current status.
      */
-    public function reportMaterials(Agent $agent, string $pollingUnitCode, MaterialStatus $status): MaterialReport
+    public function reportMaterials(Agent $agent, string $pollingUnitCode, MaterialStatus $status, string $channel = 'ussd'): MaterialReport
     {
         $report = $agent->materialReports()->create([
             'polling_unit_code' => $pollingUnitCode,
             'status' => $status,
             'reported_at' => now(),
+            'channel' => $channel,
         ]);
 
         $this->outbox->record('materials.reported', (string) $report->id, $report->toDashboardArray());
@@ -173,7 +178,7 @@ class ElectionRecorder
         $where = $unit ? "{$unit->shortName(30)}, {$unit->lga}" : "PU {$incident->polling_unit_code}";
 
         $message = Str::upper($incident->type->label())." ALERT: {$where} (PU {$incident->polling_unit_code}). "
-            ."\"{$incident->note}\" - {$incident->agent->name} {$incident->agent->phone_number}. Ref {$incident->reference}";
+            .'"'.Str::limit($incident->note, 100).'" - '."{$incident->agent->name} {$incident->agent->phone_number}. Ref {$incident->reference}";
 
         Coordinator::covering($unit?->lga)->each(
             fn (Coordinator $coordinator) => SendSms::dispatch($coordinator->phone_number, $message)

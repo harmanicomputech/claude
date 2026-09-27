@@ -111,6 +111,7 @@ Every `data` object also has **`rehearsal: true|false`**. Keep rehearsal data ap
   "total_votes_cast": 1146,
   "corrects_reference": null,
   "agent": { "name": "Ada Obi", "phone_number": "+2348012345678" },
+  "channel": "ussd",
   "submitted_at": "2027-02-06T15:04:10+00:00",
   "reviewed_at": null,
   "reviewed_by": null,
@@ -145,6 +146,11 @@ The web app can also **fetch** everything the USSD service holds. Use this for t
 | `GET /reports/summary` | Totals, turnout, party votes, materials, incidents, and a breakdown by LGA | |
 | `GET /reports/missing?type=presence\|results` | PUs with no check-in or no result, with their agents | `lga` |
 | `GET /corrections`, `POST /corrections/{ref}/approve\|reject` | Correction review | `status` |
+| `POST /agents`, `POST /agents/reset-pin` | Add or update an agent, and reset a PIN (optionally sent by SMS) | |
+| `POST /agents/verify-pin` | Agent sign-in to the web app with their USSD PIN; shares the USSD lock-out | |
+| `POST /field/results`, `/field/incidents`, `/field/presence`, `/field/materials` | An agent's submissions from the web app, with the USSD rules; recorded with `"channel": "web"` and sent back through the webhook like any other | |
+
+Every event and record carries `channel`: `"ussd"` or `"web"`.
 
 **Every list endpoint** accepts:
 - `updated_since=<ISO time>`: only records created or changed since then. Status changes count, for example a result becoming `superseded`.

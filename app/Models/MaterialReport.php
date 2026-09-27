@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['agent_id', 'polling_unit_code', 'status', 'reported_at'])]
+#[Fillable(['agent_id', 'polling_unit_code', 'status', 'reported_at', 'channel'])]
 class MaterialReport extends Model
 {
     protected function casts(): array
@@ -41,6 +41,7 @@ class MaterialReport extends Model
             'status' => $this->status->value,
             'status_label' => $this->status->label(),
             'agent' => $this->agent->toSummaryArray(),
+            'channel' => $this->channel ?? 'ussd',
             'reported_at' => $this->reported_at->toIso8601String(),
         ];
     }
