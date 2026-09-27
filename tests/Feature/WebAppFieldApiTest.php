@@ -50,6 +50,7 @@ class WebAppFieldApiTest extends TestCase
         $this->postJson('/api/field/results', $this->resultData(), $this->headers)
             ->assertCreated()
             ->assertJsonPath('result.channel', 'web')
+            ->assertJsonPath('result.rehearsal', false)
             ->assertJsonPath('result.status', 'accepted')
             ->assertJsonPath('result.votes.APC', 120)
             ->assertJsonPath('result.agent.phone_number', '+2348011111111');

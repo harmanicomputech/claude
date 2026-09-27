@@ -9,6 +9,7 @@ use App\Models\Agent;
 use App\Models\PollingUnit;
 use App\Services\ElectionRecorder;
 use App\Support\ElectionCalendar;
+use App\Support\Rehearsal;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -74,7 +75,7 @@ class FieldController extends Controller
 
         return response()->json([
             'message' => $result->isCorrection() ? "Correction sent for review. Ref: {$result->reference}" : "Result submitted. Ref: {$result->reference}",
-            'result' => $result->toDashboardArray(),
+            'result' => [...$result->toDashboardArray(), 'rehearsal' => Rehearsal::active()],
         ], 201);
     }
 
@@ -92,7 +93,7 @@ class FieldController extends Controller
 
         $incident = $this->recorder->logIncident($agent, $code, IncidentType::from($validated['type']), trim($validated['note']), channel: 'web');
 
-        return response()->json(['message' => "Incident logged. Ref: {$incident->reference}", 'incident' => $incident->toDashboardArray()], 201);
+        return response()->json(['message' => "Incident logged. Ref: {$incident->reference}", 'incident' => [...$incident->toDashboardArray(), 'rehearsal' => Rehearsal::active()]], 201);
     }
 
     public function presence(Request $request): JsonResponse
@@ -108,7 +109,7 @@ class FieldController extends Controller
 
         $presence = $this->recorder->confirmPresence($agent, $code, channel: 'web');
 
-        return response()->json(['message' => 'Presence confirmed.', 'presence' => $presence->toDashboardArray()], 201);
+        return response()->json(['message' => 'Presence confirmed.', 'presence' => [...$presence->toDashboardArray(), 'rehearsal' => Rehearsal::active()]], 201);
     }
 
     public function materials(Request $request): JsonResponse
@@ -124,7 +125,7 @@ class FieldController extends Controller
 
         $report = $this->recorder->reportMaterials($agent, $code, MaterialStatus::from($validated['status']), channel: 'web');
 
-        return response()->json(['message' => 'Materials report saved.', 'materials' => $report->toDashboardArray()], 201);
+        return response()->json(['message' => 'Materials report saved.', 'materials' => [...$report->toDashboardArray(), 'rehearsal' => Rehearsal::active()]], 201);
     }
 
     private function agent(string $phone): Agent
