@@ -1,6 +1,6 @@
 # Election Shield
 
-USSD service (Africa's Talking) for the Ebonyi State election (6 Feb 2027) that lets polling agents submit EC8A results, report incidents and confirm presence. Anyone else who dials gets a public menu: report an incident (by LGA/ward, `source` = `public`, no SMS alerts, daily cap per number), "How can you help?" volunteer sign-up (`volunteers`, one per phone), and election info. Laravel 13, MySQL in production, SQLite in-memory for tests.
+USSD service (Africa's Talking) for the Ebonyi State election (6 Feb 2027) that lets polling agents submit EC8A results, report incidents and confirm presence. Anyone else who dials gets a public menu: report an incident (by LGA/ward, `source` = `public`, no SMS alerts, daily cap per number), "How can you help?" volunteer sign-up (`volunteers`, one per contact number; one phone can sign up several people), and election info. Laravel 13, MySQL in production, SQLite in-memory for tests.
 
 ## Commands
 

@@ -153,18 +153,19 @@ class ElectionRecorder
     }
 
     /**
-     * A "How can you help?" sign-up. One per phone number: signing up again
-     * updates the same record (and the web app gets the new version).
+     * A "How can you help?" sign-up. One per contact number: signing up again
+     * with the same contact number updates it (and the web app gets the new
+     * version); one phone can sign up several people with different numbers.
      *
      * @param  list<string>  $roles  VolunteerRole values
      * @param  list<string>  $skills  keys of VolunteerRole::SKILLS
      */
     public function registerVolunteer(string $phoneNumber, string $contactPhone, string $name, string $lga, string $ward, array $roles, array $skills, ?string $other, bool $isAgent, string $channel = 'ussd'): Volunteer
     {
-        $volunteer = Volunteer::query()->firstOrNew(['phone_number' => $phoneNumber]);
+        $volunteer = Volunteer::query()->firstOrNew(['contact_phone' => $contactPhone]);
         $volunteer->fill([
+            'phone_number' => $phoneNumber,
             'reference' => $volunteer->reference ?? $this->references->generate('VL', Volunteer::class),
-            'contact_phone' => $contactPhone,
             'name' => $name,
             'lga' => $lga,
             'ward' => $ward,
@@ -180,6 +181,14 @@ class ElectionRecorder
         $this->outbox->record('volunteer.registered', $volunteer->reference.':'.$volunteer->updated_at->timestamp, $volunteer->toDashboardArray());
 
         return $volunteer;
+    }
+
+    /**
+     * Sign-ups made from this phone in the last 24 hours (for the daily cap).
+     */
+    public function volunteerSignUpsToday(string $phoneNumber): int
+    {
+        return Volunteer::query()->where('phone_number', $phoneNumber)->where('updated_at', '>=', now()->subDay())->count();
     }
 
     public function confirmPresence(Agent $agent, string $pollingUnitCode, string $channel = 'ussd'): Presence

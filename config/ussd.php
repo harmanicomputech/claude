@@ -64,6 +64,9 @@ return [
 
     'max_volunteer_note_length' => 160,
 
+    // Volunteer sign-ups one phone can make in 24 hours (it may sign up family and friends).
+    'volunteer_daily_limit' => (int) env('USSD_VOLUNTEER_DAILY_LIMIT', 20),
+
     'instructions' => env(
         'USSD_INSTRUCTIONS',
         "Stay at PU.\nSubmit results after counting.\nReport any issue immediately."

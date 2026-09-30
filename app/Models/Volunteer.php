@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * A "How can you help?" sign-up (USSD). One per phone number: signing up
+ * A "How can you help?" sign-up (USSD). One per contact number: signing up
  * again updates it.
  */
 #[Fillable(['reference', 'phone_number', 'contact_phone', 'name', 'lga', 'ward', 'roles', 'skills', 'other', 'channel', 'is_agent'])]

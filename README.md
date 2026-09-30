@@ -41,7 +41,7 @@ CON Election Shield
 4. Exit             → END Thank you
 ```
 
-Lists that don't fit one screen (LGAs, wards) show `0.More`; numbers run on across pages. Wards are shown without the LGA prefix ("Ward 03"). Volunteers are kept one per phone number: signing up again updates the entry.
+Lists that don't fit one screen (LGAs, wards) show `0.More`; numbers run on across pages. Wards are shown without the LGA prefix ("Ward 03"). Volunteers are kept one per contact number: signing up again with the same contact number updates the entry, and one phone can sign up several people (at most `USSD_VOLUNTEER_DAILY_LIMIT`, 20, a day).
 
 Example confirmation screen, for a real PU from the register (it fits the 182-character USSD limit even with large numbers):
 

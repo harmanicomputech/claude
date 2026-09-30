@@ -213,7 +213,7 @@ class UssdMenu
         if ($this->agent === null) {
             return match ($input) {
                 '1' => $this->startPublicIncident(),
-                '2' => $this->goTo(self::VOLUNTEER_ROLES),
+                '2' => $this->startVolunteer(),
                 '3' => (string) config('ussd.public_info'),
                 '4' => 'Thank you',
                 default => $this->fail(self::ERROR_OPTION),
@@ -226,7 +226,7 @@ class UssdMenu
             '3' => $this->calendar->presenceClosedMessage() ?? $this->startPresence(),
             '4' => $this->startMaterials(),
             '5' => (string) config('ussd.instructions'),
-            '6' => $this->goTo(self::VOLUNTEER_ROLES),
+            '6' => $this->startVolunteer(),
             '7' => 'Thank you',
             default => $this->fail(self::ERROR_OPTION),
         };
@@ -593,6 +593,15 @@ class UssdMenu
     }
 
     // How can you help? (volunteers; agents and the public) ---------------
+
+    private function startVolunteer(): ?string
+    {
+        if ($this->recorder->volunteerSignUpsToday($this->phone) >= (int) config('ussd.volunteer_daily_limit')) {
+            return "Daily sign-up limit reached\nfor this phone.\nThank you! Try again tomorrow.";
+        }
+
+        return $this->goTo(self::VOLUNTEER_ROLES);
+    }
 
     private function onVolunteerRoles(string $input): ?string
     {

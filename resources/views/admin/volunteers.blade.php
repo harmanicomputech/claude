@@ -8,7 +8,7 @@
     <div class="page-head">
         <div>
             <h1>Volunteers</h1>
-            <p class="muted">Signed up on USSD with “How can you help?” ({{ number_format($total) }} in all). One entry per phone number: signing up again updates it. The web app has the same list with call and WhatsApp buttons.</p>
+            <p class="muted">Signed up on USSD with “How can you help?” ({{ number_format($total) }} in all). One entry per contact number: signing up again with the same number updates it; one phone can sign up several people. The web app has the same list with call and WhatsApp buttons.</p>
         </div>
         <div class="actions">
             <a class="button" href="{{ route('admin.volunteers.export', request()->query()) }}">Export (CSV)</a>

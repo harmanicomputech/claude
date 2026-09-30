@@ -136,13 +136,28 @@ class PublicUssdTest extends TestCase
         $this->assertSame(['Canvass in my ward', 'Share on WhatsApp and social media', 'Mobilise youth', 'Professional skills (legal, media, medical, IT)'], $volunteer->roleLabels());
         $this->assertSame('volunteer.registered', DashboardDelivery::query()->sole()->event);
 
-        // Anything else: a note. Signing up again updates the same record (and tells the web app again).
+        // Anything else: a note. The same contact number again updates that volunteer (and tells the web app again).
         $this->travel(1)->minutes();
         $this->dial('2*8')->assertContent("CON Anything else?\nTell us how you can help:");
-        $this->dial('2*8*I can print posters*7*2*Chioma Uche*1*1');
+        $this->dial('2*8*I can print posters*7*2*Chioma Uche*2*08031234567*1');
         $volunteer = Volunteer::query()->sole();
-        $this->assertSame([['other'], 'I can print posters', 'Ikwo', null, self::CALLER], [$volunteer->roles, $volunteer->other, $volunteer->lga, $volunteer->skills, $volunteer->contact_phone]);
+        $this->assertSame([['other'], 'I can print posters', 'Ikwo', null, '+2348031234567'], [$volunteer->roles, $volunteer->other, $volunteer->lga, $volunteer->skills, $volunteer->contact_phone]);
         $this->assertSame(2, DashboardDelivery::query()->where('event', 'volunteer.registered')->count());
+
+        // The same phone signing up someone else (another contact number) adds a new volunteer.
+        $this->dial('2*6*7*2*Emeka Eze*1*1')->assertSee('END Thank you, Emeka!', false);
+        $this->assertSame(['Chioma Uche' => '+2348031234567', 'Emeka Eze' => self::CALLER], Volunteer::query()->orderBy('id')->pluck('contact_phone', 'name')->all());
+        $this->assertSame([self::CALLER, self::CALLER], Volunteer::query()->pluck('phone_number')->all());
+    }
+
+    public function test_one_phone_can_sign_up_a_limited_number_of_people_a_day(): void
+    {
+        config(['ussd.volunteer_daily_limit' => 2]);
+        $this->dial('2*1*1*1*Ada One*2*08031111111*1');
+        $this->dial('2*1*1*1*Ada Two*2*08032222222*1');
+        $this->dial('2')->assertSee('END Daily sign-up limit reached', false);
+        $this->assertSame(2, Volunteer::query()->count());
+        $this->dial('2', '+2348077777777')->assertSee('CON How can you help?', false); // another phone
     }
 
     public function test_agents_can_sign_up_to_help_too(): void

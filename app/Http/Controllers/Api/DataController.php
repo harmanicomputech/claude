@@ -66,7 +66,7 @@ class DataController extends Controller
     }
 
     /**
-     * "How can you help?" sign-ups (one per phone number, updated when they sign up again).
+     * "How can you help?" sign-ups (one per contact number, updated when they sign up again).
      */
     public function volunteers(Request $request): JsonResponse
     {
