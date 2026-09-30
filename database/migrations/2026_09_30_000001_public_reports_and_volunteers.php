@@ -46,6 +46,8 @@ return new class extends Migration
         Schema::dropIfExists('volunteers');
 
         Schema::table('incidents', function (Blueprint $table) {
+            $table->dropIndex(['source']);
+            $table->dropIndex(['reporter_phone']);
             $table->dropColumn(['source', 'reporter_phone', 'lga', 'ward']);
         });
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Support\Audit;
+use App\Support\Deployment;
 use App\Support\Queues;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,9 @@ class SystemController extends Controller
 {
     public function migrate(): RedirectResponse
     {
+        // Also drop compiled pages and caches, so uploaded files show at once.
+        Deployment::clearCaches();
+
         return $this->run('migrate', ['--force' => true], 'Database set up');
     }
 
