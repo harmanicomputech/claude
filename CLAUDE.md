@@ -27,7 +27,7 @@ USSD service (Africa's Talking) for the Ebonyi State election (6 Feb 2027) that 
 - `app/Support/Rehearsal.php`, `Settings.php`, `app/Services/TestDataCleaner.php` — rehearsal mode (console setting) and clearing test data
 - `app/Services/AgentRegistrar.php`, `AgentImporter.php` — agent registration shared by CLI and console
 - `docs/WEB-APP-HANDOFF.md` — integration brief for the separate Election Shield web app (webhook events, API); keep it in sync with DashboardClient/README
-- `app/Support/Deployment.php` + `DEPLOY_ID`: unzipping keeps build-time file dates, so Blade can keep serving old compiled views after an upload; every update package carries a new `DEPLOY_ID` and the app clears compiled views and caches once (Admin → System → database update does too)
+- `app/Support/Deployment.php` + `DEPLOY_ID`: unzipping keeps build-time file dates, so Blade can keep serving old compiled views after an upload; every update package carries a new `DEPLOY_ID` and the app clears compiled views and caches and runs pending database updates once (Admin → System → database update also works)
 - `scripts/build-shared-hosting.sh`, `deploy/shared-hosting/`, `docs/DEPLOY-SHARED-HOSTING.md` — upload package for cPanel/DirectAdmin
 - `config/election.php` — date, windows, parties + candidates, PIN, alerts, reminders; `config/ussd.php` — USSD limits and callback protection
 - `database/data/ebonyi_polling_units.csv` — the PU register (3,308 PUs; codes like `EB/212/02633/007`, typed by agents as `21202633007`). `db:seed` imports it.
