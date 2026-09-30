@@ -112,7 +112,7 @@
 <body>
 @auth
     @php
-        $nav = ['admin.overview' => 'Overview', 'admin.results.index' => 'Results', 'admin.incidents.index' => 'Incidents', 'admin.polling-units.index' => 'Polling units', 'admin.agents.index' => 'Agents', 'admin.corrections.index' => 'Corrections', 'admin.coordinators.index' => 'Coordinators'];
+        $nav = ['admin.overview' => 'Overview', 'admin.results.index' => 'Results', 'admin.incidents.index' => 'Incidents', 'admin.volunteers.index' => 'Volunteers', 'admin.polling-units.index' => 'Polling units', 'admin.agents.index' => 'Agents', 'admin.corrections.index' => 'Corrections', 'admin.coordinators.index' => 'Coordinators'];
         if (auth()->user()->isAdmin()) {
             $nav += ['admin.users.index' => 'Users', 'admin.audit.index' => 'Audit log', 'admin.settings.index' => 'Settings'];
         }

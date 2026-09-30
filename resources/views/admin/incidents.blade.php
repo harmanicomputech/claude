@@ -8,7 +8,7 @@
     <div class="page-head">
         <div>
             <h1>Incidents</h1>
-            <p class="muted">Reported by agents over USSD. Types marked urgent also send an SMS alert to coordinators.</p>
+            <p class="muted">Reported by agents (USSD or web app) and by the public over USSD. Urgent types from agents also send an SMS alert to coordinators; public reports never do (they are unverified).</p>
         </div>
         <div class="actions">
             <a class="button" href="{{ route('admin.incidents.export', request()->query()) }}">Export (CSV)</a>
@@ -28,6 +28,14 @@
             @if ($filters['type'])<input type="hidden" name="type" value="{{ $filters['type'] }}">@endif
             <div class="wide"><label>Search</label><input type="search" name="q" value="{{ $filters['q'] }}" placeholder="Reference, note, PU code or name, agent"></div>
             <div>
+                <label>Reported by</label>
+                <select name="source">
+                    <option value="">Everyone</option>
+                    <option value="agent" @selected($filters['source'] === 'agent')>Agents</option>
+                    <option value="public" @selected($filters['source'] === 'public')>The public ({{ number_format($publicCount) }})</option>
+                </select>
+            </div>
+            <div>
                 <label>LGA</label>
                 <select name="lga">
                     <option value="">All LGAs</option>
@@ -41,7 +49,7 @@
     <div class="card">
         <table class="data">
             <thead>
-                <tr><th>Reference</th><th>Type</th><th>Note</th><th>Polling unit</th><th>Agent</th><th>Reported</th></tr>
+                <tr><th>Reference</th><th>Type</th><th>Note</th><th>Where</th><th>Reported by</th><th>Reported</th></tr>
             </thead>
             <tbody>
                 @forelse ($incidents as $incident)
@@ -49,11 +57,19 @@
                         <td><b>{{ $incident->reference }}</b></td>
                         <td>
                             <span class="badge {{ $incident->isUrgent() ? 'urgent' : 'neutral' }}">{{ $incident->type->label() }}</span>
-                            @if ($incident->isUrgent())<span class="sub">Urgent: coordinators alerted</span>@endif
+                            @if ($incident->isPublic())<span class="badge neutral">Public (unverified)</span>@elseif ($incident->isUrgent())<span class="sub">Urgent: coordinators alerted</span>@endif
                         </td>
                         <td class="text">{{ $incident->note }}</td>
-                        <td class="text">{{ $incident->pollingUnit?->name ?? '—' }}<span class="sub">{{ $incident->polling_unit_code }}@if ($incident->pollingUnit) · {{ $incident->pollingUnit->ward }}, {{ $incident->pollingUnit->lga }}@endif</span></td>
-                        <td>{{ $incident->agent->name }}<span class="sub">{{ $incident->agent->phone_number }}</span></td>
+                        @if ($incident->pollingUnit)
+                            <td class="text">{{ $incident->pollingUnit->name }}<span class="sub">{{ $incident->polling_unit_code }} · {{ $incident->pollingUnit->ward }}, {{ $incident->pollingUnit->lga }}</span></td>
+                        @else
+                            <td class="text">{{ $incident->ward ?? '—' }}<span class="sub">{{ $incident->lga }}{{ $incident->polling_unit_code ? ' · PU '.$incident->polling_unit_code : '' }}</span></td>
+                        @endif
+                        @if ($incident->agent)
+                            <td>{{ $incident->agent->name }}<span class="sub">Agent · {{ $incident->agent->phone_number }}</span></td>
+                        @else
+                            <td>Member of the public<span class="sub">{{ $incident->reporter_phone }}</span></td>
+                        @endif
                         <td>{{ $incident->created_at->timezone($tz)->format('j M, g:i A') }}<span class="sub">{{ $incident->created_at->diffForHumans() }}</span></td>
                     </tr>
                 @empty

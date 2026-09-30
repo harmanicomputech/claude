@@ -30,6 +30,7 @@ Route::middleware(AuthenticateApiToken::class)->group(function () {
     Route::get('/materials', [DataController::class, 'materials']);
     Route::get('/polling-units', [DataController::class, 'pollingUnits']);
     Route::get('/agents', [DataController::class, 'agents']);
+    Route::get('/volunteers', [DataController::class, 'volunteers']);
 
     // Agent accounts and agents' submissions from the web app (channel "web").
     Route::post('/agents', [AgentAccountController::class, 'store']);

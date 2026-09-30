@@ -9,6 +9,7 @@ use App\Models\Incident;
 use App\Models\MaterialReport;
 use App\Models\Presence;
 use App\Models\Result;
+use App\Models\Volunteer;
 use App\Support\Rehearsal;
 
 /**
@@ -48,6 +49,7 @@ class DashboardOutbox
         Incident::orderBy('id')->lazy(500)->each(fn (Incident $incident) => $this->record('incident.reported', $incident->reference, $incident->toDashboardArray()));
         Presence::orderBy('id')->lazy(500)->each(fn (Presence $presence) => $this->record('presence.confirmed', (string) $presence->id, $presence->toDashboardArray()));
         MaterialReport::orderBy('id')->lazy(500)->each(fn (MaterialReport $report) => $this->record('materials.reported', (string) $report->id, $report->toDashboardArray()));
+        Volunteer::orderBy('id')->lazy(500)->each(fn (Volunteer $volunteer) => $this->record('volunteer.registered', $volunteer->reference.':'.$volunteer->updated_at->timestamp, $volunteer->toDashboardArray()));
 
         return DashboardDelivery::count() - $before;
     }

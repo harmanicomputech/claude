@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\ResultController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SystemController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\VolunteerController;
 use App\Http\Controllers\RunnerController;
 use App\Http\Middleware\AuthenticateAdmin;
 use App\Http\Middleware\EnsureDatabaseReady;
@@ -50,6 +51,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             Route::get('/incidents', [IncidentController::class, 'index'])->name('incidents.index');
             Route::get('/incidents/export', [IncidentController::class, 'export'])->name('incidents.export');
+
+            Route::get('/volunteers', [VolunteerController::class, 'index'])->name('volunteers.index');
+            Route::get('/volunteers/export', [VolunteerController::class, 'export'])->name('volunteers.export');
 
             Route::get('/polling-units', [PollingUnitController::class, 'index'])->name('polling-units.index');
             Route::get('/polling-units/export', [PollingUnitController::class, 'export'])->name('polling-units.export');

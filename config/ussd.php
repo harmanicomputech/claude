@@ -45,6 +45,25 @@ return [
     |
     */
 
+    /*
+    | Shown to the public for "Election info" (not a registered agent).
+    | Keep it under ~170 characters.
+    */
+
+    'public_info' => env(
+        'USSD_PUBLIC_INFO',
+        "Governorship election:\nSat 6 Feb 2027.\nBring your PVC.\nPolls open 8:30am.\nSee trouble? Dial this code,\noption 1 to report it."
+    ),
+
+    /*
+    | Members of the public can report at most this many incidents per phone
+    | number in 24 hours (stops floods of prank reports).
+    */
+
+    'public_daily_incident_limit' => (int) env('USSD_PUBLIC_DAILY_LIMIT', 5),
+
+    'max_volunteer_note_length' => 160,
+
     'instructions' => env(
         'USSD_INSTRUCTIONS',
         "Stay at PU.\nSubmit results after counting.\nReport any issue immediately."

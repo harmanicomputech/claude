@@ -5,8 +5,12 @@ A USSD service built on [Africa's Talking](https://africastalking.com) for the E
 1. **Submit Result**: the EC8A figures (accredited voters, votes for APC, PDP, LP and all other parties, and rejected votes), protected by a PIN. Wrong results can be corrected with a coordinator's approval.
 2. **Report Incident**: violence, vote buying, delay or other. Violence immediately texts the coordinators for that area.
 3. **Confirm Presence** at the polling unit.
-4. **Instructions**
-5. **Exit**
+4. **Materials Status**
+5. **Instructions**
+6. **How can you help?** (volunteer sign-up)
+7. **Exit**
+
+Anyone else who dials the code (the public) gets a shorter menu: **Report Incident** (by LGA and ward; flagged as an unverified public report, no SMS alerts, at most `USSD_PUBLIC_DAILY_LIMIT` a day per number), **How can you help?** and **Election info** (`USSD_PUBLIC_INFO`).
 
 Every result, incident and presence check-in is pushed to an external dashboard. Coordinators receive emails, an hourly summary, and SMS alerts for urgent incidents. Agents who haven't reported get SMS reminders on election day.
 
@@ -23,8 +27,21 @@ CON Election Shield
 3. Confirm Presence → PU code → END Presence Confirmed ✔
 4. Materials Status → PU code → 1 Arrived / 2 Incomplete / 3 Not arrived → END Materials report saved ✔
 5. Instructions     → END Stay at PU. …
-6. Exit             → END Thank you
+6. How can you help? → (as for the public, below)
+7. Exit             → END Thank you
+
+Anyone who is not a registered agent:
+CON Election Shield
+1. Report Incident  → Type → LGA → Ward → PU code or 0 to skip → Short Note → Confirm → END Report received ✔ Ref: IN123456
+2. How can you help? → choose any, e.g. 135 (1 Canvass in my ward, 2 Serve as a PU agent, 3 Share on WhatsApp and social
+                       media, 4 Mobilise women, 5 Mobilise youth, 6 Transport and logistics, 7 Professional skills → which:
+                       legal/media/medical/IT/other, 8 Anything else → type it) → LGA → Ward → Your full name
+                       → Contact number (1 this number / 2 another) → Confirm → END Thank you, <name>! Ref: VL123456
+3. Election info    → END (USSD_PUBLIC_INFO)
+4. Exit             → END Thank you
 ```
+
+Lists that don't fit one screen (LGAs, wards) show `0.More`; numbers run on across pages. Wards are shown without the LGA prefix ("Ward 03"). Volunteers are kept one per phone number: signing up again updates the entry.
 
 Example confirmation screen, for a real PU from the register (it fits the 182-character USSD limit even with large numbers):
 
@@ -54,7 +71,8 @@ Parties are set with `ELECTION_PARTIES`; candidate names live in `config/electio
 
 | Rule | Behaviour |
 | --- | --- |
-| Authentication | Phone numbers that aren't registered agents get `END Access denied. Contact coordinator.` |
+| Who can use it | Registered agents get the full menu. Everyone else gets the public menu (report an incident, How can you help?, election info); submitting results, check-in and materials stay agents-only. |
+| Public reports | Stored with `source` = `public`, the caller's number and the LGA/ward they picked (the PU is optional). Never SMS or email coordinators; at most `USSD_PUBLIC_DAILY_LIMIT` (5) per number in 24 hours. |
 | PU register | Only PU codes from the imported INEC register are accepted (`PU code not found`). The PU name is shown before voting figures are entered, so a mistyped code is easy to spot. |
 | Invalid input | `Invalid input. Enter number only:` The agent can re-enter and carry on. |
 | Accredited > registered | `Error: Accredited cannot exceed registered voters (N). Re-enter accredited:` |
@@ -205,7 +223,8 @@ X-Election-Shield-Signature: sha256=<HMAC-SHA256 of the raw body using DASHBOARD
 | `result.correction_requested` | An agent asks to correct a result | result with `status: "pending"` and `corrects_reference` |
 | `result.corrected` | A coordinator approves a correction | result with `status: "accepted"`, plus `superseded_reference`. **Replace** the PU's figures with these. |
 | `result.correction_rejected` | A coordinator rejects a correction | result with `status: "rejected"` |
-| `incident.reported` | Incident | `reference`, `polling_unit`, `type` (`violence`/`vote_suppression`/`malpractice`/`vote_buying`/`delay`/`other`), `type_label`, `urgent`, `note`, `agent`, `reported_at` |
+| `incident.reported` | Incident | `reference`, `polling_unit` (for a public report without a PU: `code` null plus `lga`, `ward`), `type` (`violence`/`vote_suppression`/`malpractice`/`vote_buying`/`delay`/`other`), `type_label`, `urgent`, `note`, `agent` (null for the public), `source` (`agent`/`public`), `reporter_phone` (public), `channel`, `reported_at` |
+| `volunteer.registered` | How can you help? sign-up (again on each update) | `reference`, `name`, `phone_number` (dialled from), `contact_phone`, `lga`, `ward`, `roles`, `role_labels`, `skills`, `skill_labels`, `other`, `is_agent`, `channel`, `registered_at`, `updated_at`. Upsert by `reference`. |
 | `materials.reported` | Materials status report (the latest per PU is current) | `id`, `polling_unit`, `status` (`arrived`/`incomplete`/`not_arrived`), `status_label`, `agent`, `reported_at` |
 | `presence.confirmed` | Check-in | `id`, `polling_unit`, `agent`, `confirmed_at` |
 
@@ -288,7 +307,9 @@ curl -X POST http://localhost:8000/api/ussd \
 | `USSD_COUNTRY_CODE` | `234` | Used to normalise local phone numbers |
 | `USSD_REFERENCE_DIGITS` | `6` | Digits in `RS`/`IN` references |
 | `USSD_SMS_CONFIRMATION` | `true` | Send SMS receipts to agents |
-| `USSD_INSTRUCTIONS` | see `config/ussd.php` | Text for menu option 4 (`\n` for new lines) |
+| `USSD_INSTRUCTIONS` | see `config/ussd.php` | Text for agents' Instructions option (`\n` for new lines) |
+| `USSD_PUBLIC_INFO` | see `config/ussd.php` | Text for the public's Election info option (under ~170 characters) |
+| `USSD_PUBLIC_DAILY_LIMIT` | `5` | Public incident reports allowed per phone number in 24 hours |
 | `AFRICASTALKING_USERNAME` | `sandbox` | AT app username |
 | `AFRICASTALKING_API_KEY` | — | AT API key (SMS) |
 | `AFRICASTALKING_SENDER_ID` | — | Optional SMS sender ID or short code |

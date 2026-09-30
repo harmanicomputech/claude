@@ -1,6 +1,6 @@
 # Election Shield
 
-USSD service (Africa's Talking) for the Ebonyi State election (6 Feb 2027) that lets polling agents submit EC8A results, report incidents and confirm presence. Laravel 13, MySQL in production, SQLite in-memory for tests.
+USSD service (Africa's Talking) for the Ebonyi State election (6 Feb 2027) that lets polling agents submit EC8A results, report incidents and confirm presence. Anyone else who dials gets a public menu: report an incident (by LGA/ward, `source` = `public`, no SMS alerts, daily cap per number), "How can you help?" volunteer sign-up (`volunteers`, one per phone), and election info. Laravel 13, MySQL in production, SQLite in-memory for tests.
 
 ## Commands
 
@@ -35,7 +35,7 @@ USSD service (Africa's Talking) for the Ebonyi State election (6 Feb 2027) that 
 
 Africa's Talking sends the full input history each request (`text=1*110101001*300*120*...`). `UssdMenu` replays every input through the state machine from the main menu, so never read inputs by position. Only END (terminal) steps may write to the database — a CON step can be replayed many times in one session. The one exception, counting wrong PINs, only happens for the latest input (`$isLatestInput`).
 
-Screen texts must stay under 182 characters (`test_screens_fit_on_a_ussd_display`).
+Screen texts must stay under 182 characters (`test_screens_fit_on_a_ussd_display`, `PublicUssdTest::test_every_new_screen_fits_on_a_ussd_display`). Long lists (LGAs, wards) are paged by `UssdMenu::pages()`, which leaves room for an error line; multi-choice answers are typed as digits together ("135"). `UssdMenu::handle()` takes a null agent for the public; agent-only flows must check `$this->agent`.
 
 Results: one `accepted` result per PU, enforced by the unique `accepted_polling_unit_code` column (null for every other status). Corrections are `pending` until reviewed; approval marks the old result `superseded`.
 

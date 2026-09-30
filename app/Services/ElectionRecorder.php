@@ -13,8 +13,10 @@ use App\Models\Agent;
 use App\Models\Coordinator;
 use App\Models\Incident;
 use App\Models\MaterialReport;
+use App\Models\PollingUnit;
 use App\Models\Presence;
 use App\Models\Result;
+use App\Models\Volunteer;
 use Illuminate\Contracts\Mail\Mailable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -115,6 +117,69 @@ class ElectionRecorder
         }
 
         return $incident;
+    }
+
+    /**
+     * An incident reported by a member of the public (anyone who dials the
+     * code). Shown to the situation room as an unverified public report; no
+     * SMS alerts or emails, so a prank can't set off alarms.
+     */
+    public function logPublicIncident(string $phoneNumber, string $lga, string $ward, ?PollingUnit $unit, IncidentType $type, string $note, string $channel = 'ussd'): Incident
+    {
+        $incident = Incident::create([
+            'reference' => $this->references->generate('IN', Incident::class),
+            'agent_id' => null,
+            'polling_unit_code' => $unit?->code,
+            'lga' => $unit?->lga ?? $lga,
+            'ward' => $unit?->ward ?? $ward,
+            'source' => Incident::SOURCE_PUBLIC,
+            'reporter_phone' => $phoneNumber,
+            'type' => $type,
+            'note' => $note,
+            'channel' => $channel,
+        ]);
+
+        $this->outbox->record('incident.reported', $incident->reference, $incident->toDashboardArray());
+
+        return $incident;
+    }
+
+    /**
+     * How many public reports this number sent in the last 24 hours.
+     */
+    public function publicReportsToday(string $phoneNumber): int
+    {
+        return Incident::query()->where('source', Incident::SOURCE_PUBLIC)->where('reporter_phone', $phoneNumber)->where('created_at', '>=', now()->subDay())->count();
+    }
+
+    /**
+     * A "How can you help?" sign-up. One per phone number: signing up again
+     * updates the same record (and the web app gets the new version).
+     *
+     * @param  list<string>  $roles  VolunteerRole values
+     * @param  list<string>  $skills  keys of VolunteerRole::SKILLS
+     */
+    public function registerVolunteer(string $phoneNumber, string $contactPhone, string $name, string $lga, string $ward, array $roles, array $skills, ?string $other, bool $isAgent, string $channel = 'ussd'): Volunteer
+    {
+        $volunteer = Volunteer::query()->firstOrNew(['phone_number' => $phoneNumber]);
+        $volunteer->fill([
+            'reference' => $volunteer->reference ?? $this->references->generate('VL', Volunteer::class),
+            'contact_phone' => $contactPhone,
+            'name' => $name,
+            'lga' => $lga,
+            'ward' => $ward,
+            'roles' => array_values($roles),
+            'skills' => $skills === [] ? null : array_values($skills),
+            'other' => $other,
+            'is_agent' => $isAgent,
+            'channel' => $channel,
+        ]);
+        $volunteer->save();
+
+        // A new key for each version, so an update reaches the web app too.
+        $this->outbox->record('volunteer.registered', $volunteer->reference.':'.$volunteer->updated_at->timestamp, $volunteer->toDashboardArray());
+
+        return $volunteer;
     }
 
     public function confirmPresence(Agent $agent, string $pollingUnitCode, string $channel = 'ussd'): Presence

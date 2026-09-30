@@ -61,6 +61,7 @@ class ElectionStats
             'incidents' => [
                 'total' => Incident::count(),
                 'last_hour' => Incident::where('created_at', '>=', now()->subHour())->count(),
+                'from_public' => Incident::where('source', Incident::SOURCE_PUBLIC)->count(),
                 'by_type' => Incident::query()
                     ->select('type', DB::raw('count(*) as total'))
                     ->groupBy('type')

@@ -32,16 +32,16 @@ class UssdTest extends TestCase
 
     // Authentication --------------------------------------------------------
 
-    public function test_unknown_phone_numbers_are_denied(): void
+    public function test_unknown_phone_numbers_get_the_public_menu(): void
     {
         $this->ussd('', Agent::factory()->make(['phone_number' => '+2348099999999']))
-            ->assertContent("END Access denied.\nContact coordinator.");
+            ->assertContent("CON Election Shield\n1. Report Incident\n2. How can you help?\n3. Election info\n4. Exit");
     }
 
     public function test_registered_agent_sees_main_menu(): void
     {
         $this->ussd('')->assertContent(
-            "CON Election Shield\n1. Submit Result\n2. Report Incident\n3. Confirm Presence\n4. Materials Status\n5. Instructions\n6. Exit"
+            "CON Election Shield\n1. Submit Result\n2. Report Incident\n3. Confirm Presence\n4. Materials Status\n5. Instructions\n6. How can you help?\n7. Exit"
         );
     }
 
@@ -305,7 +305,7 @@ class UssdTest extends TestCase
 
     public function test_exit(): void
     {
-        $this->ussd('6')->assertContent('END Thank you');
+        $this->ussd('7')->assertContent('END Thank you');
     }
 
     // Screen size -----------------------------------------------------------

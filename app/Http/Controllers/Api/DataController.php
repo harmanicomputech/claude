@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\IncidentType;
 use App\Enums\MaterialStatus;
 use App\Enums\ResultStatus;
+use App\Enums\VolunteerRole;
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
 use App\Models\Incident;
@@ -12,6 +13,7 @@ use App\Models\MaterialReport;
 use App\Models\PollingUnit;
 use App\Models\Presence;
 use App\Models\Result;
+use App\Models\Volunteer;
 use App\Support\Rehearsal;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -51,12 +53,35 @@ class DataController extends Controller
 
     public function incidents(Request $request): JsonResponse
     {
-        $request->validate(['type' => ['nullable', Rule::enum(IncidentType::class)]]);
+        $request->validate([
+            'type' => ['nullable', Rule::enum(IncidentType::class)],
+            'source' => ['nullable', Rule::in([Incident::SOURCE_AGENT, Incident::SOURCE_PUBLIC])],
+        ]);
 
         $query = Incident::with('agent', 'pollingUnit')
-            ->when($request->query('type'), fn (Builder $query, $type) => $query->where('type', $type));
+            ->when($request->query('type'), fn (Builder $query, $type) => $query->where('type', $type))
+            ->when($request->query('source'), fn (Builder $query, $source) => $query->where('source', $source));
 
-        return $this->page($request, $this->byArea($request, $query), fn (Incident $incident) => $incident->toDashboardArray());
+        return $this->page($request, $this->byArea($request, $query, placeColumns: true), fn (Incident $incident) => $incident->toDashboardArray());
+    }
+
+    /**
+     * "How can you help?" sign-ups (one per phone number, updated when they sign up again).
+     */
+    public function volunteers(Request $request): JsonResponse
+    {
+        $request->validate([
+            'lga' => ['nullable', 'string'],
+            'ward' => ['nullable', 'string'],
+            'role' => ['nullable', Rule::enum(VolunteerRole::class)],
+        ]);
+
+        $query = Volunteer::query()
+            ->when($request->query('lga'), fn (Builder $query, $lga) => $query->where('lga', $lga))
+            ->when($request->query('ward'), fn (Builder $query, $ward) => $query->where('ward', $ward))
+            ->when($request->query('role'), fn (Builder $query, $role) => $query->whereJsonContains('roles', $role));
+
+        return $this->page($request, $query, fn (Volunteer $volunteer) => $volunteer->toDashboardArray());
     }
 
     public function presences(Request $request): JsonResponse
@@ -104,7 +129,7 @@ class DataController extends Controller
     /**
      * Records at a PU / in an LGA / in a ward.
      */
-    private function byArea(Request $request, Builder $query): Builder
+    private function byArea(Request $request, Builder $query, bool $placeColumns = false): Builder
     {
         $request->validate([
             'polling_unit' => ['nullable', 'string', 'max:30'],
@@ -112,14 +137,22 @@ class DataController extends Controller
             'ward' => ['nullable', 'string'],
         ]);
 
+        $inUnits = fn (Builder $query) => $query->whereIn(
+            'polling_unit_code',
+            PollingUnit::select('code')
+                ->when($request->query('lga'), fn ($units, $lga) => $units->where('lga', $lga))
+                ->when($request->query('ward'), fn ($units, $ward) => $units->where('ward', $ward)),
+        );
+
         return $query
             ->when($request->query('polling_unit'), fn (Builder $query, $code) => $query->where('polling_unit_code', PollingUnit::normalizeCode($code)))
-            ->when($request->query('lga') || $request->query('ward'), fn (Builder $query) => $query->whereIn(
-                'polling_unit_code',
-                PollingUnit::select('code')
-                    ->when($request->query('lga'), fn ($units, $lga) => $units->where('lga', $lga))
-                    ->when($request->query('ward'), fn ($units, $ward) => $units->where('ward', $ward)),
-            ));
+            ->when($request->query('lga') || $request->query('ward'), fn (Builder $query) => $placeColumns
+                // Public incidents may name only an LGA and ward.
+                ? $query->where(fn (Builder $query) => $inUnits($query)->orWhere(fn (Builder $query) => $query
+                    ->whereNull('polling_unit_code')
+                    ->when($request->query('lga'), fn ($query, $lga) => $query->where('lga', $lga))
+                    ->when($request->query('ward'), fn ($query, $ward) => $query->where('ward', $ward))))
+                : $inUnits($query));
     }
 
     /**

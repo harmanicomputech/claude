@@ -91,7 +91,8 @@ The web app must:
 | `result.correction_requested` | A result with `status: "pending"` and `corrects_reference` |
 | `result.corrected` | A result with `status: "accepted"` plus `superseded_reference`. **Replace** that PU's figures. |
 | `result.correction_rejected` | A result with `status: "rejected"` |
-| `incident.reported` | `reference`, `polling_unit`, `type` (`violence`/`vote_suppression`/`malpractice`/`vote_buying`/`delay`/`other`), `type_label`, `urgent`, `note`, `agent`, `reported_at` |
+| `incident.reported` | `reference`, `polling_unit` (a public report may have no PU: `code` null with `lga` and `ward`), `type` (`violence`/`vote_suppression`/`malpractice`/`vote_buying`/`delay`/`other`), `type_label`, `urgent`, `note`, `agent` (null for a public report), `source` (`agent` or `public`: anyone who dials can report; public reports are unverified and never SMS coordinators), `reporter_phone` (public reports), `channel`, `reported_at` |
+| `volunteer.registered` | A "How can you help?" sign-up, sent again whenever it changes (one per phone number): `reference`, `name`, `phone_number`, `contact_phone`, `lga`, `ward`, `roles` (`canvass`/`pu_agent`/`share`/`women`/`youth`/`transport`/`professional`/`other`), `role_labels`, `skills` (`legal`/`media`/`medical`/`it`/`other`), `skill_labels`, `other`, `is_agent`, `registered_at`, `updated_at`. Upsert by `reference`. |
 | `materials.reported` | `id`, `polling_unit`, `status` (`arrived`/`incomplete`/`not_arrived`), `status_label`, `agent`, `reported_at`. Agents can report again; the latest report per PU is its current status. |
 | `presence.confirmed` | `id`, `polling_unit`, `agent`, `confirmed_at` |
 
@@ -143,6 +144,7 @@ The web app can also **fetch** everything the USSD service holds. Use this for t
 | `GET /materials` | Materials reports. `latest=1` gives the current status per PU. | `status`, `latest`, `lga`, `ward`, `polling_unit` |
 | `GET /polling-units` | The register (code, name, ward, LGA, registered voters) | `lga`, `ward` |
 | `GET /agents` | Agents: name, phone, assigned PU, `locked`, `last_seen_at`. PINs are never returned. | `lga` |
+| `GET /volunteers` | "How can you help?" sign-ups, same shape as `volunteer.registered` | `lga`, `ward`, `role` |
 | `GET /reports/summary` | Totals, turnout, party votes, materials, incidents, and a breakdown by LGA | |
 | `GET /reports/missing?type=presence\|results` | PUs with no check-in or no result, with their agents | `lga` |
 | `GET /corrections`, `POST /corrections/{ref}/approve\|reject` | Correction review | `status` |
@@ -173,7 +175,7 @@ Records are ordered by `updated_at`, then `id`. Keep following `next_cursor` unt
 
 ### Recommended sync strategy (both paths together)
 
-1. **First import:** page through `/polling-units`, `/agents`, `/results?status=…` (all statuses), `/incidents`, `/presences` and `/materials`. **Upsert** results and incidents by `reference`, and the others by `id`.
+1. **First import:** page through `/polling-units`, `/agents`, `/results?status=…` (all statuses), `/incidents`, `/presences`, `/materials` and `/volunteers`. **Upsert** results, incidents and volunteers by `reference`, and the others by `id`.
 2. **Real time:** the webhook (section 1) delivers each event within seconds.
 3. **Safety net:** every 2–5 minutes, a scheduled job calls each list endpoint with `updated_since` set to the last `server_time` seen, minus 1 minute of overlap. Upserting makes the overlap harmless. This catches anything a webhook missed.
 4. **Rehearsals:** webhook events carry `rehearsal: true|false`. Pulled records don't, but each response has `rehearsal_mode`. Rehearsal data is cleared in the USSD console before the real election.

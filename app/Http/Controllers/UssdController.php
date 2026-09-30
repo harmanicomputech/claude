@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Agent;
+use App\Support\PhoneNumber;
 use App\Ussd\UssdMenu;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -23,14 +24,12 @@ class UssdController extends Controller
             'text' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $agent = Agent::findByPhone($validated['phoneNumber']);
-
-        if ($agent === null) {
-            return $this->reply("END Access denied.\nContact coordinator.");
-        }
+        // Registered agents get the full menu; anyone else the public menu.
+        $phone = PhoneNumber::normalize($validated['phoneNumber']);
+        $agent = Agent::findByPhone($phone);
 
         try {
-            return $this->reply($menu->handle($agent, $validated['text'] ?? ''));
+            return $this->reply($menu->handle($agent, $phone, $validated['text'] ?? ''));
         } catch (Throwable $e) {
             report($e);
 

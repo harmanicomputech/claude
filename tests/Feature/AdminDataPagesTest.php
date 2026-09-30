@@ -155,7 +155,7 @@ class AdminDataPagesTest extends TestCase
         $rows = $this->csv($this->admin()->get('/admin/incidents/export?type=other'));
 
         $this->assertSame("'=HYPERLINK(\"x\")", $rows[1][3]);
-        $this->assertSame('+2348011111111', $rows[1][9]);
+        $this->assertSame('+2348011111111', $rows[1][10]);
     }
 
     public function test_polling_units_page_statuses_and_export(): void
