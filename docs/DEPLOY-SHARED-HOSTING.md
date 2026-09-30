@@ -50,7 +50,7 @@ Open `https://ussd.yourdomain.com/admin`. The first time, it asks you to **creat
 Then, on the **Overview** page:
 
 1. Press **Set up / update database**.
-2. Press **Import polling units**. With no file chosen, it loads the bundled Ebonyi register (3,308 PUs).
+2. Press **Import polling units**. With no file chosen, it loads the bundled Ebonyi register (INEC's 2,940 PUs).
 3. Press **Send test email** and check your inbox.
 4. Go to **Agents** and add yourself with your phone number and a PIN, for testing.
 5. Go to **Coordinators** and add at least one state-wide coordinator.
@@ -95,8 +95,8 @@ Go to **Agents → Import agents from CSV** and upload a file like `database/dat
 
 ```
 name,phone,pu_code,pin
-Ada Obi,08012345678,EB/212/02633/007,
-Chidi Eze,08023456789,21202633002,4821
+Ada Obi,08012345678,11/01/01/007,
+Chidi Eze,08023456789,110101002,4821
 ```
 
 - `pu_code` is optional. When it's given, the agent is never asked for a PU code.

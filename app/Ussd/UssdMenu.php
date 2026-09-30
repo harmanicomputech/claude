@@ -809,7 +809,7 @@ class UssdMenu
     }
 
     /**
-     * "Abakaliki Ward 01" → "Ward 01" (the LGA is already on the screen).
+     * "Abakaliki Ward 01" → "Ward 01" (the LGA is already on the screen); INEC ward names are shown as they are.
      */
     private function wardLabel(string $ward, string $lga): string
     {

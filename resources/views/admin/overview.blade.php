@@ -85,8 +85,9 @@
             <h2>Polling unit register</h2>
             <form method="post" action="{{ route('admin.system.polling-units') }}" enctype="multipart/form-data">
                 @csrf
-                <p class="muted">Loads the bundled Ebonyi register (3,308 PUs), or upload an updated CSV (<code>code,name,ward,lga,registered_voters</code>). Existing PUs are updated.</p>
+                <p class="muted">Loads the bundled Ebonyi register (INEC: 2,940 PUs, 171 wards), or upload an updated CSV (<code>code,name,ward,lga,registered_voters</code>). Existing PUs are updated; an empty <code>registered_voters</code> keeps the figure already stored.</p>
                 <input type="file" name="file" accept=".csv,text/csv">
+                <p><label class="inline"><input type="checkbox" name="replace" value="1"> Remove PUs that are not in the file (agents assigned to them are unassigned)</label></p>
                 <p><button type="submit" @disabled(! $ready)>Import polling units</button></p>
             </form>
         </div>

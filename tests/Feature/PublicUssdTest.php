@@ -180,6 +180,29 @@ class PublicUssdTest extends TestCase
         }
     }
 
+    public function test_the_real_register_ward_lists_fit_on_a_ussd_display(): void
+    {
+        PollingUnit::query()->delete();
+        $this->artisan('pu:import', ['file' => database_path('data/ebonyi_polling_units.csv')])->assertSuccessful();
+
+        foreach (range(1, 13) as $lga) {
+            $text = "1*1*{$lga}";
+            for ($page = 1; $page <= 6; $page++) {
+                $body = $this->dial($text)->getContent();
+                $this->assertLessThanOrEqual(182, mb_strlen($body), "Screen too long for [{$text}]: {$body}");
+                $this->assertLessThanOrEqual(182, mb_strlen($this->dial($text.'*999')->getContent()), "Error screen too long for [{$text}]");
+                if (! str_contains($body, '0.More')) {
+                    break;
+                }
+                $text .= '*0';
+            }
+            $this->assertStringNotContainsString('0.More', $body, "LGA {$lga} has more ward pages than expected");
+        }
+
+        // Choosing a ward on a later page still lands on that ward (Ikwo has 20).
+        $this->dial('1*1*7*20')->assertSee('PU code (if you know it)', false);
+    }
+
     public function test_the_admin_console_and_the_data_api_show_public_reports_and_volunteers(): void
     {
         $this->dial('1*1*7*3*0*Thugs at the school*1');   // public, Ikwo Ward 03

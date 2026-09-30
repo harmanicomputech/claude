@@ -41,15 +41,72 @@ class AdminCommandTest extends TestCase
     public function test_the_ebonyi_register_imports_cleanly(): void
     {
         $this->artisan('pu:import', ['file' => database_path('data/ebonyi_polling_units.csv')])
-            ->expectsOutputToContain('Imported 3308 polling unit(s); 0 row(s) skipped.')
+            ->expectsOutputToContain('Imported 2940 polling unit(s); 0 row(s) skipped.')
             ->assertSuccessful();
 
         $this->assertSame(13, PollingUnit::distinct()->count('lga'));
+        $this->assertSame(171, PollingUnit::select('lga', 'ward')->distinct()->get()->count());
 
-        $unit = PollingUnit::findByCode('EB/212/02633/007');
-        $this->assertSame('21202633007', $unit->code);
-        $this->assertSame('Police Station Area 007', $unit->shortName());
+        $unit = PollingUnit::findByCode('11/01/01/007');
+        $this->assertSame('110101007', $unit->code);
+        $this->assertSame('VANCO HOTEL SPACE I', $unit->shortName());
+        $this->assertSame('Abakpa', $unit->ward);
         $this->assertSame('Abakaliki', $unit->lga);
+    }
+
+    public function test_pu_import_keeps_voter_numbers_when_the_file_has_none(): void
+    {
+        PollingUnit::factory()->create(['code' => '110101001', 'name' => 'Old name', 'registered_voters' => 640]);
+
+        $this->artisan('pu:import', ['file' => $this->csv('code,name,ward,lga,registered_voters
+11/01/01/001,ADAZI-ENU HALL I,Abakpa,Abakaliki,
+')])->assertSuccessful();
+
+        $unit = PollingUnit::findByCode('110101001');
+        $this->assertSame('ADAZI-ENU HALL I', $unit->name);
+        $this->assertSame(640, $unit->registered_voters);
+    }
+
+    public function test_pu_import_can_replace_the_register(): void
+    {
+        PollingUnit::factory()->create(['code' => '21202633007']);
+        $kept = Agent::factory()->create(['name' => 'Kept', 'polling_unit_code' => '110101001']);
+        $moved = Agent::factory()->create(['name' => 'Moved', 'polling_unit_code' => '21202633007']);
+
+        $this->artisan('pu:import', ['file' => $this->csv('code,name,ward,lga
+11/01/01/001,ADAZI-ENU HALL I,Abakpa,Abakaliki
+'), '--replace' => true])
+            ->expectsOutputToContain('1 removed; 1 agent(s) unassigned')
+            ->assertSuccessful();
+
+        $this->assertSame(['110101001'], PollingUnit::pluck('code')->all());
+        $this->assertSame('110101001', $kept->fresh()->polling_unit_code);
+        $this->assertNull($moved->fresh()->polling_unit_code);
+
+        // A file with a bad row never replaces anything.
+        $this->artisan('pu:import', ['file' => $this->csv('code,name,ward,lga
+x,,,
+'), '--replace' => true])->assertFailed();
+        $this->assertSame(1, PollingUnit::count());
+    }
+
+    public function test_the_made_up_register_is_swapped_for_inecs_on_update(): void
+    {
+        PollingUnit::factory()->create(['code' => '21202633007']);
+        $agent = Agent::factory()->create(['polling_unit_code' => '21202633007']);
+
+        $migration = require database_path('migrations/2026_10_01_000001_use_inec_polling_unit_register.php');
+        $migration->up();
+
+        $this->assertSame(2940, PollingUnit::count());
+        $this->assertNull(PollingUnit::findByCode('21202633007'));
+        $this->assertNull($agent->fresh()->polling_unit_code);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'polling_unit.register_replaced']);
+
+        // Running again (or on a database already on INEC's codes) does nothing.
+        PollingUnit::findByCode('110101001')->update(['registered_voters' => 500]);
+        $migration->up();
+        $this->assertSame(500, PollingUnit::findByCode('110101001')->registered_voters);
     }
 
     public function test_pu_import_reports_bad_rows_and_missing_columns(): void

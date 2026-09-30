@@ -41,14 +41,14 @@ CON Election Shield
 4. Exit             → END Thank you
 ```
 
-Lists that don't fit one screen (LGAs, wards) show `0.More`; numbers run on across pages. Wards are shown without the LGA prefix ("Ward 03"). Volunteers are kept one per contact number: signing up again with the same contact number updates the entry, and one phone can sign up several people (at most `USSD_VOLUNTEER_DAILY_LIMIT`, 20, a day).
+Lists that don't fit one screen (LGAs, wards) show `0.More`; numbers run on across pages. Wards are listed by name within the chosen LGA. Volunteers are kept one per contact number: signing up again with the same contact number updates the entry, and one phone can sign up several people (at most `USSD_VOLUNTEER_DAILY_LIMIT`, 20, a day).
 
 Example confirmation screen, for a real PU from the register (it fits the 182-character USSD limit even with large numbers):
 
 ```
 Confirm:
-PU:21202633007
-Police Station Area 007
+PU:110101007
+VANCO HOTEL SPACE I
 Acc:1200 Rej:21
 APC:610 PDP:402
 LP:95 OTHERS:18
@@ -81,10 +81,10 @@ Parties are set with `ELECTION_PARTIES`; candidate names live in `config/electio
 | Duplicate result | The agent is offered *Request correction*. The correction is stored as **pending** and doesn't count until a coordinator approves it. |
 | Time windows | Presence opens at 07:00 on election day and results open at 14:30. Both close at `ELECTION_RESULTS_CLOSE_AT`. Incidents can be reported at any time. |
 | Auto-PU detection | Agents registered with `--pu` are never asked for a PU code. |
-| Quick codes | `*XXX*1*21202633007*1200*610*402*95*18*21#` goes straight to the confirmation screen, which still asks for the PIN. |
+| Quick codes | `*XXX*1*110101007*1200*610*402*95*18*21#` goes straight to the confirmation screen, which still asks for the PIN. |
 | SMS | The agent gets a receipt for each result and correction request, and a message when a correction is approved or rejected. |
 
-Africa's Talking sends the whole session so far as one string (`text=1*21202633007*1200*…`). `app/Ussd/UssdMenu.php` replays these inputs through a state machine on every request, which is how retries, "Edit" and corrections work.
+Africa's Talking sends the whole session so far as one string (`text=1*110101007*1200*…`). `app/Ussd/UssdMenu.php` replays these inputs through a state machine on every request, which is how retries, "Edit" and corrections work.
 
 ## Setup
 
@@ -115,18 +115,20 @@ php artisan migrate
 
 ### 1. Import the polling unit register
 
-The Ebonyi register is in `database/data/ebonyi_polling_units.csv`: 3,308 PUs in 13 LGAs and 169 wards. The columns are `code,name,ward,lga,registered_voters`, and `registered_voters` is optional.
+The Ebonyi register is in `database/data/ebonyi_polling_units.csv`: INEC's 2,940 PUs in 13 LGAs and 171 wards, taken from INEC's polling unit locator (via the public [mykeels/inec-polling-units](https://github.com/mykeels/inec-polling-units) copy, July 2022, after INEC's 2021 PU expansion). The columns are `code,name,ward,lga,registered_voters,latitude,longitude`; `registered_voters` is optional and empty for now (INEC publishes it per PU in its register PDFs), and the coordinates are INEC's approximate locations (the USSD service ignores them). An empty `registered_voters` keeps the figure already stored. Ward names repeat across LGAs (Abakpa and Ndiagu are in both Abakaliki and Ebonyi), so always filter a ward together with its LGA.
+
+An earlier version bundled a made-up register (codes like `EB/212/02633/007`). The `2026_10_01_000001_use_inec_polling_unit_register` migration replaces it on any database that still has those codes: old PUs are removed and agents assigned to them are unassigned and listed in the audit log (reassign them on the Agents page).
 
 ```bash
 php artisan pu:import database/data/ebonyi_polling_units.csv
 ```
 
-Codes are stored as digits only, which is what agents type: `EB/212/02633/007` becomes **`21202633007`**. Print a list of each agent's code for them. Re-running the import (for example with an updated file) updates existing polling units and adds new ones.
+Codes are stored as digits only, which is what agents type: INEC's `11/01/01/007` (state/LGA/ward/PU) becomes **`110101007`**. Print a list of each agent's code for them. Re-running the import (for example with an updated file) updates existing polling units and adds new ones; `--replace` (or the tick box in the admin console) also removes PUs that are not in the file.
 
 ### 2. Register agents and coordinators
 
 ```bash
-php artisan agent:add 08012345678 "Ada Obi" --pu=EB/212/02633/007 --sms-pin   # random PIN, texted to the agent
+php artisan agent:add 08012345678 "Ada Obi" --pu=11/01/01/007 --sms-pin   # random PIN, texted to the agent
 php artisan agent:add 08012345679 "Chidi Eze" --pin=4821                   # any PU, chosen PIN
 php artisan agent:pin 08012345678 --sms                                    # reset a PIN / unlock
 php artisan agent:import agents.csv --sms-pins                             # bulk: name,phone,pu_code,pin
@@ -151,7 +153,7 @@ Every notification runs on the queue, so the USSD reply is never delayed. On sha
 * * * * * cd /path/to/app && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-`php artisan db:seed` imports the Ebonyi register and adds demo agents `+2348000000001` (any PU) and `+2348000000002` (assigned to PU 21202633002), both with PIN `1234`, plus a state-wide coordinator. Remove the demo people before election day.
+`php artisan db:seed` imports the Ebonyi register and adds demo agents `+2348000000001` (any PU) and `+2348000000002` (assigned to PU 110101002), both with PIN `1234`, plus a state-wide coordinator. Remove the demo people before election day.
 
 ## Election day tools
 
@@ -202,7 +204,7 @@ X-Election-Shield-Signature: sha256=<HMAC-SHA256 of the raw body using DASHBOARD
   "data": {
     "reference": "RS784321",
     "status": "accepted",
-    "polling_unit": { "code": "21202633007", "name": "Police Station Area 007", "ward": "Abakaliki Ward 01", "lga": "Abakaliki", "registered_voters": 1507 },
+    "polling_unit": { "code": "110101007", "name": "VANCO HOTEL SPACE I", "ward": "Abakpa", "lga": "Abakaliki", "registered_voters": null },
     "accredited_voters": 1200,
     "votes": { "APC": 610, "PDP": 402, "LP": 95, "OTHERS": 18 },
     "total_valid_votes": 1125,
@@ -276,7 +278,7 @@ To test without Africa's Talking (set `ELECTION_ENFORCE_WINDOWS=false` to try it
 
 ```bash
 curl -X POST http://localhost:8000/api/ussd \
-  -d "sessionId=test&serviceCode=*384*1#&phoneNumber=+2348000000001&text=1*21202633007*1200*610*402*95*18*21"
+  -d "sessionId=test&serviceCode=*384*1#&phoneNumber=+2348000000001&text=1*110101007*1200*610*402*95*18*21"
 ```
 
 ## Configuration

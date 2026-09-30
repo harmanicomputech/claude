@@ -37,7 +37,7 @@
                 @csrf
                 <label>Full name</label><input type="text" name="name" value="{{ old('name') }}" required>
                 <label>Phone number</label><input type="text" name="phone" value="{{ old('phone') }}" placeholder="08012345678" required>
-                <label>Assigned PU code (optional)</label><input type="text" name="pu_code" value="{{ old('pu_code') }}" placeholder="EB/212/02633/007 or 21202633007">
+                <label>Assigned PU code (optional)</label><input type="text" name="pu_code" value="{{ old('pu_code') }}" placeholder="11/01/01/007 or 110101007">
                 <label>PIN (optional, 4 digits: random if blank)</label><input type="text" name="pin" inputmode="numeric" maxlength="4">
                 <p><label class="inline"><input type="checkbox" name="sms_pin" value="1"> Text the PIN to the agent</label></p>
                 <button type="submit">Save agent</button>

@@ -152,7 +152,7 @@ class AdminConsoleTest extends TestCase
     {
         $this->asAdmin()->post('/admin/system/polling-units')->assertSessionHas('status');
 
-        $this->assertSame(3309, PollingUnit::count()); // 3,308 + the test PU
+        $this->assertSame(2940, PollingUnit::count()); // INEC's register already includes the test PU's code
     }
 
     public function test_test_email_button(): void

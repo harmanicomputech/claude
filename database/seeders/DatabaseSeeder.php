@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
 
         Agent::updateOrCreate(
             ['phone_number' => '+2348000000002'],
-            ['name' => 'Demo Agent (assigned PU)', 'polling_unit_code' => '21202633002', 'pin' => '1234'],
+            ['name' => 'Demo Agent (assigned PU)', 'polling_unit_code' => '110101002', 'pin' => '1234'],
         );
 
         Coordinator::updateOrCreate(

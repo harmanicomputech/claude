@@ -26,11 +26,11 @@ class SystemController extends Controller
 
     public function importPollingUnits(Request $request): RedirectResponse
     {
-        $request->validate(['file' => ['nullable', 'file', 'mimes:csv,txt', 'max:10240']]);
+        $request->validate(['file' => ['nullable', 'file', 'mimes:csv,txt', 'max:10240'], 'replace' => ['nullable', 'boolean']]);
 
         $path = $request->file('file')?->getRealPath() ?? database_path('data/ebonyi_polling_units.csv');
 
-        return $this->run('pu:import', ['file' => $path], 'Polling units imported');
+        return $this->run('pu:import', ['file' => $path, '--replace' => $request->boolean('replace')], 'Polling units imported');
     }
 
     public function testEmail(Request $request): RedirectResponse
