@@ -114,9 +114,10 @@ return [
     |
     */
 
-    'notify_emails' => array_values(array_filter(array_map(
-        'trim',
-        explode(',', (string) env('NOTIFY_EMAILS', ''))
-    ))),
+    // Anything that isn't an email address (e.g. a placeholder) is ignored.
+    'notify_emails' => array_values(array_filter(
+        array_map('trim', explode(',', (string) env('NOTIFY_EMAILS', ''))),
+        fn (string $address) => filter_var($address, FILTER_VALIDATE_EMAIL) !== false,
+    )),
 
 ];
