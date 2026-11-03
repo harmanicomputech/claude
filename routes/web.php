@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\CoordinatorController;
 use App\Http\Controllers\Admin\CorrectionController;
+use App\Http\Controllers\Admin\FieldReportController;
 use App\Http\Controllers\Admin\IncidentController;
 use App\Http\Controllers\Admin\MissingController;
 use App\Http\Controllers\Admin\OverviewController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\Admin\VolunteerController;
 use App\Http\Controllers\RunnerController;
 use App\Http\Middleware\AuthenticateAdmin;
 use App\Http\Middleware\EnsureDatabaseReady;
+use App\Http\Middleware\LimitToArea;
 use App\Http\Middleware\RequireAdminRole;
 use Illuminate\Support\Facades\Route;
 
@@ -32,7 +34,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('/setup', [AuthController::class, 'setup'])->middleware('throttle:5,1')->name('setup');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::middleware(AuthenticateAdmin::class)->group(function () {
+    // Coordinators see only their LGA or ward (LimitToArea); admins see everything.
+    Route::middleware([AuthenticateAdmin::class, LimitToArea::class])->group(function () {
         Route::get('/', OverviewController::class)->name('overview');
         Route::post('/account/password', [UserController::class, 'changeOwnPassword'])->name('account.password');
 
@@ -70,6 +73,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/corrections/{result:reference}/reject', [CorrectionController::class, 'reject'])->name('corrections.reject');
 
             Route::get('/missing', MissingController::class)->name('missing');
+
+            Route::get('/check-ins', [FieldReportController::class, 'checkins'])->name('checkins.index');
+            Route::get('/materials', [FieldReportController::class, 'materials'])->name('materials.index');
+            Route::get('/field-reports/{tab}/export', [FieldReportController::class, 'export'])->whereIn('tab', ['checkins', 'materials'])->name('field-reports.export');
 
             // Admins only.
             Route::middleware(RequireAdminRole::class)->group(function () {

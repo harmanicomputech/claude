@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\VolunteerRole;
+use App\Models\Scopes\InArea;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,6 +14,11 @@ use Illuminate\Database\Eloquent\Model;
 #[Fillable(['reference', 'phone_number', 'contact_phone', 'name', 'lga', 'ward', 'roles', 'skills', 'other', 'channel', 'is_agent'])]
 class Volunteer extends Model
 {
+    protected static function booted(): void
+    {
+        static::addGlobalScope('area', new InArea('places'));
+    }
+
     protected function casts(): array
     {
         return [

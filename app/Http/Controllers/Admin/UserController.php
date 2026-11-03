@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Models\PollingUnit;
 use App\Models\User;
 use App\Support\Audit;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,7 @@ class UserController extends Controller
         return view('admin.users', [
             'users' => User::orderBy('role')->orderBy('name')->get(),
             'roles' => UserRole::cases(),
+            'places' => PollingUnit::query()->select('lga', 'ward')->distinct()->orderBy('lga')->orderBy('ward')->get()->groupBy('lga')->map->pluck('ward'),
         ]);
     }
 
@@ -29,11 +31,12 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'role' => ['required', Rule::enum(UserRole::class)],
+            'area' => ['nullable', 'string', 'max:220'],
         ]);
 
         $password = $this->temporaryPassword();
 
-        $user = User::create([...$validated, 'email' => strtolower($validated['email']), 'password' => $password]);
+        $user = User::create([...collect($validated)->except('area')->all(), ...$this->area($validated['area'] ?? null), 'email' => strtolower($validated['email']), 'password' => $password]);
 
         Audit::record('user.created', "Created {$user->role->label()} account for {$user->name} ({$user->email})", $user);
 
@@ -42,17 +45,17 @@ class UserController extends Controller
 
     public function update(Request $request, User $user): RedirectResponse
     {
-        $validated = $request->validate(['role' => ['required', Rule::enum(UserRole::class)]]);
+        $validated = $request->validate(['role' => ['required', Rule::enum(UserRole::class)], 'area' => ['nullable', 'string', 'max:220']]);
         $role = UserRole::from($validated['role']);
 
         if ($user->isAdmin() && $role !== UserRole::Admin && $this->isLastAdmin($user)) {
             return back()->with('error', 'There must always be at least one admin.');
         }
 
-        $user->update(['role' => $role]);
-        Audit::record('user.role_changed', "Changed {$user->name}'s role to {$role->label()}", $user);
+        $user->update(['role' => $role, ...$this->area($validated['area'] ?? null)]);
+        Audit::record('user.role_changed', "Changed {$user->name}'s role to {$role->label()} ({$user->areaLabel()})", $user);
 
-        return back()->with('status', "{$user->name} is now a {$role->label()}.");
+        return back()->with('status', "{$user->name} is now a {$role->label()}: {$user->areaLabel()}.");
     }
 
     public function resetPassword(User $user): RedirectResponse
@@ -92,6 +95,22 @@ class UserController extends Controller
         Audit::record('user.deleted', "Removed {$user->name}'s account ({$user->email})");
 
         return back()->with('status', "Removed {$user->name}.");
+    }
+
+    /**
+     * "Abakaliki|" (whole LGA) or "Abakaliki|Abakpa" (a ward), checked against the register.
+     *
+     * @return array{lga: ?string, ward: ?string}
+     */
+    private function area(?string $value): array
+    {
+        [$lga, $ward] = array_pad(explode('|', (string) $value, 2), 2, '');
+
+        if ($lga === '' || ! PollingUnit::where('lga', $lga)->when($ward !== '', fn ($q) => $q->where('ward', $ward))->exists()) {
+            return ['lga' => null, 'ward' => null];
+        }
+
+        return ['lga' => $lga, 'ward' => $ward === '' ? null : $ward];
     }
 
     private function isLastAdmin(User $user): bool

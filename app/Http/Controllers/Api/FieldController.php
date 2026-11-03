@@ -118,12 +118,13 @@ class FieldController extends Controller
             'phone_number' => ['required', 'string', 'max:20'],
             'polling_unit' => ['nullable', 'string', 'max:30'],
             'status' => ['required', Rule::enum(MaterialStatus::class)],
+            'personnel_arrived' => ['nullable', 'boolean'],
         ]);
 
         $agent = $this->agent($validated['phone_number']);
         [$code] = $this->pollingUnit($agent, $validated['polling_unit'] ?? null);
 
-        $report = $this->recorder->reportMaterials($agent, $code, MaterialStatus::from($validated['status']), channel: 'web');
+        $report = $this->recorder->reportMaterials($agent, $code, MaterialStatus::from($validated['status']), channel: 'web', personnelArrived: isset($validated['personnel_arrived']) ? (bool) $validated['personnel_arrived'] : null);
 
         return response()->json(['message' => 'Materials report saved.', 'materials' => [...$report->toDashboardArray(), 'rehearsal' => Rehearsal::active()]], 201);
     }

@@ -106,7 +106,7 @@ class AdminSection2Test extends TestCase
         $this->actingAs($this->admin)->get('/admin/results/export')->assertOk();
         $this->assertDatabaseHas('audit_logs', ['action' => 'result.exported', 'user_name' => 'Chief Admin']);
 
-        $confirmed = '1*'.self::PU.'*300*120*80*20*5*1';
+        $confirmed = '5*'.self::PU_ENTRY.'*300*120*80*20*5*1';
         $this->ussd("{$confirmed}*1111");
         $this->ussd("{$confirmed}*1111*2222");
         $this->ussd("{$confirmed}*1111*2222*3333");
@@ -127,7 +127,7 @@ class AdminSection2Test extends TestCase
         ]);
         $this->travelTo(Carbon::parse('2026-12-10 10:00', 'Africa/Lagos'));
 
-        $this->ussd('1')->assertSee('Result submission opens', false);
+        $this->ussd('5')->assertSee('Result submission opens', false);
 
         $this->actingAs($this->admin)->post('/admin/settings/rehearsal', ['on' => 1])->assertSessionHas('status');
         $this->assertTrue(Rehearsal::active());
@@ -218,7 +218,7 @@ class AdminSection2Test extends TestCase
         Agent::factory()->assignedTo(self::PU)->create(['name' => 'Assigned Agent']);
         Coordinator::create(['name' => 'Abakaliki Lead', 'phone_number' => '08020000001', 'lga' => 'Abakaliki']);
 
-        $coordinator = User::factory()->create();
+        $coordinator = User::factory()->create(['lga' => 'Abakaliki']);
 
         $this->actingAs($coordinator)->get('/admin/agents/cards')->assertOk()
             ->assertSee('Assigned Agent')
@@ -227,7 +227,12 @@ class AdminSection2Test extends TestCase
             ->assertSee('APC → PDP → LP')
             ->assertSee('Abakaliki Lead')
             ->assertSee('Your PIN was sent to you by SMS')
+            ->assertSee('press <b>5</b>', false)
             ->assertDontSee('Set new PINs'); // coordinators can't reset PINs
+
+        // A coordinator for another LGA gets no cards for this one.
+        $elsewhere = User::factory()->create(['lga' => 'Ikwo']);
+        $this->actingAs($elsewhere)->get('/admin/agents/cards')->assertOk()->assertDontSee('Assigned Agent');
     }
 
     public function test_cards_with_new_pins(): void

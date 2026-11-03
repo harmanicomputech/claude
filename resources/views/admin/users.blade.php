@@ -6,7 +6,7 @@
     <div class="page-head">
         <div>
             <h1>Users</h1>
-            <p class="muted"><b>Admins</b> can do everything. <b>Coordinators</b> can see all data, export it and review corrections, but can't change agents, users or settings.</p>
+            <p class="muted"><b>Admins</b> can do everything. <b>Coordinators</b> see only their LGA, or their ward when one is set: results, incidents, check-ins, agents and everything else, with exports and correction review for that area. They can't change agents, users or settings. A coordinator with no area sees nothing.</p>
         </div>
     </div>
 
@@ -22,6 +22,18 @@
                     @foreach ($roles as $role)<option value="{{ $role->value }}" @selected(old('role', 'coordinator') === $role->value)>{{ $role->label() }}</option>@endforeach
                 </select>
             </div>
+            <div>
+                <label>Area (coordinators)</label>
+                <select name="area" style="min-width:200px">
+                                    <option value="">No area (sees nothing unless admin)</option>
+                                    @foreach ($places as $lga => $wards)
+                                        <optgroup label="{{ $lga }}">
+                                            <option value="{{ $lga }}|" @selected(old('area') === $lga.'|')>All of {{ $lga }} LGA</option>
+                                            @foreach ($wards as $ward)<option value="{{ $lga }}|{{ $ward }}" @selected(old('area') === $lga.'|'.$ward)>{{ $ward }} ward</option>@endforeach
+                                        </optgroup>
+                                    @endforeach
+                                </select>
+            </div>
             <div class="actions" style="flex:0 0 auto"><button type="submit">Create account</button></div>
         </form>
         <p class="muted">A temporary password is shown once after creating the account. Share it privately; they can change it on the Overview page.</p>
@@ -29,7 +41,7 @@
 
     <div class="card">
         <table class="data">
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Last login</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Role and area</th><th>Last login</th><th></th></tr></thead>
             <tbody>
                 @foreach ($users as $user)
                     <tr>
@@ -40,6 +52,15 @@
                                 @csrf @method('PATCH')
                                 <select name="role" style="min-width:130px">
                                     @foreach ($roles as $role)<option value="{{ $role->value }}" @selected($user->role === $role)>{{ $role->label() }}</option>@endforeach
+                                </select>
+                                <select name="area" style="min-width:170px">
+                                    <option value="">No area (sees nothing unless admin)</option>
+                                    @foreach ($places as $lga => $wards)
+                                        <optgroup label="{{ $lga }}">
+                                            <option value="{{ $lga }}|" @selected(($user->lga ? $user->lga.'|'.$user->ward : '') === $lga.'|')>All of {{ $lga }} LGA</option>
+                                            @foreach ($wards as $ward)<option value="{{ $lga }}|{{ $ward }}" @selected(($user->lga ? $user->lga.'|'.$user->ward : '') === $lga.'|'.$ward)>{{ $ward }} ward</option>@endforeach
+                                        </optgroup>
+                                    @endforeach
                                 </select>
                                 <button type="submit" class="secondary">Save</button>
                             </form>

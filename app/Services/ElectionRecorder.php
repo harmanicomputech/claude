@@ -212,11 +212,12 @@ class ElectionRecorder
      * Record the election materials status at a PU. Agents may report again
      * as things change; the latest report is the PU's current status.
      */
-    public function reportMaterials(Agent $agent, string $pollingUnitCode, MaterialStatus $status, string $channel = 'ussd'): MaterialReport
+    public function reportMaterials(Agent $agent, string $pollingUnitCode, MaterialStatus $status, string $channel = 'ussd', ?bool $personnelArrived = null): MaterialReport
     {
         $report = $agent->materialReports()->create([
             'polling_unit_code' => $pollingUnitCode,
             'status' => $status,
+            'personnel_arrived' => $personnelArrived,
             'reported_at' => now(),
             'channel' => $channel,
         ]);

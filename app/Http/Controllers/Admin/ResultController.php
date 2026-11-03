@@ -6,6 +6,7 @@ use App\Enums\ResultStatus;
 use App\Http\Controllers\Controller;
 use App\Models\PollingUnit;
 use App\Models\Result;
+use App\Support\Area;
 use App\Support\Audit;
 use App\Support\CsvExport;
 use Illuminate\Database\Eloquent\Builder;
@@ -219,6 +220,7 @@ class ResultController extends Controller
             ->join('polling_units', 'polling_units.code', '=', 'results.polling_unit_code')
             ->where('results.status', ResultStatus::Accepted->value)
             ->when($filters['lga'], fn ($query, $lga) => $query->where('polling_units.lga', $lga));
+        Area::onPlaceColumns($accepted, 'polling_units.lga', 'polling_units.ward');
 
         $figures = (clone $accepted)
             ->groupBy("polling_units.{$area}")

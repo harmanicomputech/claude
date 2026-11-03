@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\InArea;
 use Database\Factories\PollingUnitFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,6 +12,11 @@ use Illuminate\Support\Str;
 #[Fillable(['code', 'name', 'ward', 'lga', 'registered_voters'])]
 class PollingUnit extends Model
 {
+    protected static function booted(): void
+    {
+        static::addGlobalScope('area', new InArea('places'));
+    }
+
     /** @use HasFactory<PollingUnitFactory> */
     use HasFactory;
 

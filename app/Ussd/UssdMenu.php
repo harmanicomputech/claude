@@ -3,7 +3,7 @@
 namespace App\Ussd;
 
 use App\Enums\IncidentType;
-use App\Enums\MaterialStatus;
+use App\Enums\MaterialsReport;
 use App\Enums\VolunteerRole;
 use App\Models\Agent;
 use App\Models\PollingUnit;
@@ -33,8 +33,6 @@ class UssdMenu
 {
     private const MAIN = 'main';
 
-    private const RESULT_PU = 'result.pu';
-
     private const RESULT_EXISTS = 'result.exists';
 
     private const RESULT_ACCREDITED = 'result.accredited';
@@ -53,24 +51,18 @@ class UssdMenu
 
     private const INCIDENT_TYPE = 'incident.type';
 
-    private const INCIDENT_PU = 'incident.pu';
-
     private const INCIDENT_NOTE = 'incident.note';
 
     private const INCIDENT_CONFIRM = 'incident.confirm';
 
-    private const PRESENCE_PU = 'presence.pu';
-
-    private const MATERIALS_PU = 'materials.pu';
-
     private const MATERIALS_STATUS = 'materials.status';
 
-    // Choosing an LGA, then a ward (for a public incident or a volunteer).
+    // Choosing an LGA, then a ward, then (for a PU) the last 3 digits of its code.
     private const PICK_LGA = 'pick.lga';
 
     private const PICK_WARD = 'pick.ward';
 
-    private const PUBLIC_PU = 'public.pu';
+    private const PICK_PU = 'pick.pu';
 
     private const VOLUNTEER_ROLES = 'volunteer.roles';
 
@@ -179,7 +171,6 @@ class UssdMenu
     {
         return match ($this->state) {
             self::MAIN => $this->onMainMenu($input),
-            self::RESULT_PU => $this->onResultPollingUnit($input),
             self::RESULT_EXISTS => $this->onResultExists($input),
             self::RESULT_ACCREDITED => $this->onAccredited($input),
             self::RESULT_PARTY => $this->onPartyVotes($input),
@@ -189,15 +180,12 @@ class UssdMenu
             self::RESULT_CONFIRM => $this->onResultConfirm($input),
             self::RESULT_PIN => $this->onPin($input),
             self::INCIDENT_TYPE => $this->onIncidentType($input),
-            self::INCIDENT_PU => $this->onIncidentPollingUnit($input),
             self::INCIDENT_NOTE => $this->onIncidentNote($input),
             self::INCIDENT_CONFIRM => $this->onIncidentConfirm($input),
-            self::PRESENCE_PU => $this->onPresencePollingUnit($input),
-            self::MATERIALS_PU => $this->onMaterialsPollingUnit($input),
             self::MATERIALS_STATUS => $this->onMaterialsStatus($input),
             self::PICK_LGA => $this->onPickLga($input),
             self::PICK_WARD => $this->onPickWard($input),
-            self::PUBLIC_PU => $this->onPublicPollingUnit($input),
+            self::PICK_PU => $this->onPickPollingUnit($input),
             self::VOLUNTEER_ROLES => $this->onVolunteerRoles($input),
             self::VOLUNTEER_SKILLS => $this->onVolunteerSkills($input),
             self::VOLUNTEER_OTHER => $this->onVolunteerOther($input),
@@ -221,11 +209,11 @@ class UssdMenu
         }
 
         return match ($input) {
-            '1' => $this->calendar->resultsClosedMessage() ?? $this->startResult(correction: false),
-            '2' => $this->goTo(self::INCIDENT_TYPE),
-            '3' => $this->calendar->presenceClosedMessage() ?? $this->startPresence(),
-            '4' => $this->startMaterials(),
-            '5' => (string) config('ussd.instructions'),
+            '1' => $this->calendar->presenceClosedMessage() ?? $this->startPresence(),
+            '2' => $this->startMaterials(),
+            '3' => (string) config('ussd.instructions'),
+            '4' => $this->goTo(self::INCIDENT_TYPE),
+            '5' => $this->calendar->resultsClosedMessage() ?? $this->startResult(correction: false),
             '6' => $this->startVolunteer(),
             '7' => 'Thank you',
             default => $this->fail(self::ERROR_OPTION),
@@ -234,12 +222,20 @@ class UssdMenu
 
     // Flow 1: Submit Result (EC8A) -----------------------------------------
 
-    private function startResult(bool $correction): ?string
+    /**
+     * Start (or, with $keepUnit, restart after "Edit") the result entry.
+     */
+    private function startResult(bool $correction, bool $keepUnit = false): ?string
     {
+        $chosen = $keepUnit && isset($this->data['pu']) ? [$this->data['pu'], $this->data['unit'] ?? null] : null;
         $this->data = ['correction' => $correction];
 
+        if ($chosen !== null) {
+            return $this->acceptResultPollingUnit(...$chosen);
+        }
+
         if (! $this->agent->hasAssignedPollingUnit()) {
-            return $this->goTo(self::RESULT_PU);
+            return $this->startPicking('result');
         }
 
         $unit = PollingUnit::findByCode($this->agent->polling_unit_code);
@@ -249,11 +245,6 @@ class UssdMenu
         }
 
         return $this->acceptResultPollingUnit($this->agent->polling_unit_code, $unit);
-    }
-
-    private function onResultPollingUnit(string $input): ?string
-    {
-        return $this->withPollingUnit($input, fn (string $code, ?PollingUnit $unit) => $this->acceptResultPollingUnit($code, $unit));
     }
 
     private function acceptResultPollingUnit(string $code, ?PollingUnit $unit): ?string
@@ -347,7 +338,7 @@ class UssdMenu
     {
         return match ($input) {
             '1' => $this->goTo(self::RESULT_ACCREDITED_FIX),
-            '2' => $this->startResult($this->data['correction']),
+            '2' => $this->startResult($this->data['correction'], keepUnit: true),
             default => $this->fail(self::ERROR_OPTION),
         };
     }
@@ -362,7 +353,7 @@ class UssdMenu
 
                 return $this->goTo(self::RESULT_PIN);
             case '2':
-                return $this->startResult($this->data['correction']);
+                return $this->startResult($this->data['correction'], keepUnit: true);
             case '3':
                 return 'Submission cancelled.';
             default:
@@ -426,17 +417,7 @@ class UssdMenu
             return $this->goTo(self::INCIDENT_NOTE);
         }
 
-        return $this->goTo(self::INCIDENT_PU);
-    }
-
-    private function onIncidentPollingUnit(string $input): ?string
-    {
-        return $this->withPollingUnit($input, function (string $code, ?PollingUnit $unit) {
-            $this->data['pu'] = $code;
-            $this->data['unit'] = $unit;
-
-            return $this->goTo(self::INCIDENT_NOTE);
-        });
+        return $this->startPicking('agent_incident');
     }
 
     private function onIncidentNote(string $input): ?string
@@ -478,15 +459,10 @@ class UssdMenu
     private function startPresence(): ?string
     {
         if (! $this->agent->hasAssignedPollingUnit()) {
-            return $this->goTo(self::PRESENCE_PU);
+            return $this->startPicking('presence');
         }
 
         return $this->confirmPresence($this->agent->polling_unit_code, PollingUnit::findByCode($this->agent->polling_unit_code));
-    }
-
-    private function onPresencePollingUnit(string $input): ?string
-    {
-        return $this->withPollingUnit($input, fn (string $code, ?PollingUnit $unit) => $this->confirmPresence($code, $unit));
     }
 
     private function confirmPresence(string $code, ?PollingUnit $unit): string
@@ -501,7 +477,7 @@ class UssdMenu
     private function startMaterials(): ?string
     {
         if (! $this->agent->hasAssignedPollingUnit()) {
-            return $this->goTo(self::MATERIALS_PU);
+            return $this->startPicking('materials');
         }
 
         $this->data['pu'] = $this->agent->polling_unit_code;
@@ -510,27 +486,17 @@ class UssdMenu
         return $this->goTo(self::MATERIALS_STATUS);
     }
 
-    private function onMaterialsPollingUnit(string $input): ?string
-    {
-        return $this->withPollingUnit($input, function (string $code, ?PollingUnit $unit) {
-            $this->data['pu'] = $code;
-            $this->data['unit'] = $unit;
-
-            return $this->goTo(self::MATERIALS_STATUS);
-        });
-    }
-
     private function onMaterialsStatus(string $input): ?string
     {
-        $status = MaterialStatus::fromMenuOption($input);
+        $answer = MaterialsReport::fromMenuOption($input);
 
-        if ($status === null) {
+        if ($answer === null) {
             return $this->fail(self::ERROR_OPTION);
         }
 
-        $this->recorder->reportMaterials($this->agent, $this->data['pu'], $status);
+        $this->recorder->reportMaterials($this->agent, $this->data['pu'], $answer->materials(), personnelArrived: $answer->personnelArrived());
 
-        return "Materials report saved ✔\n{$status->label()}".(isset($this->data['unit']) ? "\n".$this->data['unit']->shortName(30) : '');
+        return "Report saved ✔\n{$answer->label()}".(isset($this->data['unit']) ? "\n".$this->data['unit']->shortName(30) : '');
     }
 
     // Public incident (anyone who is not a registered agent) -------------
@@ -549,22 +515,6 @@ class UssdMenu
     private function publicLimitReached(): bool
     {
         return $this->recorder->publicReportsToday($this->phone) >= (int) config('ussd.public_daily_incident_limit');
-    }
-
-    private function onPublicPollingUnit(string $input): ?string
-    {
-        if ($input === '0') {
-            $this->data['unit'] = null;
-
-            return $this->goTo(self::INCIDENT_NOTE);
-        }
-
-        return $this->withPollingUnit($input, function (string $code, ?PollingUnit $unit) {
-            $this->data['unit'] = $unit;
-            $this->data['pu'] = $code;
-
-            return $this->goTo(self::INCIDENT_NOTE);
-        });
     }
 
     private function onPublicIncidentConfirm(string $input): ?string
@@ -721,6 +671,9 @@ class UssdMenu
 
     // Choosing an LGA, then a ward -----------------------------------------
 
+    /**
+     * @param  string  $for  volunteer, incident (public), or for an agent: result, agent_incident, presence, materials
+     */
     private function startPicking(string $for): null
     {
         $this->data['pick_for'] = $for;
@@ -744,10 +697,51 @@ class UssdMenu
         return $this->pick($input, $this->wards($this->data['lga']), $this->wardHeader(), function (string $ward) {
             $this->data['ward'] = $ward;
 
-            return $this->data['pick_for'] === 'incident'
-                ? $this->goTo(self::PUBLIC_PU)
-                : $this->goTo(self::VOLUNTEER_NAME);
+            return $this->data['pick_for'] === 'volunteer'
+                ? $this->goTo(self::VOLUNTEER_NAME)
+                : $this->goTo(self::PICK_PU);
         });
+    }
+
+    /**
+     * The PU in the chosen ward, by the last 3 digits of its code (INEC's PU
+     * number, e.g. 007 for 11/01/01/007). The public may skip it with 0.
+     */
+    private function onPickPollingUnit(string $input): ?string
+    {
+        if ($input === '0' && $this->data['pick_for'] === 'incident') {
+            $this->data['unit'] = null;
+
+            return $this->goTo(self::INCIDENT_NOTE);
+        }
+
+        if (! ctype_digit($input) || strlen($input) > 3 || (int) $input === 0) {
+            return $this->fail(self::ERROR_PU);
+        }
+
+        $number = str_pad($input, 3, '0', STR_PAD_LEFT);
+        $unit = PollingUnit::query()
+            ->where('lga', $this->data['lga'])
+            ->where('ward', $this->data['ward'])
+            ->where('code', 'like', '%'.$number)
+            ->get()
+            ->first(fn (PollingUnit $unit) => str_ends_with($unit->code, $number));
+
+        if ($unit === null) {
+            $this->data['tried'] = $number;
+
+            return $this->fail(self::ERROR_PU_UNKNOWN);
+        }
+
+        $this->data['pu'] = $unit->code;
+        $this->data['unit'] = $unit;
+
+        return match ($this->data['pick_for']) {
+            'result' => $this->acceptResultPollingUnit($unit->code, $unit),
+            'presence' => $this->confirmPresence($unit->code, $unit),
+            'materials' => $this->goTo(self::MATERIALS_STATUS),
+            default => $this->goTo(self::INCIDENT_NOTE),
+        };
     }
 
     /**
@@ -792,7 +786,11 @@ class UssdMenu
 
     private function lgaHeader(): string
     {
-        return $this->data['pick_for'] === 'incident' ? 'Where? Choose LGA:' : 'Your LGA:';
+        return match ($this->data['pick_for']) {
+            'incident' => 'Where? Choose LGA:',
+            'volunteer' => 'Your LGA:',
+            default => "Your PU's LGA:",
+        };
     }
 
     private function wardHeader(): string
@@ -916,31 +914,6 @@ class UssdMenu
         return null;
     }
 
-    /**
-     * Validate a typed PU code against the format and the PU register, then
-     * hand it on, or stay on the screen with an error.
-     *
-     * @param  callable(string, ?PollingUnit): ?string  $next
-     */
-    private function withPollingUnit(string $input, callable $next): ?string
-    {
-        if (! ctype_digit($input)) {
-            return $this->fail(self::ERROR_NUMBER);
-        }
-
-        if (! preg_match(config('ussd.polling_unit_pattern'), $input)) {
-            return $this->fail(self::ERROR_PU);
-        }
-
-        $unit = PollingUnit::findByCode($input);
-
-        if ($unit === null && config('election.require_known_polling_unit')) {
-            return $this->fail(self::ERROR_PU_UNKNOWN);
-        }
-
-        return $next($input, $unit);
-    }
-
     private function isCount(string $input): bool
     {
         return ctype_digit($input) && strlen($input) <= config('ussd.max_vote_digits');
@@ -971,12 +944,10 @@ class UssdMenu
 
     private function screen(): string
     {
-        $puPrompt = $this->state === self::PUBLIC_PU ? 'Enter PU code or 0 to skip:' : 'Enter PU Code:';
-
         return match ($this->error) {
-            self::ERROR_NUMBER => "Invalid input.\n".($this->state === self::PUBLIC_PU ? $puPrompt : 'Enter number only:'),
-            self::ERROR_PU => "Invalid PU code.\n{$puPrompt}",
-            self::ERROR_PU_UNKNOWN => "PU code not found.\n{$puPrompt}",
+            self::ERROR_NUMBER => "Invalid input.\nEnter number only:",
+            self::ERROR_PU => "Invalid input.\n".$this->puPrompt(),
+            self::ERROR_PU_UNKNOWN => "No PU {$this->data['tried']} in this ward.\n".$this->puPrompt(),
             self::ERROR_ABOVE_REGISTERED => "Error:\nAccredited cannot exceed\nregistered voters ({$this->data['unit']->registered_voters}).\nRe-enter accredited:",
             self::ERROR_NOTE => 'Invalid input.'
                 ."\nNote must be ".($this->state === self::VOLUNTEER_OTHER ? 'up to '.config('ussd.max_volunteer_note_length') : '1-'.config('ussd.max_note_length')).' characters:',
@@ -997,9 +968,8 @@ class UssdMenu
     {
         return match ($this->state) {
             self::MAIN => (Rehearsal::active() ? 'Election Shield REHEARSAL' : 'Election Shield')."\n".($this->agent
-                ? "1. Submit Result\n2. Report Incident\n3. Confirm Presence\n4. Materials Status\n5. Instructions\n6. How can you help?\n7. Exit"
+                ? "1. Presence\n2. Material Status\n3. Instructions\n4. Report Incident\n5. Submit Result\n6. How can you help?\n7. Exit"
                 : "1. Report Incident\n2. How can you help?\n3. Election info\n4. Exit"),
-            self::RESULT_PU, self::INCIDENT_PU, self::PRESENCE_PU, self::MATERIALS_PU => 'Enter PU Code:',
             self::RESULT_EXISTS => "Result already submitted\nfor this PU.\n1. Request correction\n2. Exit",
             self::RESULT_ACCREDITED => $this->unitLine().($this->data['correction'] ? "CORRECTION\n" : '').'Accredited Voters:',
             self::RESULT_PARTY => "Votes for {$this->currentParty()}:",
@@ -1009,14 +979,14 @@ class UssdMenu
             self::RESULT_CONFIRM => $this->resultConfirmation(),
             self::RESULT_PIN => 'Enter PIN to submit:',
             self::INCIDENT_TYPE => "Incident Type:\n".$this->numbered(array_map(fn (IncidentType $type) => $type->label(), IncidentType::menu())),
-            self::MATERIALS_STATUS => $this->unitLine()."Materials Status:\n".$this->numbered(array_map(fn (MaterialStatus $status) => $status->label(), MaterialStatus::menu())),
+            self::MATERIALS_STATUS => $this->unitLine()."Material Status:\n".$this->numbered(array_map(fn (MaterialsReport $answer) => $answer->label(), MaterialsReport::menu())),
             self::INCIDENT_NOTE => 'Short Note:',
             self::INCIDENT_CONFIRM => $this->agent
                 ? "Confirm Incident:\n{$this->data['type']->label()}\n".$this->unitLine()."PU:{$this->data['pu']}\n1. Submit\n2. Cancel"
                 : "Confirm Report:\n{$this->data['type']->label()}\n".$this->wardLabel($this->data['ward'], $this->data['lga']).", {$this->data['lga']}\n".(isset($this->data['unit']) ? $this->unitLine() : '')."1. Submit\n2. Cancel",
             self::PICK_LGA => $this->pickScreen($this->lgaHeader(), $this->lgas()),
             self::PICK_WARD => $this->pickScreen($this->wardHeader(), $this->wardLabels()),
-            self::PUBLIC_PU => "PU code (if you know it)\nor 0 to skip:",
+            self::PICK_PU => $this->puPrompt(),
             self::VOLUNTEER_ROLES => "How can you help?\nChoose any, e.g. 135\n".$this->rolesList(),
             self::VOLUNTEER_SKILLS => "Which skills?\nChoose any, e.g. 13\n".$this->skillsList(),
             self::VOLUNTEER_OTHER => "Anything else?\nTell us how you can help:",
@@ -1058,6 +1028,12 @@ class UssdMenu
             '1. Submit',
             '2. Cancel',
         ]);
+    }
+
+    private function puPrompt(): string
+    {
+        return $this->wardLabel($this->data['ward'], $this->data['lga'])."\nPU number: last 3 digits\nof the PU code (e.g. 007)"
+            .($this->data['pick_for'] === 'incident' ? "\nor 0 to skip:" : ':');
     }
 
     private function unitLine(): string

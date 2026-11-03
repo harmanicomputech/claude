@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\InArea;
 use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,6 +12,11 @@ use Illuminate\Database\Eloquent\Model;
 #[Fillable(['name', 'phone_number', 'email', 'lga'])]
 class Coordinator extends Model
 {
+    protected static function booted(): void
+    {
+        static::addGlobalScope('area', new InArea('lga'));
+    }
+
     protected function phoneNumber(): Attribute
     {
         return Attribute::set(fn (string $value) => PhoneNumber::normalize($value));

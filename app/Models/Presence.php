@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\InArea;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +10,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['agent_id', 'polling_unit_code', 'confirmed_at', 'channel'])]
 class Presence extends Model
 {
+    protected static function booted(): void
+    {
+        static::addGlobalScope('area', new InArea('code'));
+    }
+
     protected function casts(): array
     {
         return [
@@ -16,9 +22,12 @@ class Presence extends Model
         ];
     }
 
+    /**
+     * The agent who sent it (shown even when the agent's own PU is elsewhere).
+     */
     public function agent(): BelongsTo
     {
-        return $this->belongsTo(Agent::class);
+        return $this->belongsTo(Agent::class)->withoutGlobalScope('area');
     }
 
     public function pollingUnit(): BelongsTo

@@ -20,7 +20,7 @@ class AgentPinTest extends TestCase
 
         Queue::fake();
         $this->setUpUssd();
-        $this->confirmed = '1*'.self::PU.'*300*120*80*20*5*1';
+        $this->confirmed = '5*'.self::PU_ENTRY.'*300*120*80*20*5*1';
     }
 
     public function test_wrong_pin_is_counted_and_can_be_retried(): void

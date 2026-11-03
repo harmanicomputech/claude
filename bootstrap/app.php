@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Middleware\AuthenticateAdmin;
+use App\Http\Middleware\LimitToArea;
 use App\Http\Middleware\RunBackgroundWork;
 use App\Http\Middleware\SecureCookiesOverHttps;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -18,6 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(prepend: [SecureCookiesOverHttps::class]);
         $middleware->append(RunBackgroundWork::class);
+
+        // Sign-in, then the coordinator's area, before route models are
+        // loaded: a record from another LGA or ward is then a 404.
+        $middleware->prependToPriorityList(SubstituteBindings::class, AuthenticateAdmin::class);
+        $middleware->prependToPriorityList(SubstituteBindings::class, LimitToArea::class);
 
         // Shared hosts often terminate HTTPS at a front proxy. Trust only its
         // scheme header, never X-Forwarded-For, so the USSD IP allowlist

@@ -37,31 +37,31 @@ class SubmissionWindowTest extends TestCase
     public function test_presence_opens_at_seven(): void
     {
         $this->at('2027-02-06 06:59');
-        $this->ussd('3')->assertContent("END Presence check-in opens\n6 Feb, 7:00 AM.");
+        $this->ussd('1')->assertContent("END Presence check-in opens\n6 Feb, 7:00 AM.");
 
         $this->at('2027-02-06 07:00');
-        $this->ussd('3')->assertContent('CON Enter PU Code:');
+        $this->ussd('1')->assertContent("CON Your PU's LGA:\n1.Abakaliki");
     }
 
     public function test_results_open_after_polls_close(): void
     {
         $this->at('2027-02-06 14:29');
-        $this->ussd('1')->assertContent("END Result submission opens\n6 Feb, 2:30 PM.");
+        $this->ussd('5')->assertContent("END Result submission opens\n6 Feb, 2:30 PM.");
 
         $this->at('2027-02-06 14:30');
-        $this->ussd('1')->assertContent('CON Enter PU Code:');
+        $this->ussd('5')->assertContent("CON Your PU's LGA:\n1.Abakaliki");
     }
 
     public function test_results_close(): void
     {
         $this->at('2027-02-09 00:00');
-        $this->ussd('1')->assertContent("END Result submission closed\n8 Feb, 11:59 PM.");
+        $this->ussd('5')->assertContent("END Result submission closed\n8 Feb, 11:59 PM.");
     }
 
     public function test_incidents_can_be_reported_any_time(): void
     {
         $this->at('2027-02-05 12:00');
-        $this->ussd('2')->assertSee('CON Incident Type:', false);
+        $this->ussd('4')->assertSee('CON Incident Type:', false);
     }
 
     public function test_calendar_helpers(): void

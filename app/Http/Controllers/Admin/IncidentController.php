@@ -19,13 +19,16 @@ class IncidentController extends Controller
     {
         $filters = $this->filters($request);
 
+        $counts = $this->query([...$filters, 'type' => null])->reorder()
+            ->selectRaw('type, count(*) as total')->groupBy('type')->pluck('total', 'type');
+
         return view('admin.incidents', [
             'filters' => $filters,
             'incidents' => $this->query($filters)->with('agent', 'pollingUnit')->paginate(50)->withQueryString(),
             'publicCount' => Incident::query()->where('source', Incident::SOURCE_PUBLIC)->count(),
-            'counts' => $this->query([...$filters, 'type' => null])->reorder()
-                ->selectRaw('type, count(*) as total')->groupBy('type')->pluck('total', 'type'),
-            'types' => IncidentType::cases(),
+            'counts' => $counts,
+            // Today's menu types, plus older ones only where earlier reports used them.
+            'types' => array_values(array_filter(IncidentType::cases(), fn (IncidentType $type) => in_array($type, IncidentType::menu(), true) || ($counts[$type->value] ?? 0) > 0)),
             'lgas' => PollingUnit::distinct()->orderBy('lga')->pluck('lga'),
         ]);
     }

@@ -13,7 +13,7 @@ use Illuminate\Notifications\Notifiable;
 /**
  * A person who can log in to the admin console.
  */
-#[Fillable(['name', 'email', 'password', 'role'])]
+#[Fillable(['name', 'email', 'password', 'role', 'lga', 'ward'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -33,5 +33,18 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
+    }
+
+    /**
+     * "Abakaliki LGA", "Abakpa ward, Abakaliki", or what an admin / unassigned account sees.
+     */
+    public function areaLabel(): string
+    {
+        return match (true) {
+            $this->isAdmin() => 'All LGAs',
+            ! $this->lga => 'No area yet: sees nothing',
+            (bool) $this->ward => "{$this->ward} ward, {$this->lga}",
+            default => "{$this->lga} LGA",
+        };
     }
 }

@@ -91,9 +91,9 @@ The web app must:
 | `result.correction_requested` | A result with `status: "pending"` and `corrects_reference` |
 | `result.corrected` | A result with `status: "accepted"` plus `superseded_reference`. **Replace** that PU's figures. |
 | `result.correction_rejected` | A result with `status: "rejected"` |
-| `incident.reported` | `reference`, `polling_unit` (a public report may have no PU: `code` null with `lga` and `ward`), `type` (`violence`/`vote_suppression`/`malpractice`/`vote_buying`/`delay`/`other`), `type_label`, `urgent`, `note`, `agent` (null for a public report), `source` (`agent` or `public`: anyone who dials can report; public reports are unverified and never SMS coordinators), `reporter_phone` (public reports), `channel`, `reported_at` |
+| `incident.reported` | `reference`, `polling_unit` (a public report may have no PU: `code` null with `lga` and `ward`), `type` (`ballot_snatching`/`malpractice`/`intimidation`/`violence`; older reports may also be `vote_suppression`/`vote_buying`/`delay`/`other`), `type_label`, `urgent`, `note`, `agent` (null for a public report), `source` (`agent` or `public`: anyone who dials can report; public reports are unverified and never SMS coordinators), `reporter_phone` (public reports), `channel`, `reported_at` |
 | `volunteer.registered` | A "How can you help?" sign-up, sent again whenever it changes (one per contact number; one phone can sign up several people): `reference`, `name`, `phone_number`, `contact_phone`, `lga`, `ward`, `roles` (`canvass`/`pu_agent`/`share`/`women`/`youth`/`transport`/`professional`/`other`), `role_labels`, `skills` (`legal`/`media`/`medical`/`it`/`other`), `skill_labels`, `other`, `is_agent`, `registered_at`, `updated_at`. Upsert by `reference`. |
-| `materials.reported` | `id`, `polling_unit`, `status` (`arrived`/`incomplete`/`not_arrived`), `status_label`, `agent`, `reported_at`. Agents can report again; the latest report per PU is its current status. |
+| `materials.reported` | `id`, `polling_unit`, `status` (`arrived`/`incomplete`/`not_arrived`), `status_label`, `personnel_arrived` (whether the INEC officials had arrived: `true`/`false`, `null` when not said), `personnel_label`, `agent`, `channel`, `reported_at`. Agents can report again; the latest report per PU is its current status. |
 | `presence.confirmed` | `id`, `polling_unit`, `agent`, `confirmed_at` |
 
 Every `data` object also has **`rehearsal: true|false`**. Keep rehearsal data apart from real results, or drop it.
@@ -150,7 +150,7 @@ The web app can also **fetch** everything the USSD service holds. Use this for t
 | `GET /corrections`, `POST /corrections/{ref}/approve\|reject` | Correction review | `status` |
 | `POST /agents`, `POST /agents/reset-pin` | Add or update an agent, and reset a PIN (optionally sent by SMS) | |
 | `POST /agents/verify-pin` | Agent sign-in to the web app with their USSD PIN; shares the USSD lock-out | |
-| `POST /field/results`, `/field/incidents`, `/field/presence`, `/field/materials` | An agent's submissions from the web app, with the USSD rules; recorded with `"channel": "web"` and sent back through the webhook like any other | |
+| `POST /field/results`, `/field/incidents`, `/field/presence`, `/field/materials` | An agent's submissions from the web app, with the USSD rules; recorded with `"channel": "web"` and sent back through the webhook like any other. `/field/materials` takes `status` and `personnel_arrived` (`true`/`false`, optional) | |
 
 Every event and record carries `channel`: `"ussd"` or `"web"`.
 

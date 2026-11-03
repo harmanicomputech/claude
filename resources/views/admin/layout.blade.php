@@ -112,7 +112,7 @@
 <body>
 @auth
     @php
-        $nav = ['admin.overview' => 'Overview', 'admin.results.index' => 'Results', 'admin.incidents.index' => 'Incidents', 'admin.volunteers.index' => 'Volunteers', 'admin.polling-units.index' => 'Polling units', 'admin.agents.index' => 'Agents', 'admin.corrections.index' => 'Corrections', 'admin.coordinators.index' => 'Coordinators'];
+        $nav = ['admin.overview' => 'Overview', 'admin.results.index' => 'Results', 'admin.incidents.index' => 'Incidents', 'admin.checkins.index' => 'Check-ins & materials', 'admin.volunteers.index' => 'Volunteers', 'admin.polling-units.index' => 'Polling units', 'admin.agents.index' => 'Agents', 'admin.corrections.index' => 'Corrections', 'admin.coordinators.index' => 'Coordinators'];
         if (auth()->user()->isAdmin()) {
             $nav += ['admin.users.index' => 'Users', 'admin.audit.index' => 'Audit log', 'admin.settings.index' => 'Settings'];
         }
@@ -122,13 +122,18 @@
             <strong>Election Shield</strong>
             <nav>
                 @foreach ($nav as $route => $label)
-                    <a href="{{ route($route) }}" @class(['active' => request()->routeIs(Str::before($route, '.index').'*')])>{{ $label }}</a>
+                    <a href="{{ route($route) }}" @class(['active' => request()->routeIs(Str::before($route, '.index').'*') || ($route === 'admin.checkins.index' && request()->routeIs('admin.materials*'))])>{{ $label }}</a>
                 @endforeach
             </nav>
-            <span style="font-size:13px;color:#d1fadf">{{ auth()->user()->name }} · {{ auth()->user()->role->label() }}</span>
+            <span style="font-size:13px;color:#d1fadf">{{ auth()->user()->name }} · {{ auth()->user()->role->label() }}{{ auth()->user()->isAdmin() ? '' : ' · '.auth()->user()->areaLabel() }}</span>
             <form method="post" action="{{ route('admin.logout') }}">@csrf<button type="submit">Log out</button></form>
         </div>
     </header>
+    @if (! auth()->user()->isAdmin())
+        <div class="no-print" style="background:{{ auth()->user()->lga ? '#ecfdf3' : '#fef3f2' }};color:{{ auth()->user()->lga ? '#067647' : '#b42318' }};border-bottom:1px solid var(--line);text-align:center;padding:8px 16px;font-weight:600">
+            {{ auth()->user()->lga ? 'You see only '.auth()->user()->areaLabel().'.' : 'No LGA has been assigned to your account yet, so no data is shown. Ask an admin to assign your LGA (Users page).' }}
+        </div>
+    @endif
     @if (\App\Support\Rehearsal::active())
         <div class="no-print" style="background:#fffaeb;color:#b54708;border-bottom:1px solid #fedf89;text-align:center;padding:8px 16px;font-weight:600">
             REHEARSAL MODE: submissions are practice data. Clear them in Settings before election day.

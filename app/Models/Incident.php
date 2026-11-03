@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\IncidentType;
+use App\Models\Scopes\InArea;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['reference', 'agent_id', 'polling_unit_code', 'type', 'note', 'channel', 'source', 'reporter_phone', 'lga', 'ward'])]
 class Incident extends Model
 {
+    protected static function booted(): void
+    {
+        static::addGlobalScope('area', new InArea('incident'));
+    }
+
     protected function casts(): array
     {
         return [
@@ -17,9 +23,12 @@ class Incident extends Model
         ];
     }
 
+    /**
+     * The agent who sent it (shown even when the agent's own PU is elsewhere).
+     */
     public function agent(): BelongsTo
     {
-        return $this->belongsTo(Agent::class);
+        return $this->belongsTo(Agent::class)->withoutGlobalScope('area');
     }
 
     public function pollingUnit(): BelongsTo
@@ -38,7 +47,9 @@ class Incident extends Model
 
     public function isUrgent(): bool
     {
-        return in_array($this->type->value, config('election.urgent_incident_types'), true);
+        // Ballot box snatching is always urgent, even if an older .env list predates it.
+        return $this->type === IncidentType::BallotSnatching
+            || in_array($this->type->value, config('election.urgent_incident_types'), true);
     }
 
     /**

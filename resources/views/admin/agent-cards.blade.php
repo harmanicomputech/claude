@@ -85,7 +85,7 @@
                         <div>{{ $unit->name }} · {{ $unit->ward }}, {{ $unit->lga }}</div>
                     @else
                         <div class="muted" style="font-size:12px">Polling unit</div>
-                        <div>Enter your PU code when asked: ______________</div>
+                        <div>LGA: __________ Ward: __________ PU number (last 3 digits of the PU code): _____</div>
                     @endif
                 </div>
 
@@ -95,11 +95,12 @@
                 </dl>
                 @unless (isset($pins[$agent->id]))<div class="foot" style="margin-top:0">Your PIN was sent to you by SMS. Never share it.</div>@endunless
 
+                @php($pick = $unit ? '' : ', choose your LGA and ward, type the PU number')
                 <ol>
-                    <li><b>At the PU (from {{ $presenceAt }}):</b> dial, press <b>3</b>{{ $unit ? '' : ', enter PU code' }}.</li>
-                    <li><b>Materials:</b> dial, press <b>4</b>, then 1 arrived / 2 incomplete / 3 not arrived. Report again when it changes.</li>
-                    <li><b>After counting (from {{ $resultsAt }}):</b> dial, press <b>1</b>{{ $unit ? '' : ', PU code' }}, then enter accredited voters → {{ $parties }} → rejected votes. Check the screen, press <b>1</b>, enter your PIN.</li>
-                    <li><b>Any problem:</b> dial, press <b>2</b>, choose the type, type a short note, press <b>1</b>.</li>
+                    <li><b>At the PU (from {{ $presenceAt }}):</b> dial, press <b>1</b> (Presence){{ $pick }}.</li>
+                    <li><b>Materials &amp; INEC staff:</b> dial, press <b>2</b>{{ $pick }}, then 1 both arrived / 2 materials only / 3 personnel only / 4 materials incomplete / 5 neither. Report again when it changes.</li>
+                    <li><b>After counting (from {{ $resultsAt }}):</b> dial, press <b>5</b>{{ $pick }}, then enter accredited voters → {{ $parties }} → rejected votes. Check the screen, press <b>1</b>, enter your PIN.</li>
+                    <li><b>Any problem:</b> dial, press <b>4</b>, choose the type{{ $unit ? '' : ' and your PU' }}, type a short note, press <b>1</b>.</li>
                     <li>Keep the reference (RS… / IN…) you receive.</li>
                 </ol>
                 @if ($coordinator)

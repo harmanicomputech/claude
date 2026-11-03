@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\InArea;
 use App\Support\PhoneNumber;
 use Database\Factories\AgentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -17,6 +18,11 @@ use Illuminate\Support\Facades\Hash;
 #[Hidden(['pin'])]
 class Agent extends Model
 {
+    protected static function booted(): void
+    {
+        static::addGlobalScope('area', new InArea('agent'));
+    }
+
     /** @use HasFactory<AgentFactory> */
     use HasFactory;
 

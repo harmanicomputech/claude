@@ -139,13 +139,13 @@ Clearing is blocked on election day itself, unless rehearsal mode is on.
 
 ## Updating an existing install: urgent incident types
 
-Installs set up before 26 Sep 2026 have `ELECTION_URGENT_INCIDENT_TYPES=violence` in `.env`. Change it to:
+The USSD incident menu is now Ballot box/Result snatching, Malpractice, Intimidation and Violence. Installs set up before 3 Nov 2026 have an older list in `.env` (for example `violence,vote_suppression,malpractice`). Change it to:
 
 ```
-ELECTION_URGENT_INCIDENT_TYPES=violence,vote_suppression,malpractice
+ELECTION_URGENT_INCIDENT_TYPES=ballot_snatching,malpractice,intimidation,violence
 ```
 
-so the new vote-suppression and malpractice reports also text coordinators.
+so every type on the new menu texts coordinators (ballot box/result snatching always does).
 
 ## Troubleshooting
 

@@ -16,6 +16,9 @@ trait InteractsWithUssd
 
     protected const PIN = '1234';
 
+    /** Picking the PU on USSD: LGA 1 (Abakaliki), ward 1 (Amachi Ward), PU number 001. */
+    protected const PU_ENTRY = '1*1*001';
+
     protected Agent $agent;
 
     protected PollingUnit $unit;
@@ -48,11 +51,12 @@ trait InteractsWithUssd
     }
 
     /**
-     * USSD input for a full result: accredited 300, APC 120, PDP 80, LP 20,
-     * rejected 5, then Submit and PIN.
+     * USSD input for a full result: Submit Result (5), the PU (LGA, ward,
+     * PU number), accredited 300, APC 120, PDP 80, LP 20, rejected 5, then
+     * Submit and PIN.
      */
-    protected function resultInput(string $pu = self::PU, string $votes = '300*120*80*20*5'): string
+    protected function resultInput(string $pu = self::PU_ENTRY, string $votes = '300*120*80*20*5'): string
     {
-        return "1*{$pu}*{$votes}*1*".self::PIN;
+        return "5*{$pu}*{$votes}*1*".self::PIN;
     }
 }

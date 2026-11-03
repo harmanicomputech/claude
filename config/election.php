@@ -84,7 +84,7 @@ return [
     |
     */
 
-    'urgent_incident_types' => $list(env('ELECTION_URGENT_INCIDENT_TYPES', 'violence,vote_suppression,malpractice')),
+    'urgent_incident_types' => $list(env('ELECTION_URGENT_INCIDENT_TYPES', 'ballot_snatching,malpractice,intimidation,violence')),
 
     /*
     |--------------------------------------------------------------------------

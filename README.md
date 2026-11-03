@@ -2,13 +2,15 @@
 
 A USSD service built on [Africa's Talking](https://africastalking.com) for the Ebonyi State election on 6 February 2027. Registered polling agents can use it from any phone to:
 
-1. **Submit Result**: the EC8A figures (accredited voters, votes for APC, PDP, LP and all other parties, and rejected votes), protected by a PIN. Wrong results can be corrected with a coordinator's approval.
-2. **Report Incident**: violence, vote buying, delay or other. Violence immediately texts the coordinators for that area.
-3. **Confirm Presence** at the polling unit.
-4. **Materials Status**
-5. **Instructions**
+1. **Presence**: confirm they are at the polling unit.
+2. **Material Status**: one answer for the election materials and the INEC officials (personnel): both arrived, materials only, personnel only, materials incomplete, or neither.
+3. **Instructions**
+4. **Report Incident**: ballot box/result snatching, malpractice, intimidation or violence. Urgent types immediately text the coordinators for that area.
+5. **Submit Result**: the EC8A figures (accredited voters, votes for APC, PDP, LP and all other parties, and rejected votes), protected by a PIN. Wrong results can be corrected with a coordinator's approval.
 6. **How can you help?** (volunteer sign-up)
 7. **Exit**
+
+Agents not assigned to a PU choose it each time: LGA, then ward, then the PU number (the last 3 digits of the INEC PU code, e.g. `007` for `11/01/01/007`).
 
 Anyone else who dials the code (the public) gets a shorter menu: **Report Incident** (by LGA and ward; flagged as an unverified public report, no SMS alerts, at most `USSD_PUBLIC_DAILY_LIMIT` a day per number), **How can you help?** and **Election info** (`USSD_PUBLIC_INFO`).
 
@@ -21,18 +23,22 @@ Built with Laravel 13 and MySQL.
 ```
 *XXX#
 CON Election Shield
-1. Submit Result    → PU code → Accredited Voters → Votes for APC → PDP → LP → OTHERS → Rejected Votes
+1. Presence         → [PU] → END Presence Confirmed ✔
+2. Material Status  → [PU] → 1 Materials & personnel arrived / 2 Materials only / 3 Personnel only
+                      / 4 Materials incomplete / 5 Neither has arrived → END Report saved ✔
+3. Instructions     → END Stay at PU. …
+4. Report Incident  → Type (Ballot box/Result snatching, Malpractice, Intimidation, Violence) → [PU] → Short Note
+                      → Confirm → END Incident Logged ✔ Ref: IN123456
+5. Submit Result    → [PU] → Accredited Voters → Votes for APC → PDP → LP → OTHERS → Rejected Votes
                       → Confirm (1.Submit 2.Edit 3.Cancel) → Enter PIN → END Submitted ✔ Ref: RS123456
-2. Report Incident  → Type (Violence, Vote Suppression, Malpractice, Vote Buying, Delay, Other) → PU code → Short Note → Confirm → END Incident Logged ✔ Ref: IN123456
-3. Confirm Presence → PU code → END Presence Confirmed ✔
-4. Materials Status → PU code → 1 Arrived / 2 Incomplete / 3 Not arrived → END Materials report saved ✔
-5. Instructions     → END Stay at PU. …
 6. How can you help? → (as for the public, below)
 7. Exit             → END Thank you
 
+[PU] = LGA → Ward → PU number (last 3 digits of the PU code). Skipped for agents assigned to a PU.
+
 Anyone who is not a registered agent:
 CON Election Shield
-1. Report Incident  → Type → LGA → Ward → PU code or 0 to skip → Short Note → Confirm → END Report received ✔ Ref: IN123456
+1. Report Incident  → Type → LGA → Ward → PU number (last 3 digits) or 0 to skip → Short Note → Confirm → END Report received ✔ Ref: IN123456
 2. How can you help? → choose any, e.g. 135 (1 Canvass in my ward, 2 Serve as a PU agent, 3 Share on WhatsApp and social
                        media, 4 Mobilise women, 5 Mobilise youth, 6 Transport and logistics, 7 Professional skills → which:
                        legal/media/medical/IT/other, 8 Anything else → type it) → LGA → Ward → Your full name
@@ -73,18 +79,18 @@ Parties are set with `ELECTION_PARTIES`; candidate names live in `config/electio
 | --- | --- |
 | Who can use it | Registered agents get the full menu. Everyone else gets the public menu (report an incident, How can you help?, election info); submitting results, check-in and materials stay agents-only. |
 | Public reports | Stored with `source` = `public`, the caller's number and the LGA/ward they picked (the PU is optional). Never SMS or email coordinators; at most `USSD_PUBLIC_DAILY_LIMIT` (5) per number in 24 hours. |
-| PU register | Only PU codes from the imported INEC register are accepted (`PU code not found`). The PU name is shown before voting figures are entered, so a mistyped code is easy to spot. |
+| PU register | Agents pick the LGA and ward from lists, then type the PU number (the last 3 digits of the INEC code); only PUs in that ward in the imported register are accepted (`No PU 012 in this ward.`). The PU name is shown before voting figures are entered, so a mistyped number is easy to spot. |
 | Invalid input | `Invalid input. Enter number only:` The agent can re-enter and carry on. |
 | Accredited > registered | `Error: Accredited cannot exceed registered voters (N). Re-enter accredited:` |
 | Votes cast > accredited | Valid votes plus rejected votes can't exceed accredited voters. The agent chooses *Re-enter accredited* or *Start again*. |
 | PIN | Required to submit a result. After 3 wrong PINs the agent is locked out for 30 minutes. Only the latest input counts toward the limit, so replayed inputs aren't counted twice. |
 | Duplicate result | The agent is offered *Request correction*. The correction is stored as **pending** and doesn't count until a coordinator approves it. |
 | Time windows | Presence opens at 07:00 on election day and results open at 14:30. Both close at `ELECTION_RESULTS_CLOSE_AT`. Incidents can be reported at any time. |
-| Auto-PU detection | Agents registered with `--pu` are never asked for a PU code. |
-| Quick codes | `*XXX*1*110101007*1200*610*402*95*18*21#` goes straight to the confirmation screen, which still asks for the PIN. |
+| Auto-PU detection | Agents registered with `--pu` are never asked for their PU. |
+| Quick codes | `*XXX*5*1*1*007*1200*610*402*95*18*21#` (Submit Result, LGA 1, ward 1, PU 007, figures) goes straight to the confirmation screen, which still asks for the PIN. |
 | SMS | The agent gets a receipt for each result and correction request, and a message when a correction is approved or rejected. |
 
-Africa's Talking sends the whole session so far as one string (`text=1*110101007*1200*…`). `app/Ussd/UssdMenu.php` replays these inputs through a state machine on every request, which is how retries, "Edit" and corrections work.
+Africa's Talking sends the whole session so far as one string (`text=5*1*1*007*1200*…`). `app/Ussd/UssdMenu.php` replays these inputs through a state machine on every request, which is how retries, "Edit" and corrections work.
 
 ## Setup
 
@@ -182,7 +188,7 @@ For your dashboard. Set `ELECTION_API_TOKEN` and send `Authorization: Bearer {to
 | `POST /api/agents` | Add or update an agent from the web app. Body: `name`, `phone_number`, `polling_unit`, `pin` (optional; random if new), `sms_pin`, `by` (who, for the audit log). Returns the agent and the PIN when one was set. |
 | `POST /api/agents/reset-pin` | Body: `phone_number`, `pin` (optional), `sms_pin`, `by` |
 | `POST /api/agents/verify-pin` | Web app sign-in with the agent's USSD PIN. Body: `phone_number`, `pin`. 200 with the agent; 401 wrong PIN (`tries_left`); 423 locked; 404 unknown; 409 no PIN. Wrong PINs count towards the same lock-out as on USSD. |
-| `POST /api/field/results`, `/api/field/incidents`, `/api/field/presence`, `/api/field/materials` | Submissions an agent makes in the web app, identified by `phone_number`. The USSD rules apply (windows, assigned PU, register, votes against accredited, one accepted result per PU with `correction: true` for a second), and the records are marked `"channel": "web"`. Errors are JSON `{error, message}`: 404 unknown agent, 409 `closed` or `result_exists`, 422 for bad figures or PU. |
+| `POST /api/field/results`, `/api/field/incidents`, `/api/field/presence`, `/api/field/materials` | Submissions an agent makes in the web app, identified by `phone_number`. The USSD rules apply (windows, assigned PU, register, votes against accredited, one accepted result per PU with `correction: true` for a second), and the records are marked `"channel": "web"`. `/api/field/materials` also takes `personnel_arrived` (`true`/`false`, optional): whether the INEC officials have arrived. Errors are JSON `{error, message}`: 404 unknown agent, 409 `closed` or `result_exists`, 422 for bad figures or PU. |
 | `GET /api/reports/summary` | The same figures as the hourly email: turnout, party totals, incidents, and a breakdown by LGA |
 | `GET /api/reports/missing?type=presence\|results&lga=…` | PUs missing presence or a result, with their assigned agents |
 
@@ -225,9 +231,9 @@ X-Election-Shield-Signature: sha256=<HMAC-SHA256 of the raw body using DASHBOARD
 | `result.correction_requested` | An agent asks to correct a result | result with `status: "pending"` and `corrects_reference` |
 | `result.corrected` | A coordinator approves a correction | result with `status: "accepted"`, plus `superseded_reference`. **Replace** the PU's figures with these. |
 | `result.correction_rejected` | A coordinator rejects a correction | result with `status: "rejected"` |
-| `incident.reported` | Incident | `reference`, `polling_unit` (for a public report without a PU: `code` null plus `lga`, `ward`), `type` (`violence`/`vote_suppression`/`malpractice`/`vote_buying`/`delay`/`other`), `type_label`, `urgent`, `note`, `agent` (null for the public), `source` (`agent`/`public`), `reporter_phone` (public), `channel`, `reported_at` |
+| `incident.reported` | Incident | `reference`, `polling_unit` (for a public report without a PU: `code` null plus `lga`, `ward`), `type` (`ballot_snatching`/`malpractice`/`intimidation`/`violence`; reports from before 3 Nov 2026 may also be `vote_suppression`/`vote_buying`/`delay`/`other`), `type_label`, `urgent`, `note`, `agent` (null for the public), `source` (`agent`/`public`), `reporter_phone` (public), `channel`, `reported_at` |
 | `volunteer.registered` | How can you help? sign-up (again on each update) | `reference`, `name`, `phone_number` (dialled from), `contact_phone`, `lga`, `ward`, `roles`, `role_labels`, `skills`, `skill_labels`, `other`, `is_agent`, `channel`, `registered_at`, `updated_at`. Upsert by `reference`. |
-| `materials.reported` | Materials status report (the latest per PU is current) | `id`, `polling_unit`, `status` (`arrived`/`incomplete`/`not_arrived`), `status_label`, `agent`, `reported_at` |
+| `materials.reported` | Materials status report (the latest per PU is current) | `id`, `polling_unit`, `status` (`arrived`/`incomplete`/`not_arrived`), `status_label`, `personnel_arrived` (`true`/`false`, or `null` when not said), `personnel_label`, `agent`, `channel`, `reported_at` |
 | `presence.confirmed` | Check-in | `id`, `polling_unit`, `agent`, `confirmed_at` |
 
 The dashboard should:
@@ -296,7 +302,7 @@ curl -X POST http://localhost:8000/api/ussd \
 | `ELECTION_REQUIRE_KNOWN_PU` | `true` | Only accept imported PU codes |
 | `ELECTION_PIN_MAX_ATTEMPTS` | `3` | Wrong PINs before lockout |
 | `ELECTION_PIN_LOCK_MINUTES` | `30` | Lockout length |
-| `ELECTION_URGENT_INCIDENT_TYPES` | `violence,vote_suppression,malpractice` | Types that text coordinators (any of `violence,vote_suppression,malpractice,vote_buying,delay,other`) |
+| `ELECTION_URGENT_INCIDENT_TYPES` | `ballot_snatching,malpractice,intimidation,violence` | Types that text coordinators (any of `ballot_snatching,malpractice,intimidation,violence`; older reports may also be `vote_suppression,vote_buying,delay,other`). Ballot box/result snatching is always urgent |
 | `ELECTION_PRESENCE_REMINDER_AT` | `08:00` | Presence reminder SMS time (empty disables) |
 | `ELECTION_RESULTS_REMINDER_AT` | `17:00` | Result reminder SMS time (empty disables) |
 | `ELECTION_API_TOKEN` | — | Coordinator API token |

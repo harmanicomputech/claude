@@ -4,9 +4,13 @@ namespace App\Enums;
 
 enum IncidentType: string
 {
-    case Violence = 'violence';
-    case VoteSuppression = 'vote_suppression';
+    case BallotSnatching = 'ballot_snatching';
     case Malpractice = 'malpractice';
+    case Intimidation = 'intimidation';
+    case Violence = 'violence';
+
+    // No longer offered on the menu; kept so earlier reports still read.
+    case VoteSuppression = 'vote_suppression';
     case VoteBuying = 'vote_buying';
     case Delay = 'delay';
     case Other = 'other';
@@ -18,7 +22,7 @@ enum IncidentType: string
      */
     public static function menu(): array
     {
-        return [self::Violence, self::VoteSuppression, self::Malpractice, self::VoteBuying, self::Delay, self::Other];
+        return [self::BallotSnatching, self::Malpractice, self::Intimidation, self::Violence];
     }
 
     public static function fromMenuOption(string $option): ?self
@@ -29,9 +33,11 @@ enum IncidentType: string
     public function label(): string
     {
         return match ($this) {
+            self::BallotSnatching => 'Ballot box/Result snatching',
+            self::Malpractice => 'Malpractice',
+            self::Intimidation => 'Intimidation',
             self::Violence => 'Violence',
             self::VoteSuppression => 'Vote Suppression',
-            self::Malpractice => 'Malpractice',
             self::VoteBuying => 'Vote Buying',
             self::Delay => 'Delay',
             self::Other => 'Other',

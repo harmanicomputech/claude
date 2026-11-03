@@ -81,9 +81,9 @@ class PublicUssdTest extends TestCase
         $this->assertStringContainsString('0.More', $wards);
         $this->assertStringContainsString('15.Ward 15', $this->dial('1*1*7*0')->getContent());
 
-        $this->dial('1*1*7*3')->assertContent("CON PU code (if you know it)\nor 0 to skip:");
+        $this->dial('1*1*7*3')->assertContent("CON Ward 03\nPU number: last 3 digits\nof the PU code (e.g. 007)\nor 0 to skip:");
         $this->dial('1*1*7*3*0')->assertContent('CON Short Note:');
-        $this->dial('1*1*7*3*0*Thugs at the school')->assertContent("CON Confirm Report:\nViolence\nWard 03, Ikwo\n1. Submit\n2. Cancel");
+        $this->dial('1*1*7*3*0*Thugs at the school')->assertContent("CON Confirm Report:\nBallot box/Result snatching\nWard 03, Ikwo\n1. Submit\n2. Cancel");
         $end = $this->dial('1*1*7*3*0*Thugs at the school*1')->getContent();
         $this->assertMatchesRegularExpression('/^END Report received ✔\nThank you.\nRef: IN\d+$/u', $end);
 
@@ -98,18 +98,19 @@ class PublicUssdTest extends TestCase
 
     public function test_a_known_pu_code_sets_the_place(): void
     {
-        $this->dial('1*4*1*1*'.self::PU.'*Delay at PU*1');
+        // Abakaliki's wards: Abakaliki Ward 01-03, then Amachi Ward (4); PU number 001 is 110101001.
+        $this->dial('1*4*1*4*001*Delay at PU*1');
         $incident = Incident::query()->sole();
         $this->assertSame([self::PU, 'Abakaliki', 'Amachi Ward'], [$incident->polling_unit_code, $incident->lga, $incident->ward]);
-        $this->dial('1*4*1*1*99')->assertContent("CON PU code not found.\nEnter PU code or 0 to skip:");
-        $this->dial('1*4*1*1*99*0')->assertContent('CON Short Note:');
+        $this->dial('1*4*1*4*99')->assertContent("CON No PU 099 in this ward.\nAmachi Ward\nPU number: last 3 digits\nof the PU code (e.g. 007)\nor 0 to skip:");
+        $this->dial('1*4*1*4*99*0')->assertContent('CON Short Note:');
     }
 
     public function test_the_public_can_report_a_few_times_a_day_only(): void
     {
         config(['ussd.public_daily_incident_limit' => 2]);
-        $this->dial('1*5*1*1*0*One*1');
-        $this->dial('1*5*1*1*0*Two*1');
+        $this->dial('1*2*1*1*0*One*1');
+        $this->dial('1*2*1*1*0*Two*1');
         $this->dial('1')->assertSee('END Daily report limit reached.', false);
         $this->assertSame(2, Incident::query()->count());
         // Another number is not affected; agents are never limited.
@@ -200,13 +201,13 @@ class PublicUssdTest extends TestCase
         }
 
         // Choosing a ward on a later page still lands on that ward (Ikwo has 20).
-        $this->dial('1*1*7*20')->assertSee('PU code (if you know it)', false);
+        $this->dial('1*1*7*20')->assertSee('PU number: last 3 digits', false);
     }
 
     public function test_the_admin_console_and_the_data_api_show_public_reports_and_volunteers(): void
     {
         $this->dial('1*1*7*3*0*Thugs at the school*1');   // public, Ikwo Ward 03
-        $this->ussd('2*1*'.self::PU.'*Fight at PU*1');     // agent, Abakaliki
+        $this->ussd('4*4*1*4*001*Fight at PU*1');          // agent, Abakaliki / Amachi Ward
         $this->dial('2*15*7*2*Chioma Uche*1*1');           // volunteer in Ikwo Ward 02
         config(['election.api_token' => 'api-secret']);
         $api = ['Authorization' => 'Bearer api-secret'];

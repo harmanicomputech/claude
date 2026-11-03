@@ -10,6 +10,7 @@ use App\Models\MaterialReport;
 use App\Models\PollingUnit;
 use App\Models\Presence;
 use App\Models\Result;
+use App\Support\Area;
 use App\Support\ElectionCalendar;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -141,6 +142,7 @@ class ElectionStats
         $totals = DB::table('result_votes')
             ->join('results', 'results.id', '=', 'result_votes.result_id')
             ->where('results.status', ResultStatus::Accepted->value)
+            ->where(fn ($query) => Area::onCodes($query, 'results.polling_unit_code'))
             ->groupBy('result_votes.party')
             ->select('result_votes.party', DB::raw('sum(result_votes.votes) as votes'))
             ->pluck('votes', 'party')

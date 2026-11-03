@@ -114,7 +114,8 @@ class WebAppFieldApiTest extends TestCase
 
     public function test_ussd_submissions_say_ussd(): void
     {
-        $this->ussd($this->resultInput());
+        // The agent is assigned to their PU here, so USSD skips choosing it.
+        $this->ussd('5*300*120*80*20*5*1*'.self::PIN)->assertSee('END Submitted', false);
 
         $this->assertSame('ussd', Result::sole()->channel);
         $this->assertSame('ussd', Result::sole()->toDashboardArray()['channel']);

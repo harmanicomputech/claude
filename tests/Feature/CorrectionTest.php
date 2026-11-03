@@ -30,7 +30,7 @@ class CorrectionTest extends TestCase
 
     private function requestCorrection(?Agent $agent = null): Result
     {
-        $this->ussd('1*'.self::PU.'*1*310*130*80*20*5*1*'.self::PIN, $agent)
+        $this->ussd('5*'.self::PU_ENTRY.'*1*310*130*80*20*5*1*'.self::PIN, $agent)
             ->assertSee('END Correction sent for review ✔', false);
 
         return Result::where('status', ResultStatus::Pending)->sole();
@@ -38,11 +38,11 @@ class CorrectionTest extends TestCase
 
     public function test_second_submission_offers_a_correction(): void
     {
-        $this->ussd('1*'.self::PU)
+        $this->ussd('5*'.self::PU_ENTRY)
             ->assertContent("CON Result already submitted\nfor this PU.\n1. Request correction\n2. Exit");
-        $this->ussd('1*'.self::PU.'*2')->assertContent('END Thank you');
-        $this->ussd('1*'.self::PU.'*1')->assertContent("CON Amachi Pry Sch\nCORRECTION\nAccredited Voters:");
-        $this->ussd('1*'.self::PU.'*1*310*130*80*20*5')->assertSee("CON Confirm CORRECTION:\nPU:110101001", false);
+        $this->ussd('5*'.self::PU_ENTRY.'*2')->assertContent('END Thank you');
+        $this->ussd('5*'.self::PU_ENTRY.'*1')->assertContent("CON Amachi Pry Sch\nCORRECTION\nAccredited Voters:");
+        $this->ussd('5*'.self::PU_ENTRY.'*1*310*130*80*20*5')->assertSee("CON Confirm CORRECTION:\nPU:110101001", false);
     }
 
     public function test_correction_is_stored_as_pending(): void
