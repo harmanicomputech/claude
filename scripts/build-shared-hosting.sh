@@ -30,15 +30,23 @@ git -C "$ROOT" ls-files -z --cached --others --exclude-standard \
       [ -f "$file" ] && cp --parents "$file" "$BUILD/election-shield"
     done)
 
-(cd "$BUILD/election-shield" && COMPOSER_ALLOW_SUPERUSER=1 composer install \
+(cd "$BUILD/election-shield" && COMPOSER_ALLOW_SUPERUSER=1 COMPOSER_IGNORE_PLATFORM_REQS=1 composer install \
   --prefer-dist --no-dev --optimize-autoloader --no-interaction --no-progress --no-scripts --quiet)
-(cd "$BUILD/election-shield" && php artisan package:discover --ansi >/dev/null)
+
+# Package discovery runs on the server at first request (bootstrap/cache is
+# emptied below), and the platform check is skipped so the package can be
+# built on a machine with a different PHP than the server.
 
 # Packages installed from source carry their git history; it is not needed to run.
 find "$BUILD/election-shield/vendor" -depth -type d \( -name .git -o -name .github \) -exec rm -rf {} +
 
 mkdir -p "$BUILD/election-shield/storage/"{app/private,framework/{cache/data,sessions,views},logs}
 rm -f "$BUILD/election-shield/bootstrap/cache/"*.php
+# Libraries' own tests and docs never run on the server.
+find "$BUILD/election-shield/vendor" -mindepth 3 -maxdepth 3 -type d \( -name tests -o -name test -o -name docs -o -name doc -o -name examples \) -exec rm -rf {} +
+# A new release id: the app clears compiled pages and caches and runs pending
+# database updates once after the upload.
+date -u +%Y%m%d%H%M%S-$(git -C "$ROOT" rev-parse --short HEAD) > "$BUILD/election-shield/DEPLOY_ID"
 
 cp "$ROOT/deploy/shared-hosting/"{index.php,.htaccess,robots.txt} "$BUILD/public_html/"
 touch "$BUILD/public_html/favicon.ico"
