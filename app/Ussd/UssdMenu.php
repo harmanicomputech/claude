@@ -679,6 +679,15 @@ class UssdMenu
         $this->data['pick_for'] = $for;
         $this->data['page'] = 0;
 
+        // Agents registered for a ward go straight to the PU number in it.
+        if ($this->agent?->hasWard() && in_array($for, ['result', 'agent_incident', 'presence', 'materials'], true)) {
+            $this->data['lga'] = $this->agent->lga;
+            $this->data['ward'] = $this->agent->ward;
+            $this->data['own_ward'] = true;
+
+            return $this->goTo(self::PICK_PU);
+        }
+
         return $this->goTo(self::PICK_LGA);
     }
 
@@ -713,6 +722,14 @@ class UssdMenu
             $this->data['unit'] = null;
 
             return $this->goTo(self::INCIDENT_NOTE);
+        }
+
+        // "0. Other ward": the agent is at a PU outside their own ward.
+        if ($input === '0' && ($this->data['own_ward'] ?? false)) {
+            $this->data['own_ward'] = false;
+            $this->data['page'] = 0;
+
+            return $this->goTo(self::PICK_LGA);
         }
 
         if (! ctype_digit($input) || strlen($input) > 3 || (int) $input === 0) {
@@ -1033,7 +1050,11 @@ class UssdMenu
     private function puPrompt(): string
     {
         return $this->wardLabel($this->data['ward'], $this->data['lga'])."\nPU number: last 3 digits\nof the PU code (e.g. 007)"
-            .($this->data['pick_for'] === 'incident' ? "\nor 0 to skip:" : ':');
+            .match (true) {
+                $this->data['pick_for'] === 'incident' => "\nor 0 to skip:",
+                (bool) ($this->data['own_ward'] ?? false) => ":\n0. Other ward",
+                default => ':',
+            };
     }
 
     private function unitLine(): string

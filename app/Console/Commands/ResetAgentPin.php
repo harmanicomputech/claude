@@ -11,7 +11,7 @@ class ResetAgentPin extends Command
 {
     protected $signature = 'agent:pin
         {phone : Agent phone number}
-        {--pin= : New 4-digit PIN (random if omitted)}
+        {--pin= : New 4- to 6-digit PIN (random if omitted)}
         {--sms : Text the new PIN to the agent}';
 
     protected $description = 'Set a new PIN for an agent and unlock their account';

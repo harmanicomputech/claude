@@ -48,6 +48,7 @@ class EveryPageLoadsTest extends TestCase
 
         $assigned = Agent::factory()->assignedTo('110101001')->create(['name' => 'Assigned Agent']);
         $roaming = Agent::factory()->create(['name' => 'Roaming Agent']);
+        Agent::factory()->create(['name' => 'Ward Agent', 'lga' => 'Abakaliki', 'ward' => 'Abakpa']);
         Agent::factory()->assignedTo('110101002')->create(['name' => 'Silent Agent', 'pin' => null]);
         $ikwo = PollingUnit::query()->where('lga', 'Ikwo')->orderBy('code')->value('code');
         $ikwoAgent = Agent::factory()->assignedTo($ikwo)->create(['name' => 'Ikwo Agent']);

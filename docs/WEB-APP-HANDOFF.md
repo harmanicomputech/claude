@@ -143,12 +143,12 @@ The web app can also **fetch** everything the USSD service holds. Use this for t
 | `GET /presences` | Check-ins | `lga`, `ward`, `polling_unit` |
 | `GET /materials` | Materials reports. `latest=1` gives the current status per PU. | `status`, `latest`, `lga`, `ward`, `polling_unit` |
 | `GET /polling-units` | The register (code, name, ward, LGA, registered voters) | `lga`, `ward` |
-| `GET /agents` | Agents: name, phone, assigned PU, `locked`, `last_seen_at`. PINs are never returned. | `lga` |
+| `GET /agents` | Agents: name, phone, assigned PU, `lga` and `ward` (the agent's own, from the ward lists or the assigned PU), `locked`, `last_seen_at`. PINs are never returned. | `lga`, `ward` |
 | `GET /volunteers` | "How can you help?" sign-ups, same shape as `volunteer.registered` | `lga`, `ward`, `role` |
 | `GET /reports/summary` | Totals, turnout, party votes, materials, incidents, and a breakdown by LGA | |
 | `GET /reports/missing?type=presence\|results` | PUs with no check-in or no result, with their agents | `lga` |
 | `GET /corrections`, `POST /corrections/{ref}/approve\|reject` | Correction review | `status` |
-| `POST /agents`, `POST /agents/reset-pin` | Add or update an agent, and reset a PIN (optionally sent by SMS) | |
+| `POST /agents`, `POST /agents/reset-pin` | Add or update an agent (`name`, `phone_number`, optional `polling_unit` or `ward` + `lga`, `pin`, `sms_pin`), and reset a PIN (optionally sent by SMS) | |
 | `POST /agents/verify-pin` | Agent sign-in to the web app with their USSD PIN; shares the USSD lock-out | |
 | `POST /field/results`, `/field/incidents`, `/field/presence`, `/field/materials` | An agent's submissions from the web app, with the USSD rules; recorded with `"channel": "web"` and sent back through the webhook like any other. `/field/materials` takes `status` and `personnel_arrived` (`true`/`false`, optional) | |
 

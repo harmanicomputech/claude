@@ -12,7 +12,9 @@ class AddAgent extends Command
         {phone : Agent phone number, e.g. 08012345678 or +2348012345678}
         {name : Agent full name}
         {--pu= : Assigned polling unit code (skips PU entry on USSD)}
-        {--pin= : 4-digit PIN (a random one is generated for new agents)}
+        {--ward= : The agent ward, as named in the PU register (USSD then asks only for the PU number)}
+        {--lga= : LGA of the ward (needed when the ward name is used in two LGAs)}
+        {--pin= : 4- to 6-digit PIN (a random 4-digit one is generated for new agents)}
         {--sms-pin : Text the PIN to the agent}';
 
     protected $description = 'Register (or update) a polling agent allowed to use the USSD service';
@@ -26,6 +28,8 @@ class AddAgent extends Command
                 $this->option('pu'),
                 $this->option('pin'),
                 (bool) $this->option('sms-pin'),
+                $this->option('ward'),
+                $this->option('lga'),
             );
         } catch (InvalidArgumentException $e) {
             $this->error($e->getMessage());
@@ -34,7 +38,8 @@ class AddAgent extends Command
         }
 
         $this->info(($agent->wasRecentlyCreated ? 'Added' : 'Updated')." agent {$agent->name} ({$agent->phone_number})"
-            .($agent->hasAssignedPollingUnit() ? " assigned to PU {$agent->polling_unit_code}" : ''));
+            .($agent->hasAssignedPollingUnit() ? " assigned to PU {$agent->polling_unit_code}" : '')
+            .(! $agent->hasAssignedPollingUnit() && $agent->hasWard() ? " in {$agent->areaLabel()}" : ''));
 
         if ($pin !== null) {
             $this->line("PIN: {$pin}");

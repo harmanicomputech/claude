@@ -6,7 +6,8 @@ use InvalidArgumentException;
 
 /**
  * Bulk agent registration from a CSV with a header row:
- * name,phone[,pu_code][,pin]
+ * name,phone[,pu_code][,pin][,lga][,ward]
+ * (any order; a ward needs its LGA when the name is used in more than one).
  */
 class AgentImporter
 {
@@ -14,7 +15,7 @@ class AgentImporter
 
     /**
      * @return array{
-     *     imported: list<array{name: string, phone_number: string, polling_unit_code: ?string, pin: ?string}>,
+     *     imported: list<array{name: string, phone_number: string, polling_unit_code: ?string, lga: ?string, ward: ?string, pin: ?string}>,
      *     errors: list<string>
      * }
      */
@@ -34,7 +35,7 @@ class AgentImporter
         if ($missing !== []) {
             fclose($handle);
 
-            return ['imported' => [], 'errors' => ['CSV is missing column(s): '.implode(', ', $missing).'. Expected: name,phone,pu_code,pin']];
+            return ['imported' => [], 'errors' => ['CSV is missing column(s): '.implode(', ', $missing).'. Expected: name,phone (and optionally pu_code, pin, lga, ward)']];
         }
 
         $imported = [];
@@ -63,6 +64,8 @@ class AgentImporter
                     $data['pu_code'] ?? null,
                     $data['pin'] ?? null,
                     $smsPins,
+                    $data['ward'] ?? null,
+                    $data['lga'] ?? null,
                 );
             } catch (InvalidArgumentException $e) {
                 $errors[] = "Line {$line}: {$e->getMessage()}";
@@ -74,6 +77,8 @@ class AgentImporter
                 'name' => $agent->name,
                 'phone_number' => $agent->phone_number,
                 'polling_unit_code' => $agent->polling_unit_code,
+                'lga' => $agent->lga,
+                'ward' => $agent->ward,
                 'pin' => $pin,
             ];
         }

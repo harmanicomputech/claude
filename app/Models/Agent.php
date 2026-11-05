@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Hash;
 
-#[Fillable(['name', 'phone_number', 'polling_unit_code', 'pin', 'is_active', 'last_seen_at'])]
+#[Fillable(['name', 'phone_number', 'polling_unit_code', 'lga', 'ward', 'pin', 'is_active', 'last_seen_at'])]
 #[Hidden(['pin'])]
 class Agent extends Model
 {
@@ -50,6 +50,22 @@ class Agent extends Model
     public function hasAssignedPollingUnit(): bool
     {
         return filled($this->polling_unit_code);
+    }
+
+    /**
+     * Registered for a ward (from the ward lists), so USSD can skip choosing the LGA and ward.
+     */
+    public function hasWard(): bool
+    {
+        return filled($this->lga) && filled($this->ward);
+    }
+
+    /**
+     * "Abakpa ward, Abakaliki", or "" when not known.
+     */
+    public function areaLabel(): string
+    {
+        return $this->hasWard() ? "{$this->ward} ward, {$this->lga}" : (string) $this->lga;
     }
 
     public function hasPin(): bool

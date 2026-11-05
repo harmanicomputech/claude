@@ -72,7 +72,7 @@
     <div class="cards">
         @forelse ($agents as $agent)
             @php($unit = $agent->pollingUnit)
-            @php($coordinator = $coordinatorFor($unit?->lga))
+            @php($coordinator = $coordinatorFor($unit?->lga ?? $agent->lga))
             <article class="agent-card">
                 <div class="card-head"><b>Election Shield{{ $rehearsal ? ' · REHEARSAL' : '' }}</b><span class="muted">Polling agent card</span></div>
                 <div class="who">{{ $agent->name }}</div>
@@ -85,7 +85,12 @@
                         <div>{{ $unit->name }} · {{ $unit->ward }}, {{ $unit->lga }}</div>
                     @else
                         <div class="muted" style="font-size:12px">Polling unit</div>
-                        <div>LGA: __________ Ward: __________ PU number (last 3 digits of the PU code): _____</div>
+                        @if ($agent->hasWard())
+                            <div><b>{{ $agent->ward }}</b> ward, {{ $agent->lga }}</div>
+                            <div>PU number (last 3 digits of the PU code): _____</div>
+                        @else
+                            <div>LGA: __________ Ward: __________ PU number (last 3 digits of the PU code): _____</div>
+                        @endif
                     @endif
                 </div>
 
@@ -95,7 +100,7 @@
                 </dl>
                 @unless (isset($pins[$agent->id]))<div class="foot" style="margin-top:0">Your PIN was sent to you by SMS. Never share it.</div>@endunless
 
-                @php($pick = $unit ? '' : ', choose your LGA and ward, type the PU number')
+                @php($pick = $unit ? '' : ($agent->hasWard() ? ', type the PU number' : ', choose your LGA and ward, type the PU number'))
                 <ol>
                     <li><b>At the PU (from {{ $presenceAt }}):</b> dial, press <b>1</b> (Presence){{ $pick }}.</li>
                     <li><b>Materials &amp; INEC staff:</b> dial, press <b>2</b>{{ $pick }}, then 1 both arrived / 2 materials only / 3 personnel only / 4 materials incomplete / 5 neither. Report again when it changes.</li>

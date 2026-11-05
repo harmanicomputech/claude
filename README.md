@@ -34,7 +34,8 @@ CON Election Shield
 6. How can you help? → (as for the public, below)
 7. Exit             → END Thank you
 
-[PU] = LGA → Ward → PU number (last 3 digits of the PU code). Skipped for agents assigned to a PU.
+[PU] = LGA → Ward → PU number (last 3 digits of the PU code). Skipped for agents assigned to a PU; agents registered for a ward
+      (lga/ward on import) go straight to the PU number in their ward, with "0. Other ward" for any other.
 
 Anyone who is not a registered agent:
 CON Election Shield
@@ -136,8 +137,9 @@ Codes are stored as digits only, which is what agents type: INEC's `11/01/01/007
 ```bash
 php artisan agent:add 08012345678 "Ada Obi" --pu=11/01/01/007 --sms-pin   # random PIN, texted to the agent
 php artisan agent:add 08012345679 "Chidi Eze" --pin=4821                   # any PU, chosen PIN
+php artisan agent:add 08012345670 "Uche Nwafor" --ward=Abakpa --lga=Abakaliki # USSD asks only for the PU number
 php artisan agent:pin 08012345678 --sms                                    # reset a PIN / unlock
-php artisan agent:import agents.csv --sms-pins                             # bulk: name,phone,pu_code,pin
+php artisan agent:import agents.csv --sms-pins                             # bulk: name,phone[,lga,ward][,pu_code][,pin]
 
 php artisan coordinator:add 08020000001 "Abakaliki Lead" --lga=Abakaliki --email=lead@example.com
 php artisan coordinator:add 08020000009 "State Lead"                      # state-wide
@@ -185,7 +187,7 @@ For your dashboard. Set `ELECTION_API_TOKEN` and send `Authorization: Bearer {to
 | `POST /api/corrections/{reference}/approve` | Body: `reviewed_by`, `note` (both optional). Returns 409 if the correction has already been reviewed. |
 | `POST /api/corrections/{reference}/reject` | Same body as approve |
 | `GET /api/results`, `/api/results/{reference}`, `/api/incidents`, `/api/presences`, `/api/materials`, `/api/polling-units`, `/api/agents` | Read API for the web app, in the same shapes as the webhook events. Filters: `lga`, `ward`, `polling_unit`, plus `status`, `type` or `latest` where relevant. `updated_since` for incremental sync; `per_page` (up to 500) and `cursor` for paging. See `docs/WEB-APP-HANDOFF.md`. |
-| `POST /api/agents` | Add or update an agent from the web app. Body: `name`, `phone_number`, `polling_unit`, `pin` (optional; random if new), `sms_pin`, `by` (who, for the audit log). Returns the agent and the PIN when one was set. |
+| `POST /api/agents` | Add or update an agent from the web app. Body: `name`, `phone_number`, `polling_unit` or `ward` + `lga` (optional), `pin` (optional; random if new), `sms_pin`, `by` (who, for the audit log). Returns the agent and the PIN when one was set. |
 | `POST /api/agents/reset-pin` | Body: `phone_number`, `pin` (optional), `sms_pin`, `by` |
 | `POST /api/agents/verify-pin` | Web app sign-in with the agent's USSD PIN. Body: `phone_number`, `pin`. 200 with the agent; 401 wrong PIN (`tries_left`); 423 locked; 404 unknown; 409 no PIN. Wrong PINs count towards the same lock-out as on USSD. |
 | `POST /api/field/results`, `/api/field/incidents`, `/api/field/presence`, `/api/field/materials` | Submissions an agent makes in the web app, identified by `phone_number`. The USSD rules apply (windows, assigned PU, register, votes against accredited, one accepted result per PU with `correction: true` for a second), and the records are marked `"channel": "web"`. `/api/field/materials` also takes `personnel_arrived` (`true`/`false`, optional): whether the INEC officials have arrived. Errors are JSON `{error, message}`: 404 unknown agent, 409 `closed` or `result_exists`, 422 for bad figures or PU. |

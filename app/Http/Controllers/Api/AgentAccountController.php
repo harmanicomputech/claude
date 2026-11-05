@@ -23,6 +23,8 @@ class AgentAccountController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'phone_number' => ['required', 'string', 'max:20'],
             'polling_unit' => ['nullable', 'string', 'max:30'],
+            'lga' => ['nullable', 'string', 'max:100'],
+            'ward' => ['nullable', 'string', 'max:150'],
             'pin' => ['nullable', 'string'],
             'sms_pin' => ['boolean'],
             'by' => ['nullable', 'string', 'max:100'],
@@ -37,6 +39,8 @@ class AgentAccountController extends Controller
                 $validated['polling_unit'] ?? null,
                 $validated['pin'] ?? null,
                 (bool) ($validated['sms_pin'] ?? false),
+                $validated['ward'] ?? null,
+                $validated['lga'] ?? null,
             );
         } catch (InvalidArgumentException $e) {
             return $this->error('invalid', $e->getMessage(), 422);
@@ -122,6 +126,8 @@ class AgentAccountController extends Controller
             'id' => $agent->id,
             ...$agent->toSummaryArray(),
             'polling_unit' => $agent->pollingUnit?->toSummaryArray() ?? ($agent->polling_unit_code ? ['code' => $agent->polling_unit_code] : null),
+            'lga' => $agent->lga,
+            'ward' => $agent->ward,
             'has_pin' => $agent->hasPin(),
             'locked' => $agent->isLocked(),
             'last_seen_at' => $agent->last_seen_at?->toIso8601String(),

@@ -14,8 +14,8 @@ use Illuminate\Support\Facades\DB;
  *
  *  - places: the table has lga and ward columns (polling units, volunteers)
  *  - code: the table has polling_unit_code (results, presences, materials)
- *  - agent: agents assigned to a PU in the area, and agents with no PU who
- *    reported from one (they type the PU on each report)
+ *  - agent: agents assigned to a PU in the area, agents registered for a ward
+ *    in it, and agents with no PU who reported from one
  *  - incident: polling_unit_code, or lga / ward for public reports without a PU
  *  - lga: only an lga column (coordinators: their LGA's)
  */
@@ -36,6 +36,7 @@ class InArea implements Scope
             'code' => Area::onCodes($builder, "{$table}.polling_unit_code"),
             'agent' => $builder->where(function (Builder $query) use ($table) {
                 $query->where(fn (Builder $q) => Area::onCodes($q, "{$table}.polling_unit_code"))
+                    ->orWhere(fn (Builder $q) => $q->whereNull("{$table}.polling_unit_code")->whereNotNull("{$table}.lga")->where(fn (Builder $q) => Area::onPlaceColumns($q, "{$table}.lga", "{$table}.ward")))
                     ->orWhere(fn (Builder $q) => $q->whereNull("{$table}.polling_unit_code")->whereIn("{$table}.id", self::reportedInArea()));
             }),
             'incident' => $builder->where(function (Builder $query) use ($table) {

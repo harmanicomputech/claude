@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
+use App\Models\PollingUnit;
 use App\Services\AgentImporter;
 use App\Services\AgentRegistrar;
 use App\Services\ElectionStats;
@@ -33,6 +34,7 @@ class AgentController extends Controller
             'search' => $filters['q'],
             'filters' => $filters,
             'checkedIn' => $this->checkedInAt($filters),
+            'places' => PollingUnit::query()->select('lga', 'ward')->distinct()->orderBy('lga')->orderBy('ward')->get()->groupBy('lga')->map->pluck('ward'),
         ]);
     }
 
@@ -50,8 +52,8 @@ class AgentController extends Controller
                     $agent->phone_number,
                     $agent->polling_unit_code,
                     $agent->pollingUnit?->name,
-                    $agent->pollingUnit?->ward,
-                    $agent->pollingUnit?->lga,
+                    $agent->pollingUnit?->ward ?? $agent->ward,
+                    $agent->pollingUnit?->lga ?? $agent->lga,
                     isset($checkedIn[$agent->id]) ? Carbon::parse($checkedIn[$agent->id])->timezone($timezone)->format('Y-m-d H:i') : '',
                     $agent->results_count,
                     $agent->incidents_count,
@@ -86,6 +88,7 @@ class AgentController extends Controller
         return Agent::query()
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                 ->where('name', 'like', "%{$search}%")
+                ->orWhere('ward', 'like', "%{$search}%")
                 ->orWhere('phone_number', 'like', '%'.ltrim($search, '0').'%')
                 ->orWhere('polling_unit_code', 'like', '%'.preg_replace('/\D/', '', $search).'%')))
             ->when($filters['status'] === 'checked_in', fn ($query) => $query->whereIn('id', $checkedIn()))
@@ -113,9 +116,11 @@ class AgentController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20'],
             'pu_code' => ['nullable', 'string', 'max:30'],
-            'pin' => ['nullable', 'digits:4'],
+            'area' => ['nullable', 'string', 'max:260'],
+            'pin' => ['nullable', 'digits_between:4,6'],
             'sms_pin' => ['nullable', 'boolean'],
         ]);
+        [$lga, $ward] = array_pad(explode('|', (string) ($validated['area'] ?? ''), 2), 2, null);
 
         try {
             [$agent, $pin] = $registrar->register(
@@ -124,6 +129,8 @@ class AgentController extends Controller
                 $validated['pu_code'] ?? null,
                 $validated['pin'] ?? null,
                 $request->boolean('sms_pin'),
+                $ward ?: null,
+                $lga ?: null,
             );
         } catch (InvalidArgumentException $e) {
             return back()->withInput()->with('error', $e->getMessage());
@@ -154,7 +161,7 @@ class AgentController extends Controller
     public function resetPin(Request $request, Agent $agent, AgentRegistrar $registrar): RedirectResponse
     {
         $validated = $request->validate([
-            'pin' => ['nullable', 'digits:4'],
+            'pin' => ['nullable', 'digits_between:4,6'],
             'sms_pin' => ['nullable', 'boolean'],
         ]);
 

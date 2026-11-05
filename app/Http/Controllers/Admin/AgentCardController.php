@@ -68,11 +68,14 @@ class AgentCardController extends Controller
         $search = trim((string) $request->input('q'));
 
         return Agent::with('pollingUnit')
-            ->when($request->input('lga'), fn (Builder $query, $lga) => $query->whereIn('polling_unit_code', PollingUnit::select('code')->where('lga', $lga)))
+            ->when($request->input('lga'), fn (Builder $query, $lga) => $query->where(fn ($query) => $query->whereIn('polling_unit_code', PollingUnit::select('code')->where('lga', $lga))->orWhere('lga', $lga)))
+            ->when($request->input('ward'), fn (Builder $query, $ward) => $query->where('ward', $ward))
             ->when($search !== '', fn (Builder $query) => $query->where(fn ($query) => $query
                 ->where('name', 'like', "%{$search}%")
                 ->orWhere('phone_number', 'like', '%'.ltrim($search, '0').'%')
                 ->orWhere('polling_unit_code', 'like', '%'.preg_replace('/\D/', '', $search).'%')))
+            ->orderBy('lga')
+            ->orderBy('ward')
             ->orderBy('polling_unit_code')
             ->orderBy('name')
             ->paginate(self::PER_PAGE, page: (int) $request->input('page', 1))

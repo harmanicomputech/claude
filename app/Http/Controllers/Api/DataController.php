@@ -115,12 +115,17 @@ class DataController extends Controller
     public function agents(Request $request): JsonResponse
     {
         $query = Agent::with('pollingUnit')
-            ->when($request->query('lga'), fn (Builder $query, $lga) => $query->whereIn('polling_unit_code', PollingUnit::select('code')->where('lga', $lga)));
+            ->when($request->query('lga'), fn (Builder $query, $lga) => $query->where(fn ($query) => $query
+                ->whereIn('polling_unit_code', PollingUnit::select('code')->where('lga', $lga))
+                ->orWhere(fn ($query) => $query->whereNull('polling_unit_code')->where('lga', $lga))))
+            ->when($request->query('ward'), fn (Builder $query, $ward) => $query->where('ward', $ward));
 
         return $this->page($request, $query, fn (Agent $agent) => [
             'id' => $agent->id,
             ...$agent->toSummaryArray(),
             'polling_unit' => $agent->pollingUnit?->toSummaryArray(),
+            'lga' => $agent->lga,
+            'ward' => $agent->ward,
             'locked' => $agent->isLocked(),
             'last_seen_at' => $agent->last_seen_at?->toIso8601String(),
         ]);
