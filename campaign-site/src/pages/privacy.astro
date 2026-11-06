@@ -1,20 +1,30 @@
 ---
+// Privacy policy for the campaign website and the two internal apps of the campaign support platform.
+// App-store listings can link straight to a section: /privacy/#command-center and /privacy/#anyi-ga-eme-ya
 import Base from '../layouts/Base.astro';
-import { contact, dataController } from '../config';
-const updated = '26 September 2026';
+import { contact, dataController, isSet } from '../config';
+const updated = '6 November 2026';
+const reach = [contact.email, contact.phone, contact.office].filter(isSet);
+const reachText = reach.length ? reach.join(', ') : '[campaign contact email]';
 ---
-<Base title="Privacy notice" description="How the campaign collects, uses and protects the personal data of volunteers and supporters, under the Nigeria Data Protection Act 2023." path="/privacy/">
+<Base title="Privacy policy" description="How the campaign website and the campaign support apps Command Center and Anyi Ga Eme Ya collect, use and protect personal data, under the Nigeria Data Protection Act 2023." path="/privacy/">
   <section class="section">
     <div class="wrap prose">
-      <p class="eyebrow">Privacy notice</p>
+      <p class="eyebrow">Privacy policy</p>
       <h1>Your data, respected.</h1>
-      <p class="lede" style="color:var(--muted)">This notice explains what personal data the campaign collects through this website, why, and your rights under the Nigeria Data Protection Act 2023 (NDPA).</p>
+      <p class="lede" style="color:var(--muted)">This policy explains what personal data we collect, why, how we protect it, and your rights under the Nigeria Data Protection Act 2023 (NDPA). It covers three services:</p>
+      <ul>
+        <li><a href="#website">This website</a>, including the volunteer sign-up form;</li>
+        <li><a href="#command-center">Command Center</a>, the campaign team’s internal app for managing volunteers and supporters;</li>
+        <li><a href="#anyi-ga-eme-ya">Anyi Ga Eme Ya</a>, the internal app for the campaign’s field team.</li>
+      </ul>
+      <p>Command Center and Anyi Ga Eme Ya are part of our campaign support platform. They are for internal use only, by people the campaign has given an account. They are not open to the public.</p>
       <p><small>Last updated: {updated}</small></p>
 
       <h2>Who we are</h2>
-      <p>The data controller is {dataController}, the campaign organisation for Dr. Ifeanyi Chukwuma Odii’s candidacy for Governor of Ebonyi State. You can contact us at {contact.email}, {contact.phone} or {contact.office}.</p>
+      <p>The data controller for all three services is {dataController}, the campaign organisation supporting Dr. Ifeanyi Chukwuma Odii’s candidacy for Governor of Ebonyi State. You can contact us at {reachText}.</p>
 
-      <h2>What we collect</h2>
+      <h2 id="website">1. This website</h2>
       <p>When you sign up to volunteer we collect:</p>
       <ul>
         <li>your name and phone number;</li>
@@ -23,24 +33,54 @@ const updated = '26 September 2026';
         <li>a record of your consent: the date and time, and the wording you agreed to;</li>
         <li>a one-way scrambled code (hash) of your internet address, used only to stop spam and abuse. We cannot recover your internet address from it.</li>
       </ul>
-      <p>This website sets no advertising or tracking cookies and uses no third-party analytics. Videos and images are served from this website, and are only downloaded when you view them.</p>
+      <p>We use these details to organise volunteers and to contact you about volunteering and the campaign by phone, SMS or WhatsApp. Our lawful basis is your consent. Sign-ups may be added to Command Center so the team in your area can contact you.</p>
+      <p>The website sets no advertising or tracking cookies and uses no third-party analytics. Videos and images are served from this website and are only downloaded when you view them.</p>
 
-      <h2>Why we use it, and our lawful basis</h2>
-      <p>We use your details only to organise volunteers and to contact you about volunteering and the campaign, by phone, SMS or WhatsApp. Our lawful basis is your consent. Because your details show support for a political candidate, we treat them as sensitive personal data and handle them with extra care.</p>
+      <h2 id="command-center">2. Command Center</h2>
+      <p>Command Center is used by authorised members of the campaign team to manage volunteers and supporters. It holds:</p>
+      <ul>
+        <li><strong>Team accounts:</strong> name, phone number or email address, role, and records of sign-ins and changes made, so we can keep the system secure;</li>
+        <li><strong>Volunteer and supporter records:</strong> the details people give us through the website or directly to the team, such as name, phone number, LGA, ward, how they would like to help, notes from the team, and their consent record;</li>
+        <li><strong>Photos:</strong> pictures that team members choose to take with the camera or upload, for example of campaign activities;</li>
+        <li><strong>Notifications:</strong> a device token, so the app can send push notifications to your device.</li>
+      </ul>
+      <p>Team members use the app as part of their work with the campaign. Records of volunteers and supporters are held on the basis of the consent those people gave us.</p>
 
-      <h2>Who can see it</h2>
-      <p>Only authorised members of the campaign team who coordinate volunteers can see your details. We may use service providers, such as our web host and email provider, who process data on our behalf under contract. <strong>We will never sell your data or share it with anyone for marketing.</strong></p>
+      <h2 id="anyi-ga-eme-ya">3. Anyi Ga Eme Ya</h2>
+      <p>Anyi Ga Eme Ya is used by members of the campaign’s field team who have been given an account. It holds:</p>
+      <ul>
+        <li><strong>Account details:</strong> name, phone number, role, and the area you are assigned to;</li>
+        <li><strong>Location:</strong> your device’s GPS location, only with your permission and only when you use a feature that needs it, for example to record where an activity took place;</li>
+        <li><strong>Photos:</strong> pictures you choose to take with the camera or upload in the app;</li>
+        <li><strong>Reports and activity:</strong> the information you submit in the app, and when you submitted it;</li>
+        <li><strong>Notifications:</strong> a device token, so the app can send you push notifications.</li>
+      </ul>
+      <p>We use this information to coordinate the field team’s work and to keep in touch with team members.</p>
+
+      <h2>Device permissions in the apps</h2>
+      <ul>
+        <li><strong>Camera and photos</strong> (both apps): used only when you choose to take or upload a picture.</li>
+        <li><strong>Location</strong> (Anyi Ga Eme Ya only): used only with your permission, when you use a feature that needs it.</li>
+        <li><strong>Notifications</strong> (both apps): used to send you updates from the campaign team.</li>
+      </ul>
+      <p>You can turn any of these off at any time in your phone’s settings. Some features may then stop working. Neither app reads your contacts, messages or call logs, and neither shows advertising.</p>
+
+      <h2>Sensitive data</h2>
+      <p>Information that shows someone supports a political candidate or party is sensitive personal data under the NDPA. We collect it only with consent or where the law allows, keep it to what we need, and limit who can see it.</p>
+
+      <h2>Who can see your data</h2>
+      <p>Only authorised members of the campaign team who need it for their work. We use service providers, such as our web host, cloud storage and the services that deliver SMS, email and push notifications, who process data only on our instructions and under contract. We may disclose data where the law requires it. <strong>We never sell personal data or share it with anyone for marketing.</strong></p>
 
       <h2>How long we keep it</h2>
-      <p>We keep volunteer details until the end of the 2027 Ebonyi State governorship election cycle, and delete them no later than 31 December 2027, unless you ask us to keep you on as a volunteer, or to delete them sooner.</p>
+      <p>We keep personal data only for as long as the campaign needs it. Volunteer and supporter records, field team records and photos are deleted no later than 31 December 2027, unless you ask us to keep you on, or the law requires us to keep something longer. App accounts are closed when a person leaves the team.</p>
 
       <h2>How we protect it</h2>
-      <p>Submissions are sent over an encrypted connection (HTTPS) and stored in a location on our server that cannot be reached from the web. Access is limited to authorised team members.</p>
+      <p>Data is sent over encrypted connections (HTTPS). The apps require each user to sign in, and access is limited by role. Website sign-ups are stored in a location that cannot be reached from the web.</p>
 
       <h2>Your rights</h2>
       <p>Under the NDPA you have the right to:</p>
       <ul>
-        <li>be informed about how your data is used (this notice);</li>
+        <li>be informed about how your data is used (this policy);</li>
         <li>get a copy of the data we hold about you;</li>
         <li>have inaccurate data corrected;</li>
         <li>have your data deleted;</li>
@@ -48,13 +88,16 @@ const updated = '26 September 2026';
         <li>object to, or ask us to restrict, how we use your data;</li>
         <li>receive your data in a portable format.</li>
       </ul>
-      <p>To use any of these rights, contact us at {contact.email} or {contact.phone}. We will respond within 30 days. If you are not satisfied, you can complain to the Nigeria Data Protection Commission (NDPC) at <a href="https://ndpc.gov.ng" rel="noopener">ndpc.gov.ng</a>.</p>
+      <p>To use any of these rights, contact us at {reachText}. We will respond within 30 days. If you are not satisfied, you can complain to the Nigeria Data Protection Commission (NDPC) at <a href="https://ndpc.gov.ng" rel="noopener">ndpc.gov.ng</a>.</p>
+
+      <h2 id="delete-account">Deleting your app account</h2>
+      <p>If you have a Command Center or Anyi Ga Eme Ya account, you can ask us to delete it and its data by contacting us at {reachText}, saying which app and the phone number or email address on the account. We will delete the account and the personal data linked to it within 30 days, except anything the law requires us to keep.</p>
 
       <h2>Children</h2>
-      <p>Volunteer sign-up is for people aged 18 and over. We do not knowingly collect data from children.</p>
+      <p>The website’s sign-up form and both apps are for people aged 18 and over. We do not knowingly collect data from children.</p>
 
       <h2>Changes</h2>
-      <p>If we change this notice, we will update the date at the top of this page.</p>
+      <p>If we change this policy, we will update the date at the top of this page, and tell app users about important changes in the app.</p>
     </div>
   </section>
 </Base>
