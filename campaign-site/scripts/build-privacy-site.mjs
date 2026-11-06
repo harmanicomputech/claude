@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process';
 
 // ---- Fill these in before publishing ---------------------------------------------
 const CONTROLLER = '[Name of campaign organisation]';
-const CONTACT_EMAIL = '[campaign contact email]';
+const CONTACT_EMAIL = 'privacy@anyigaemeya.com.ng';
 // ----------------------------------------------------------------------------------
 
 const BASE = 'https://privacy.anyigaemeya.com.ng';
@@ -60,7 +60,8 @@ footer div{max-width:760px;margin:0 auto;padding:24px 20px}
 footer p{margin:0 0 6px;color:#cfd8d3}footer a{color:#fff}
 `;
 
-const contactLine = `contact us at <strong>${CONTACT_EMAIL}</strong>`;
+const mail = `<a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>`;
+const contactLine = `contact us at <strong>${mail}</strong>`;
 
 // Sections shared by every policy.
 const whoWeAre = `<h2 id="who-we-are">Who we are</h2>
@@ -216,7 +217,7 @@ writeFileSync(`${OUT}/index.html`, page({
 <h1>Your data, respected.</h1>
 <p class="lede">These policies explain what personal data the campaign collects, why, how we protect it, and your rights under the Nigeria Data Protection Act 2023. Choose the service you use.</p>
 <div class="cards">${pages.map((p) => `<a class="card" href="/${p.slug}/"><b>${p.name}</b><span>${p.short}</span><em>Read the policy →</em></a>`).join('')}</div>
-<p style="margin-top:28px">Command Center and Anyi Ga Eme Ya are part of the campaign’s support platform and are for internal use only. Questions about any of these policies: ${CONTACT_EMAIL}.</p>
+<p style="margin-top:28px">Command Center and Anyi Ga Eme Ya are part of the campaign’s support platform and are for internal use only. Questions about any of these policies: ${mail}.</p>
 <p><small>Last updated: ${UPDATED}</small></p>`,
 }));
 

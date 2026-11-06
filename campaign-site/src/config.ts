@@ -31,7 +31,7 @@ export const isSet = (v: string) => !v.startsWith('[');
 export const contact = {
   office: '[Campaign office address]',
   phone: '[Campaign phone number]',
-  email: '[Campaign email address]',
+  email: 'privacy@anyigaemeya.com.ng',
 };
 
 export const authorisedBy = 'the Media team';
