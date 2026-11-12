@@ -5,7 +5,7 @@ import { mkdirSync } from 'node:fs';
 
 const base = process.argv[2] || 'http://127.0.0.1:8080';
 const out = process.argv[3] || 'screenshots';
-const exe = process.env.CHROMIUM || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+const exe = process.env.CHROMIUM || '/opt/pw-browsers/chromium-1243/chrome-linux64/chrome';
 mkdirSync(out, { recursive: true });
 
 const pages = [['home', '/'], ['about', '/about/'], ['agenda', '/agenda/'], ['foundation', '/foundation/'], ['leadership', '/leadership/'], ['media', '/media/'], ['news', '/news/'], ['get-involved', '/get-involved/'], ['privacy', '/privacy/'], ['thank-you', '/thank-you/'], ['404', '/404.html']];

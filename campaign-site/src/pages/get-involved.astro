@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 import PageHeader from '../components/PageHeader.astro';
 import Pic from '../components/Pic.astro';
 import Icon from '../components/Icon.astro';
-import VolunteerForm from '../components/sections/VolunteerForm.astro';
+import EmbeddedForm from '../components/sections/EmbeddedForm.astro';
 import { site, social, contact, helpOptions, isSet } from '../config';
 const shareText = encodeURIComponent(`${site.name} for Governor, Ebonyi State 2027. ${site.slogan}! Join the movement: ${site.url} ${site.hashtags.join(' ')}`);
 const contactItems = [['map', contact.office], ['phone', contact.phone], ['mail', contact.email]].filter(([, v]) => isSet(v));
@@ -18,12 +18,12 @@ const helpIcons = ['map', 'check', 'whatsapp', 'people', 'shield', 'truck', 'boo
       <div class="head reveal join-head">
         <p class="eyebrow">Volunteer</p>
         <h2 id="join-title" class="title">Sign up in one minute.</h2>
-        <p class="lede">Choose your LGA and how you would like to help. Your details are used only to organise volunteers; see the <a href="/privacy/">privacy notice</a>.</p>
+        <p class="lede">Fill in the form to join the campaign’s volunteer team. Your details are used only to organise volunteers; see the <a href="/privacy/">privacy policy</a>.</p>
       </div>
       <div class="join-aside">
         <div class="join-photo reveal"><Pic name="join" alt="Dr. Odii in a white shirt and cap, smiling and pointing" sizes="(min-width: 900px) 440px, 100vw" /></div>
       </div>
-      <VolunteerForm />
+      <EmbeddedForm />
     </div>
   </section>
 

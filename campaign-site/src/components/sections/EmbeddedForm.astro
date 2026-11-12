@@ -1,0 +1,91 @@
+---
+// The volunteer sign-up form, served by Command Center and embedded here in an iframe.
+// Works on its own with a sensible fixed height. If the Command Center page posts its height
+// (see README, "Embedded join form"), the frame grows to fit the form exactly, with no inner scrollbar.
+import Icon from '../Icon.astro';
+import { joinForm } from '../../config';
+const src = new URL(joinForm.url);
+src.searchParams.set('embed', '1');
+src.searchParams.set('source', 'campaign-website');
+---
+<script is:inline>
+  // Inline and placed before the iframe, so the listener is ready before the form can report its size.
+  (function () {
+    if (window.__ccEmbed) return;
+    window.__ccEmbed = true;
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function rootFor(src) {
+      var roots = document.querySelectorAll('[data-embed]');
+      for (var i = 0; i < roots.length; i++) {
+        var f = roots[i].querySelector('[data-embed-iframe]');
+        if (f && f.contentWindow === src) return roots[i];
+      }
+      return null;
+    }
+    function hide(root) { var l = root.querySelector('[data-embed-loading]'); if (l) l.hidden = true; }
+    // Optional: the form page can send
+    //   parent.postMessage({ type: 'cc:height', height: document.body.scrollHeight }, '*')
+    // and, after a successful sign-up, { type: 'cc:submitted' }.
+    window.addEventListener('message', function (e) {
+      var root = rootFor(e.source);
+      if (!root || e.origin !== root.getAttribute('data-origin')) return;
+      var d = e.data;
+      if (!d || typeof d !== 'object') return;
+      if (d.type === 'cc:height' && isFinite(d.height)) {
+        var h = Math.max(400, Math.min(6000, Math.ceil(d.height)));
+        root.querySelector('[data-embed-iframe]').style.height = h + 'px';
+        root.classList.add('is-sized');
+        hide(root);
+      }
+      if (d.type === 'cc:submitted') {
+        var top = root.getBoundingClientRect().top + window.pageYOffset - 90;
+        window.scrollTo({ top: top, behavior: reduce ? 'auto' : 'smooth' });
+      }
+    });
+    document.addEventListener('load', function (e) {
+      var t = e.target;
+      if (t && t.hasAttribute && t.hasAttribute('data-embed-iframe')) hide(t.closest('[data-embed]'));
+    }, true);
+    setTimeout(function () { document.querySelectorAll('[data-embed]').forEach(hide); }, 12000);
+  })();
+</script>
+<div class="embed reveal" data-embed data-origin={new URL(joinForm.url).origin}>
+  <p class="embed-alt" data-embed-alt>
+    Form not loading?
+    <a href={joinForm.url} target="_blank" rel="noopener">Open the sign-up form in a new tab <Icon name="arrow" size={16} /><span class="sr-only"> (opens in a new tab)</span></a>
+  </p>
+  <div class="embed-frame">
+    <div class="embed-loading" data-embed-loading aria-hidden="true">
+      <span class="embed-spinner"></span>
+      <span>Loading the sign-up form…</span>
+    </div>
+    <iframe
+      src={src.href}
+      title="Volunteer sign-up form"
+      loading="eager"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allow="clipboard-write"
+      data-embed-iframe
+    ></iframe>
+  </div>
+  <noscript>
+    <p class="embed-alt"><a href={joinForm.url}>Open the sign-up form</a></p>
+  </noscript>
+</div>
+
+<style>
+  .embed { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .embed-frame { position: relative; background: #fff; }
+  iframe { display: block; width: 100%; border: 0; height: 1500px; background: #fff; color-scheme: light; transition: height .2s ease; }
+  @media (min-width: 600px) { iframe { height: 1250px; } }
+  .embed-loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 14px; padding-top: 96px; background: #fff; color: var(--muted); font-size: .95rem; transition: opacity .25s; }
+  .embed-loading[hidden] { display: none; }
+  .embed-spinner { width: 32px; height: 32px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--green-700); animation: spin .9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .embed-alt { margin: 0; padding: 10px 18px; border-bottom: 1px solid var(--line); background: var(--paper); font-size: .92rem; color: var(--muted); }
+  .embed-alt a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 600; }
+  .embed.is-sized iframe { transition: height .2s ease; }
+  @media (prefers-reduced-motion: reduce) { .embed-spinner { animation: none; } iframe { transition: none; } }
+</style>
+
+

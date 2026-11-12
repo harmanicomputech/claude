@@ -65,3 +65,23 @@ Last run (26 Sept 2026, Lighthouse mobile): Performance 98–99, Accessibility 1
 - Agenda pillars were approved by the campaign on 26 Sept 2026. Points marked as coming from the videos come from the BBC News Igbo interview and the 2022 interview.
 - BBC News Igbo interview: used with BBC permission (confirmed by the campaign, 26 Sept 2026). English captions in `public/media/video/bbc-igbo-interview.en.vtt` are our translation and should be checked by a native Igbo speaker.
 - Foundation text and photos: from ifeanyiodii.com/philanthropy.
+
+## Embedded join form
+
+The Get involved page embeds the Command Center sign-up form (`joinForm.url` in `src/config.ts`, loaded with `?embed=1&source=campaign-website`). It works as is with a fixed height, and always shows an "Open the sign-up form in a new tab" link. For the best result, Command Center should:
+
+1. **Allow being framed** by the campaign site. Send `Content-Security-Policy: frame-ancestors 'self' https://ifeanyiodii.com https://www.ifeanyiodii.com` on `/join`, and do not send `X-Frame-Options: DENY` or `SAMEORIGIN` there.
+2. **Work without third-party cookies.** Safari, iPhone browsers and Firefox block cookies inside a frame from another site, so a session-based CSRF check on `/join` will fail there (Laravel shows "419 Page expired"). Exempt the join submission from CSRF and protect it with a honeypot and rate limit instead, or use `SameSite=None; Secure` cookies for Chrome/Android only.
+3. **Report its height** so the frame fits with no inner scrollbar, by adding to the join page (and its thank-you page):
+   ```html
+   <script>
+     (function () {
+       if (window.parent === window) return;
+       function send() { parent.postMessage({ type: 'cc:height', height: document.body.scrollHeight }, 'https://ifeanyiodii.com'); }
+       addEventListener('load', send);
+       if ('ResizeObserver' in window) new ResizeObserver(send).observe(document.body);
+     })();
+   </script>
+   ```
+   After a successful sign-up, also send `{ type: 'cc:submitted' }` so the site scrolls the thank-you message into view. Avoid `min-height: 100vh` on `body` in embed mode, or the reported height will be wrong.
+4. Optionally, when `embed=1`, hide its own header and footer so only the form shows.

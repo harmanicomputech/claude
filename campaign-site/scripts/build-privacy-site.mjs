@@ -104,16 +104,15 @@ const permissions = (items) => `<h2 id="permissions">Device permissions</h2>
 const bodies = {
   website: `
 <h2 id="what-we-collect">What we collect</h2>
-<p>When you sign up to volunteer we collect:</p>
+<p>The volunteer sign-up form on the Get involved page is provided by Command Center, the campaign team’s internal app, and shown inside this website. What you enter goes directly to Command Center. It typically includes:</p>
 <ul>
 <li>your name and phone number;</li>
 <li>your Local Government Area and, if you choose, your ward;</li>
 <li>how you would like to help, and anything else you choose to tell us;</li>
 <li>a record of your consent: the date and time, and the wording you agreed to;</li>
-<li>a one-way scrambled code (hash) of your internet address, used only to stop spam and abuse. We cannot recover your internet address from it.</li>
 </ul>
 <h2 id="how-we-use-it">How we use it, and our lawful basis</h2>
-<p>We use your details to organise volunteers and to contact you about volunteering and the campaign by phone, SMS or WhatsApp. Our lawful basis is your consent. Your sign-up may be added to Command Center, the campaign team’s internal app, so the team in your area can contact you.</p>
+<p>We use your details to organise volunteers and to contact you about volunteering and the campaign by phone, SMS or WhatsApp. Our lawful basis is your consent. Your sign-up is held in Command Center so the team in your area can contact you.</p>
 <h2 id="cookies">Cookies and analytics</h2>
 <p>The website sets no advertising or tracking cookies and uses no third-party analytics. Videos and images are served from the website and are only downloaded when you view them.</p>
 ${sensitive}
@@ -121,7 +120,7 @@ ${sharing('our web host and email provider')}
 <h2 id="retention">How long we keep it</h2>
 <p>We keep volunteer details until the end of the campaign and delete them no later than 31 December 2027, unless you ask us to keep you on as a volunteer, or to delete them sooner.</p>
 <h2 id="security">How we protect it</h2>
-<p>Sign-ups are sent over an encrypted connection (HTTPS) and stored in a location on our server that cannot be reached from the web. Only authorised team members can access them.</p>
+<p>Sign-ups are sent over an encrypted connection (HTTPS) to Command Center, where only authorised team members can see them.</p>
 ${rights}
 ${children('Volunteer sign-up is')}
 ${changes()}`,

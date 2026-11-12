@@ -38,6 +38,9 @@ export const authorisedBy = 'the Media team';
 // Data controller named in the privacy notice.
 export const dataController = '[Name of campaign organisation]';
 
+// Volunteer sign-up form, hosted on Command Center and embedded on the Get involved page.
+export const joinForm = { url: 'https://commandcenter.anyigaemeya.com.ng/join' };
+
 export const lgas = [
   'Abakaliki', 'Afikpo North', 'Afikpo South (Edda)', 'Ebonyi', 'Ezza North', 'Ezza South', 'Ikwo',
   'Ishielu', 'Ivo', 'Izzi', 'Ohaozara', 'Ohaukwu', 'Onicha',

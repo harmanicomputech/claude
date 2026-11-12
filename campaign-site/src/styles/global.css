@@ -293,7 +293,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* Join */
 .join-grid { display: grid; gap: 36px; grid-template-areas: 'head' 'form' 'aside'; }
 .join-head { grid-area: head; margin-bottom: 0; }
-.join-grid .form { grid-area: form; }
+.join-grid .form, .join-grid .embed { grid-area: form; min-width: 0; }
 .join-aside { grid-area: aside; }
 .join-photo { border-radius: var(--radius); overflow: hidden; aspect-ratio: 4 / 5; max-height: 560px; background: var(--sand); }
 .join-aside h2 { color: var(--ink); }
