@@ -37,8 +37,9 @@ This is where Election Shield delivers "coverage across all LGAs, no weak links 
 ## What already exists: Election Shield USSD
 
 - **Repository:** `harmanicomputech/claude`, branch `claude/hello-i876f8`. Laravel 13, PHP 8.4, MySQL.
-- **Live at** `https://ussd.techatronagency.com`, on DirectAdmin shared hosting with no terminal. Everything is managed through its admin console at `/admin`, and one cron job runs its background work.
-- **Africa's Talking USSD:** sandbox channel `*384*92342#` for now; a live code has been applied for.
+- **Live at** `https://ussd.anyigaemeya.com.ng`, on DirectAdmin shared hosting with no terminal. Everything is managed through its admin console at `/admin`. Background work runs after requests, through a per-minute external pinger and an hourly cron, because the host forbids per-minute cron jobs.
+- **The web app** is at `https://app.anyigaemeya.com.ng`.
+- **Africa's Talking USSD:** live code **`*347*678#`** on MTN, Airtel, Glo and T2 Mobile.
 - **What agents do by USSD** (registered phone numbers only, with a 4-digit PIN for results):
   - confirm presence at their PU
   - report election materials status: arrived, incomplete or not arrived
@@ -129,7 +130,7 @@ After connecting the webhook, press **Settings → Send all existing data to the
 
 The web app can also **fetch** everything the USSD service holds. Use this for the first full import, for staying in sync if a webhook is missed, and for pages that query the USSD data directly.
 
-- **Base URL:** `https://ussd.techatronagency.com/api`
+- **Base URL:** `https://ussd.anyigaemeya.com.ng/api`
 - **Auth:** `Authorization: Bearer {ELECTION_API_TOKEN}`. The token is in the USSD server's `.env`.
 - **Call it from the web app's server only, never from the browser.** The token gives access to every agent's name and phone number, so it must never be shipped in front-end JavaScript. Pages and the PWA read from the web app's own backend.
 
