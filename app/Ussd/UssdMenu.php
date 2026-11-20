@@ -674,10 +674,18 @@ class UssdMenu
     /**
      * @param  string  $for  volunteer, incident (public), or for an agent: result, agent_incident, presence, materials
      */
-    private function startPicking(string $for): null
+    private function startPicking(string $for): ?string
     {
         $this->data['pick_for'] = $for;
         $this->data['page'] = 0;
+
+        // No polling unit register (e.g. a fresh install that never imported it):
+        // a blank LGA list reads like a request to type something, so say so.
+        if ($this->lgas() === []) {
+            report(new \RuntimeException('USSD: the polling unit register is empty, so there are no LGAs to choose from. Import it in the admin console (Overview → Polling unit register).'));
+
+            return "Service is being set up.\nPlease try again later.";
+        }
 
         // Agents registered for a ward go straight to the PU number in it.
         if ($this->agent?->hasWard() && in_array($for, ['result', 'agent_incident', 'presence', 'materials'], true)) {
